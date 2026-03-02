@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Price List Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; transition: all 0.3s ease; }
+    .arabic-text { font-family: 'Cairo', sans-serif; direction: rtl; }
+    
+    /* Interactive Hover Effects */
+    .hover-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.1); }
+    
+    .btn-hover { transition: all 0.2s ease; }
+    .btn-hover:hover { filter: brightness(1.1); transform: scale(1.02); }
+
+    /* Fix for Select visibility */
+    select option { padding: 10px; }
+    
+    /* Ultimate Native Print Reset */
+    @media print {
+      /* 1. Hide the main web app background UI completely */
+      body > div.max-w-5xl { display: none !important; }
+      
+      /* 2. Hide the modal toolbar */
+      .no-print { display: none !important; }
+
+      /* 3. Destructive Layout Strip: Excludes the toolbar (.no-print) from the block reset */
+      html, body, #previewModal, #previewModal > div:not(.no-print) {
+        display: block !important;
+        position: static !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        box-shadow: none !important;
+        border: none !important;
+        visibility: visible !important;
+      }
+      
+      /* Forcefully kill the toolbar in print mode */
+      #previewModal .no-print { 
+        display: none !important; 
+        height: 0 !important; 
+        overflow: hidden !important; 
+      }
+
+      /* 4. Ensure the print area is treated as a standard static document block and strip shadows */
+      #pdfPrintArea {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important; /* Forces the removal of the grey shadow in print */
+        zoom: 0.90; /* Scales down slightly to accommodate footers on page 1 */
+      }
+      
+      /* Strip internal padding for printing */
+      #pdfPrintArea > div {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 text-slate-800">
+
+  <div class="max-w-5xl mx-auto space-y-6 no-print">
+    <div class="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover-card">
+      <div class="flex items-center space-x-4 rtl:space-x-reverse">
+        <div class="bg-blue-900 text-white p-3 rounded-2xl shadow-lg shadow-blue-200">
+          <i class="fas fa-file-invoice-dollar text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900">Document Engine</h1>
+          <p id="loading-indicator" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Initializing Systems...</p>
+        </div>
+      </div>
+      <div class="mt-4 md:mt-0">
+         <button onclick="openPreview()" class="bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-blue-100 btn-hover flex items-center">
+          <i class="fas fa-eye mr-2 rtl:ml-2"></i> Preview Document
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      
+      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4 hover-card">
+        <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
+          <i class="fas fa-cog mr-2 rtl:ml-2 text-blue-900"></i> Global Settings
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Date</label>
+            <input type="date" id="docDate" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Type</label>
+            <select id="docType" onchange="togglePromoFields()" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
+              <option value="standard">Standard Price List</option>
+              <option value="promo">Promotional List</option>
+            </select>
+          </div>
+          <div class="flex items-center space-x-6 rtl:space-x-reverse bg-slate-50 px-4 rounded-xl">
+               <label class="flex items-center cursor-pointer group">
+                  <input type="checkbox" id="toggleVAT" class="sr-only peer">
+                  <div class="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-blue-900 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                  <span class="ml-2 rtl:mr-2 text-xs font-bold text-slate-600 group-hover:text-blue-900">VAT</span>
+               </label>
+               <label class="flex items-center cursor-pointer group">
+                  <input type="checkbox" id="toggleRSP" onchange="renderProductTable()" class="sr-only peer">
+                  <div class="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-blue-900 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                  <span class="ml-2 rtl:mr-2 text-xs font-bold text-slate-600 group-hover:text-blue-900">RSP</span>
+               </label>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Currency</label>
+            <select id="currency" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
+               <option value="EGP">EGP</option>
+               <option value="USD">USD</option>
+               <option value="EUR">EUR</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4 hover-card">
+        <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
+          <i class="fas fa-user-tie mr-2 rtl:ml-2 text-blue-900"></i> Client & Recipient
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="relative">
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Search & Select Client</label>
+            <div class="relative">
+              <i class="fas fa-search absolute left-4 top-4 text-slate-300"></i>
+              <input type="text" id="clientSearch" onkeyup="filterDropdown('clientSearch', 'clientSelect')" placeholder="Type client name..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+              <select id="clientSelect" required class="w-full mt-2 p-3 bg-white border border-slate-100 rounded-xl focus:ring-2 focus:ring-blue-900 text-sm arabic-text">
+                <option value="">-- Choose from Results --</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">English Name Override</label>
+            <input type="text" id="clientEng" placeholder="Optional" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Send to Mr/Mrs</label>
+            <input type="text" id="sendTo" required placeholder="Name" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+          </div>
+        </div>
+        <div>
+           <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Signatory</label>
+           <select id="signatorySelect" onchange="checkNewSignatory()" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+              <option value="">-- Select Signatory --</option>
+              <option value="new">+ Add New Signatory</option>
+           </select>
+        </div>
+        <div id="newSignatoryFields" class="hidden grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+           <input type="text" id="sigName" placeholder="Name" class="w-full p-2 bg-white border-none rounded-lg text-sm">
+           <input type="text" id="sigTitle" placeholder="Title" class="w-full p-2 bg-white border-none rounded-lg text-sm">
+           <input type="text" id="sigPhone" placeholder="Phone" class="w-full p-2 bg-white border-none rounded-lg text-sm">
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-6 hover-card">
+        <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
+          <i class="fas fa-boxes mr-2 rtl:ml-2 text-blue-900"></i> Product Selection
+        </h2>
+        
+        <div id="promoSettings" class="hidden bg-blue-900 p-5 rounded-2xl text-white">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <div>
+                <label class="block text-[10px] font-bold opacity-70 mb-1">Limit Type</label>
+                <select id="promoLimitType" onchange="toggleLimitInputs()" class="w-full p-2 rounded-lg border-none text-slate-900 text-xs font-bold">
+                  <option value="date">Validity</option>
+                  <option value="qty">Quantity</option>
+                </select>
+             </div>
+             <div id="limitDateInputs" class="md:col-span-2 flex space-x-2">
+                <div class="w-1/2">
+                   <label class="block text-[10px] font-bold opacity-70 mb-1">Start</label>
+                   <input type="date" id="promoStart" class="w-full p-2 rounded-lg border-none text-slate-900 text-xs">
+                </div>
+                <div class="w-1/2">
+                   <label class="block text-[10px] font-bold opacity-70 mb-1">End</label>
+                   <input type="date" id="promoEnd" class="w-full p-2 rounded-lg border-none text-slate-900 text-xs">
+                </div>
+             </div>
+             <div id="limitQtyInput" class="hidden md:col-span-2">
+                <label class="block text-[10px] font-bold opacity-70 mb-1">Max Qty</label>
+                <input type="text" id="promoQty" placeholder="e.g. 500 Cartons" class="w-full p-2 rounded-lg border-none text-slate-900 text-xs">
+             </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 rtl:space-x-reverse">
+          <div class="relative flex-grow">
+            <i class="fas fa-search absolute left-4 top-4 text-slate-300"></i>
+            <input type="text" id="productSearch" onkeyup="filterDropdown('productSearch', 'productSelect')" placeholder="Search product name..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+            <select id="productSelect" class="w-full mt-2 p-3 bg-white border border-slate-100 rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+              <option value="">-- Choose from Results --</option>
+            </select>
+          </div>
+          <button onclick="addProduct()" class="bg-blue-900 text-white px-10 py-3 rounded-xl font-bold btn-hover flex items-center justify-center">
+            <i class="fas fa-plus mr-2 rtl:ml-2"></i> Add Product
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left rtl:text-right border-separate border-spacing-y-2">
+            <thead class="text-slate-400 font-black uppercase text-[10px] tracking-widest">
+              <tr id="tableHeader" class="px-4"></tr>
+            </thead>
+            <tbody id="productTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4 hover-card">
+         <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
+          <i class="fas fa-sticky-note mr-2 rtl:ml-2 text-blue-900"></i> Document Notes
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+           <input type="text" id="note1" placeholder="Condition 1" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+           <input type="text" id="note2" placeholder="Condition 2" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+           <input type="text" id="note3" placeholder="Condition 3" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+           <input type="text" id="note4" placeholder="Condition 4" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-6 border-t mt-8">
+        <button onclick="openPreview()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition">
+          Preview Document
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="previewModal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-75 z-50 flex flex-col">
+    <div class="bg-white p-4 shadow-md flex justify-between items-center z-10 no-print">
+      <div class="flex items-center space-x-4">
+        <button onclick="closePreview()" class="text-gray-600 hover:text-red-600 font-bold px-3 py-1 border rounded">Close</button>
+        <h2 class="font-bold text-lg">Document Preview</h2>
+      </div>
+      <div class="flex items-center space-x-8">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-bold text-gray-600">Digital</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="previewFormat" onchange="renderPreviewTemplate()" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </label>
+          <span class="text-sm font-bold text-gray-600">Letterhead</span>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-bold text-gray-600">EN</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="previewLang" onchange="renderPreviewTemplate()" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+          </label>
+          <span class="text-sm font-bold text-gray-600">AR</span>
+        </div>
+
+        <button onclick="confirmAndSave()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 shadow flex items-center">
+          <span id="save-spinner" class="hidden mr-2">⏳</span> Confirm & Save
+        </button>
+      </div>
+    </div>
+    <div class="flex-grow overflow-y-auto p-8 flex justify-center bg-gray-100">
+      <div id="pdfPrintArea" class="bg-white w-full max-w-4xl shadow-2xl text-black mx-auto relative">
+        </div>
+    </div>
+  </div>
+
+  <script>
+    let globalProducts = [];
+    let selectedProducts = [];
+    let globalSignatories = [];
+    let nextSeqNumber = 1;
+    // Initialize data from Google Apps Script
+    window.onload = function() {
+      google.script.run.withSuccessHandler(initializeUI).getInitialData();
+    };
+
+    function initializeUI(data) {
+      document.getElementById('loading-indicator').innerText = 'Data Loaded Successfully';
+      globalProducts = data.products;
+      globalSignatories = data.signatories;
+      nextSeqNumber = data.nextSeq;
+      
+      const clientSelect = document.getElementById('clientSelect');
+      data.clients.forEach(client => {
+        let opt = document.createElement('option');
+        opt.value = client;
+        opt.innerText = client;
+        clientSelect.appendChild(opt);
+      });
+
+      const sigSelect = document.getElementById('signatorySelect');
+      globalSignatories.forEach((sig, idx) => {
+        let opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = sig.name;
+        sigSelect.insertBefore(opt, sigSelect.lastElementChild);
+      });
+
+      const productSelect = document.getElementById('productSelect');
+      globalProducts.forEach(prod => {
+        let opt = document.createElement('option');
+        opt.value = prod.index;
+        opt.innerText = `${prod.englishName} | ${prod.arabicName}`;
+        productSelect.appendChild(opt);
+      });
+
+      document.getElementById('docDate').valueAsDate = new Date(); // Set default date
+      renderProductTable();
+    }
+    function checkNewSignatory() {
+      if (document.getElementById('signatorySelect').value === 'new') {
+        document.getElementById('newSignatoryFields').classList.remove('hidden');
+      } else {
+        document.getElementById('newSignatoryFields').classList.add('hidden');
+      }
+    }
+
+    // Modern Search Filter for Select Dropdowns
+    function filterDropdown(inputId, selectId) {
+      const input = document.getElementById(inputId);
+      const filter = input.value.toUpperCase();
+      const select = document.getElementById(selectId);
+      const options = select.getElementsByTagName("option");
+
+      for (let i = 0; i < options.length; i++) {
+        const txtValue = options[i].textContent || options[i].innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1 || options[i].value === "") {
+          options[i].style.display = "";
+        } else {
+          options[i].style.display = "none";
+        }
+      }
+    }
+
+    function togglePromoFields() {
+      const docType = document.getElementById('docType').value;
+      const promoSettings = document.getElementById('promoSettings');
+      if (docType === 'promo') {
+        promoSettings.classList.remove('hidden');
+      } else {
+        promoSettings.classList.add('hidden');
+      }
+      renderProductTable(); // Re-render table to show/hide promo columns
+    }
+
+    function toggleLimitInputs() {
+      const limitType = document.getElementById('promoLimitType').value;
+      if (limitType === 'date') {
+        document.getElementById('limitDateInputs').classList.remove('hidden');
+        document.getElementById('limitQtyInput').classList.add('hidden');
+      } else {
+        document.getElementById('limitDateInputs').classList.add('hidden');
+        document.getElementById('limitQtyInput').classList.remove('hidden');
+      }
+    }
+
+    function addProduct() {
+      const select = document.getElementById('productSelect');
+      const searchInput = document.getElementById('productSearch');
+      const prodIndex = select.value;
+      
+      if (!prodIndex) {
+        alert("Please select a product from the list first.");
+        return;
+      }
+
+      const product = globalProducts.find(p => p.index == prodIndex);
+      if (product && !selectedProducts.some(p => p.index == prodIndex)) {
+        selectedProducts.push({...product, officialPrice: 0, promoPrice: 0, rsp: 0});
+        renderProductTable();
+        
+        // Clear inputs for the next selection
+        select.value = "";
+        searchInput.value = "";
+        // Reset the dropdown visibility so all products appear again
+        filterDropdown('productSearch', 'productSelect');
+      } else if (selectedProducts.some(p => p.index == prodIndex)) {
+        alert("This product is already in the list.");
+      }
+    }
+
+    function removeProduct(index) {
+      selectedProducts = selectedProducts.filter(p => p.index != index);
+      renderProductTable();
+    }
+
+    function updatePrice(index, field, value) {
+      const prod = selectedProducts.find(p => p.index == index);
+      if(prod) {
+        prod[field] = parseFloat(value) || 0;
+        if(field === 'officialPrice' || field === 'promoPrice') {
+           renderProductTable(); // Re-render to update discount % calculation
+        }
+      }
+    }
+
+    function renderProductTable() {
+      const isPromo = document.getElementById('docType').value === 'promo';
+      const includeRSP = document.getElementById('toggleRSP').checked;
+      const includeVAT = document.getElementById('toggleVAT').checked;
+      const currency = document.getElementById('currency').value;
+      
+      let headers = `<th class="px-4 py-3">Product Name</th><th class="px-4 py-3 text-xs">Unit Cap.</th>`;
+      headers += `<th class="px-4 py-3">Official Price (${currency})</th>`;
+      
+      if (isPromo) {
+        headers += `<th class="px-4 py-3 bg-blue-50 text-blue-800">Promo Price (${currency})</th>`;
+        headers += `<th class="px-4 py-3 bg-blue-50 text-blue-800">Discount %</th>`;
+      }
+      if (includeVAT) headers += `<th class="px-4 py-3 bg-gray-50">Unit + VAT</th><th class="px-4 py-3 bg-gray-50">Piece + VAT</th>`;
+      else headers += `<th class="px-4 py-3 bg-gray-50">Piece Price</th>`;
+      
+      if (includeRSP) headers += `<th class="px-4 py-3 bg-green-50 text-green-800">RSP (Piece)</th>`;
+      headers += `<th class="px-4 py-3 text-right">Action</th>`;
+      
+      document.getElementById('tableHeader').innerHTML = headers;
+      const tbody = document.getElementById('productTableBody');
+      tbody.innerHTML = '';
+
+      selectedProducts.forEach(prod => {
+        let basePrice = isPromo ? (prod.promoPrice || 0) : (prod.officialPrice || 0);
+        let unitVatPrice = basePrice + (basePrice * prod.taxRate);
+        let piecePriceCalc = unitVatPrice / (prod.unitCapacity || 1);
+        let piecePriceNoVat = basePrice / (prod.unitCapacity || 1);
+
+        let promoHtml = '';
+        if (isPromo) {
+           let discountPercent = (prod.officialPrice > 0 && prod.promoPrice > 0) 
+             ? (((prod.officialPrice - prod.promoPrice) / prod.officialPrice) * 100).toFixed(1) : 0;
+           promoHtml = `
+             <td class="px-4 py-2 bg-blue-50"><input type="number" onchange="updatePrice(${prod.index}, 'promoPrice', this.value)" value="${prod.promoPrice || ''}" class="w-20 p-1 border rounded"></td>
+             <td class="px-4 py-2 bg-blue-50 font-bold text-blue-700">${discountPercent}%</td>
+           `;
+        }
+
+        let vatHtml = includeVAT 
+          ? `<td class="px-4 py-2 bg-gray-50">${unitVatPrice.toFixed(2)}</td><td class="px-4 py-2 bg-gray-50 font-bold">${piecePriceCalc.toFixed(2)}</td>`
+          : `<td class="px-4 py-2 bg-gray-50 font-bold">${piecePriceNoVat.toFixed(2)}</td>`;
+
+        let rspHtml = includeRSP 
+          ? `<td class="px-4 py-2 bg-green-50"><input type="number" onchange="updatePrice(${prod.index}, 'rsp', this.value)" value="${prod.rsp || ''}" class="w-20 p-1 border rounded"></td>` 
+          : '';
+
+        const row = `
+          <tr>
+            <td class="px-4 py-3"><div class="font-medium">${prod.englishName}</div><div class="text-xs text-gray-500 arabic-text">${prod.arabicName}</div></td>
+            <td class="px-4 py-3 text-gray-600 text-center">${prod.unitCapacity}</td>
+            <td class="px-4 py-2"><input type="number" onchange="updatePrice(${prod.index}, 'officialPrice', this.value)" value="${prod.officialPrice || ''}" class="w-20 p-1 border rounded"></td>
+            ${promoHtml}
+            ${vatHtml}
+            ${rspHtml}
+            <td class="px-4 py-3 text-right"><button onclick="removeProduct(${prod.index})" class="text-red-500 hover:text-red-700 font-bold text-xl">&times;</button></td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function generateReferenceNumber(isPromo, hasVat) {
+      const prefix = isPromo ? 'P' : (hasVat ? 'V' : 'N');
+      const d = new Date();
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const sss = String(nextSeqNumber).padStart(3, '0');
+      return `${prefix}${dd}${mm}${sss}`;
+    }
+
+    function openPreview() {
+      if(selectedProducts.length === 0) { alert('Add products first!'); return; }
+      const docDate = document.getElementById('docDate').value;
+      const sendTo = document.getElementById('sendTo').value;
+      const clientAr = document.getElementById('clientSelect').value;
+      
+      if (!docDate || !sendTo || !clientAr) {
+        alert('Please fill in all required fields: Document Date, Client, and Send to Mr/Mrs.');
+        return;
+      }
+      
+      renderPreviewTemplate();
+      document.getElementById('previewModal').classList.remove('hidden');
+    }
+
+    function closePreview() {
+      document.getElementById('previewModal').classList.add('hidden');
+    }
+
+    function renderPreviewTemplate() {
+      const isAr = document.getElementById('previewLang').checked;
+      const isLetterhead = document.getElementById('previewFormat').checked;
+      
+      const docDate = document.getElementById('docDate').value;
+      const clientAr = document.getElementById('clientSelect').value;
+      const clientEng = document.getElementById('clientEng').value || clientAr;
+      const clientName = isAr ? clientAr : clientEng;
+      const sendTo = document.getElementById('sendTo').value;
+      const isPromo = document.getElementById('docType').value === 'promo';
+      const hasVat = document.getElementById('toggleVAT').checked;
+      const hasRsp = document.getElementById('toggleRSP').checked;
+      const currency = document.getElementById('currency').value;
+      const refNum = generateReferenceNumber(isPromo, hasVat);
+
+      // UI Icons (With XML namespace for flawless rendering)
+      const icons = {
+        date: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="inline align-text-bottom mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`,
+        user: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="inline align-text-bottom mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`,
+        building: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="inline align-text-bottom mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>`,
+        logo: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" class="text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>`,
+        stamp: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" class="text-red-500 opacity-50 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>`,
+        signature: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`
+      };
+
+      const t = {
+        title: isAr ? 'قائمة أسعار' : 'Price-List',
+        issuedOn: isAr ? 'تاريخ الإصدار' : 'Issued on',
+        clientNameLbl: isAr ? 'اسم العميل' : 'Client name',
+        dearLbl: isAr ? 'عناية' : 'Dear',
+        greetings: isAr ? 'تحية طيبة وبعد،' : 'After Greetings,',
+        intro: isAr ? 'نرفق لسيادتكم قائمة الأسعار المطلوبة:' : 'Please find below the price list you have requested:',
+        prodName: isAr ? 'اسم الصنف' : 'Product Name',
+        barcode: isAr ? 'الباركود' : 'Barcode',
+        packDesc: isAr ? 'الشدة' : 'Pack Desc',
+        unitCap: isAr ? 'عدد القطع' : 'Unit cap',
+        netCap: isAr ? 'الوزن (جم/مل)' : 'Net Piece (gm/ml)',
+        uPrice: isAr ? 'سعر الوحدة' : 'Unit Price',
+        uPriceVat: isAr ? 'الوحدة + ضريبة' : 'Unit + VAT',
+        pPriceVat: isAr ? 'القطعة + ضريبة' : 'Piece + VAT',
+        pPriceNoVat: isAr ? 'سعر القطعة' : 'Piece Price',
+        promoPrice: isAr ? 'سعر العرض' : 'Promo Price',
+        discount: isAr ? 'الخصم %' : 'Discount %',
+        rsp: isAr ? 'سعر البيع المقترح' : 'Recommended Selling Price',
+        notes: isAr ? 'ملاحظات:' : 'NOTES:',
+        footerText: isAr ? 'الطاووس لتعبئة وتجارة المواد الغذائية' : 'Al Tawoos For Packing & Trading Food Goods'
+      };
+
+      // 1. DYNAMIC PRINT MARGINS (Top, Right, Bottom, Left)
+      let printStyle = document.getElementById('dynamic-print-margins');
+      if (!printStyle) {
+        printStyle = document.createElement('style');
+        printStyle.id = 'dynamic-print-margins';
+        document.head.appendChild(printStyle);
+      }
+      
+      if (isLetterhead) {
+        // Enforces exact empty spaces on EVERY page for physical letterheads
+        printStyle.innerHTML = `@page { margin: 50mm 10mm 40mm 10mm; }`;
+      } else {
+        printStyle.innerHTML = `@page { margin: 15mm 10mm 15mm 10mm; }`;
+      }
+
+      // Web View padding (Cosmetic for screen only)
+      let padClass = isLetterhead ? 'pt-16 px-8 pb-12' : 'p-8';
+      let html = `<div class="${isAr ? 'arabic-text' : ''} ${padClass}" dir="${isAr ? 'rtl' : 'ltr'}" style="font-size: 13px; font-family: ${isAr ? "'Cairo', sans-serif" : "'Inter', sans-serif"};">`;
+
+      // 2. THE MASTER PRINT TABLE (Forces repeating headers/footers)
+      html += `<table style="width: 100%; border-collapse: collapse; border: none;">`;
+
+      // --- HEADER SECTION (Repeats at top of every printed page) ---
+      html += `<thead style="display: table-header-group;"><tr><td style="padding-bottom: 20px; border: none;">`;
+      
+      if (!isLetterhead) {
+        html += `
+          <div class="flex justify-between items-center mb-6 border-b-2 border-slate-200 pb-4">
+            <div class="flex items-center space-x-3 rtl:space-x-reverse">
+              ${icons.logo}
+              <div class="font-black text-xl text-slate-800">${t.footerText}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      html += `
+        <div class="flex justify-between items-end mb-4">
+          <div>
+            <h1 class="text-2xl font-black uppercase text-slate-800 mb-2">${t.title}</h1>
+            <div class="inline-flex items-center bg-indigo-100 text-indigo-800 rounded-full px-3 py-1 text-xs font-bold mx-1 shadow-sm"># ${refNum}</div>
+            <div class="inline-flex items-center bg-slate-100 text-slate-800 rounded-full px-3 py-1 text-xs font-bold shadow-sm">${icons.date} ${t.issuedOn}: ${docDate}</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 shadow-sm">
+             <p class="text-xs text-gray-500 mb-1 font-semibold">${icons.building} ${t.clientNameLbl}</p>
+             <p class="font-bold text-sm text-slate-800">${clientName}</p>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 shadow-sm">
+             <p class="text-xs text-gray-500 mb-1 font-semibold">${icons.user} ${t.dearLbl}</p>
+             <p class="font-bold text-sm text-slate-800">${sendTo}</p>
+          </div>
+        </div>
+        <div class="mb-2">
+          <p class="font-bold text-slate-800">${t.greetings}</p>
+          <p class="text-slate-600">${t.intro}</p>
+        </div>
+      `;
+      html += `</td></tr></thead>`;
+
+      // --- BODY SECTION (Product Table + Unbreakable Notes/Signature) ---
+      html += `<tbody style="display: table-row-group;"><tr><td style="border: none;">`;
+
+      // Build Inner Product Table Headers
+      let thead = `<th class="p-2 text-left rtl:text-right">${t.prodName}</th>
+                   <th class="p-2">${t.barcode}</th>
+                   <th class="p-2">${t.packDesc}</th>
+                   <th class="p-2">${t.unitCap}</th>
+                   <th class="p-2">${t.netCap}</th>
+                   <th class="p-2">${t.uPrice} (${currency})</th>`;
+      
+      if (isPromo) {
+        thead += `<th class="p-2 text-blue-800 bg-blue-100/50">${t.promoPrice} (${currency})</th>`;
+        thead += `<th class="p-2 text-blue-800 bg-blue-100/50">${t.discount}</th>`;
+      }
+      if (hasVat) {
+        thead += `<th class="p-2 bg-slate-200/50">${t.uPriceVat}</th>`;
+        thead += `<th class="p-2 bg-slate-200/50">${t.pPriceVat}</th>`;
+      } else {
+        thead += `<th class="p-2 bg-slate-200/50">${t.pPriceNoVat}</th>`;
+      }
+      if (hasRsp) {
+        thead += `<th class="p-2 text-green-800 bg-green-100/50">${t.rsp}</th>`;
+      }
+
+      // Rounded Inner Table
+      html += `<div class="rounded-xl overflow-hidden border border-slate-300 shadow-sm mb-6">
+                 <table class="w-full text-center text-[11px]">
+                   <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">${thead}</thead>
+                   <tbody class="divide-y divide-slate-200">`;
+
+      selectedProducts.forEach(prod => {
+        let pName = isAr ? prod.arabicName : prod.englishName;
+        let pDesc = isAr ? prod.packDescAr : prod.packDescEn;
+        let basePrice = isPromo ? (prod.promoPrice || 0) : (prod.officialPrice || 0);
+        let unitVatPrice = basePrice + (basePrice * prod.taxRate);
+        let piecePriceCalc = unitVatPrice / (prod.unitCapacity || 1);
+        let piecePriceNoVat = basePrice / (prod.unitCapacity || 1);
+
+        // This prevents individual rows from splitting
+        let tr = `<tr style="page-break-inside: avoid;" class="hover:bg-slate-50">
+          <td class="p-2 text-left rtl:text-right font-semibold text-slate-800">${pName}</td>
+          <td class="p-2 text-slate-600">${prod.barcode}</td>
+          <td class="p-2 text-slate-600">${pDesc}</td>
+          <td class="p-2 font-medium">${prod.unitCapacity}</td>
+          <td class="p-2 text-slate-600">${prod.netCapacity}</td>`;
+
+        if (isPromo) {
+           let discountPercent = (prod.officialPrice > 0 && prod.promoPrice > 0) ? (((prod.officialPrice - prod.promoPrice) / prod.officialPrice) * 100).toFixed(1) : 0;
+           tr += `<td class="p-2 text-red-500 line-through">${prod.officialPrice}</td>`;
+           tr += `<td class="p-2 font-bold text-blue-700 bg-blue-50/50">${prod.promoPrice}</td>`;
+           tr += `<td class="p-2 font-bold text-blue-700 bg-blue-50/50">
+                    <span class="inline-block bg-blue-100 text-blue-800 rounded px-1">${discountPercent}%</span>
+                  </td>`;
+        } else {
+           tr += `<td class="p-2 font-semibold">${prod.officialPrice}</td>`;
+        }
+
+        if (hasVat) {
+          tr += `<td class="p-2 bg-slate-50/50 font-medium">${unitVatPrice.toFixed(2)}</td>
+                 <td class="p-2 bg-slate-50/50 font-bold text-slate-800">${piecePriceCalc.toFixed(2)}</td>`;
+        } else {
+          tr += `<td class="p-2 bg-slate-50/50 font-bold text-slate-800">${piecePriceNoVat.toFixed(2)}</td>`;
+        }
+        if (hasRsp) {
+          tr += `<td class="p-2 bg-green-50/50 font-bold text-green-700">${prod.rsp || '-'}</td>`;
+        }
+        tr += `</tr>`;
+        html += tr;
+      });
+
+      html += `</tbody></table></div>`;
+
+      // --- THE UNBREAKABLE BLOCK (Notes + Signature grouped together) ---
+      html += `<div style="page-break-inside: avoid; break-inside: avoid; display: block; width: 100%; padding-top: 10px;">`;
+      
+      let note1 = document.getElementById('note1').value;
+      let note2 = document.getElementById('note2').value;
+      let note3 = document.getElementById('note3').value;
+      let note4 = document.getElementById('note4').value;
+      
+      if(note1 || note2 || note3 || note4 || isPromo) {
+         html += `<div class="mb-6 bg-amber-50 rounded-lg p-4 border border-amber-200">
+                    <h4 class="font-bold text-amber-900 mb-2 flex items-center">
+                      <svg class="w-4 h-4 mx-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      ${t.notes}
+                    </h4>
+                    <ul class="list-disc list-inside text-xs space-y-1 text-amber-800 px-2">`;
+         if (isPromo) {
+           let q = document.getElementById('promoQty').value;
+           let s = document.getElementById('promoStart').value;
+           let e = document.getElementById('promoEnd').value;
+           if(q) html += `<li><span class="font-bold">${isAr ? 'الكمية المتاحة للعرض:' : 'Promo Available Qty:'}</span> ${q}</li>`;
+           if(s && e) html += `<li><span class="font-bold">${isAr ? 'العرض ساري من' : 'Promo valid from'}</span> ${s} ${isAr ? 'إلى' : 'to'} ${e}</li>`;
+         }
+         if(note1) html += `<li>${note1}</li>`;
+         if(note2) html += `<li>${note2}</li>`;
+         if(note3) html += `<li>${note3}</li>`;
+         if(note4) html += `<li>${note4}</li>`;
+         html += `</ul></div>`;
+      }
+
+      // Modern Signature Box
+      const sigVal = document.getElementById('signatorySelect').value;
+      let sName = "", sTitle = "", sPhone = "";
+      if (sigVal === 'new') {
+        sName = document.getElementById('sigName').value;
+        sTitle = document.getElementById('sigTitle').value;
+        sPhone = document.getElementById('sigPhone').value;
+      } else if (sigVal !== '') {
+        sName = globalSignatories[sigVal].name;
+        sTitle = globalSignatories[sigVal].title;
+        sPhone = globalSignatories[sigVal].phone;
+      }
+      
+      html += `
+        <div class="mt-4 flex justify-end text-sm">
+          <div class="w-72 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm p-5 flex flex-col items-center">
+            ${icons.signature}
+            <p class="font-bold text-slate-800 text-lg mb-1">${sName}</p>
+            <p class="text-slate-600 font-medium">${sTitle}</p>
+            <p class="text-slate-500 text-xs mt-1 mb-3">${sPhone}</p>
+            ${!isLetterhead ? `<div class="mt-2 pt-4 border-t border-slate-300 w-full flex justify-center">${icons.stamp}</div>` : ''}
+          </div>
+        </div>
+      `;
+      html += `</div>`; // End Unbreakable block
+      html += `</td></tr></tbody>`; // End Body
+
+      // --- FOOTER SECTION (Repeats at bottom of every printed page) ---
+      html += `<tfoot style="display: table-footer-group;"><tr><td style="padding-top: 20px; border: none;">`;
+      if (!isLetterhead) {
+         // Note: For standard browser printing, instruct the user to check "Headers and footers" in the print dialog to see default page numbering.
+         html += `<div class="text-center text-xs font-bold text-slate-400 border-t border-slate-200 pt-3 mt-4 w-full">
+                    ${t.footerText}
+                 </div>`;
+      }
+      html += `</td></tr></tfoot>`;
+      
+      html += `</table></div>`;
+      document.getElementById('pdfPrintArea').innerHTML = html;
+    }
+
+    function confirmAndSave() {
+      const btnSpinner = document.getElementById('save-spinner');
+      btnSpinner.classList.remove('hidden');
+
+      const isPromo = document.getElementById('docType').value === 'promo';
+      const hasVat = document.getElementById('toggleVAT').checked;
+      const refNum = generateReferenceNumber(isPromo, hasVat);
+      const docDate = document.getElementById('docDate').value;
+      const clientAr = document.getElementById('clientSelect').value;
+      const sendTo = document.getElementById('sendTo').value;
+      const currency = document.getElementById('currency').value;
+      
+      // Toggle Switches Values
+      const lang = document.getElementById('previewLang').checked ? 'AR' : 'EN';
+      const isLetterhead = document.getElementById('previewFormat').checked;
+      
+      let payload = { logData: [] };
+      const sigVal = document.getElementById('signatorySelect').value;
+      if (sigVal === 'new') {
+        payload.newSignatory = { 
+          name: document.getElementById('sigName').value, 
+          title: document.getElementById('sigTitle').value, 
+          phone: document.getElementById('sigPhone').value 
+        };
+      }
+
+      selectedProducts.forEach(prod => {
+        let finalPromoPrice = isPromo ? prod.promoPrice : '';
+        payload.logData.push([
+          refNum, docDate, isPromo ? 'Yes' : 'No', 
+          document.getElementById('promoQty').value || '', document.getElementById('promoStart').value || '', document.getElementById('promoEnd').value || '', 
+          clientAr, hasVat ? `${(prod.taxRate * 100)}%` : '0%', prod.arabicName, 
+          prod.officialPrice, finalPromoPrice, currency, prod.rsp || '', sendTo, 
+          document.getElementById('note1').value || '', document.getElementById('note2').value || '', 
+          document.getElementById('note3').value || '', document.getElementById('note4').value || '', 
+          '', '', new Date().toString()
+        ]);
+      });
+
+      google.script.run.withSuccessHandler(function() {
+         nextSeqNumber++;
+         
+         const element = document.getElementById('pdfPrintArea');
+         
+         btnSpinner.classList.add('hidden');
+         
+         // Trigger the browser's native, flawless print engine
+         setTimeout(() => {
+           window.print();
+           alert(`Saved to Log successfully! Reference Number: ${refNum}`);
+           // Note: You can optionally call closePreview(); here if you want the modal to close after printing.
+         }, 300);
+         
+      }).saveToLogAndSignatories(payload);
+    }
+  </script>
+</body>
+</html>

@@ -71,6 +71,12 @@
       }
       .border-dotted { border-style: dotted !important; border-bottom-width: 1.5px !important; }
     }
+
+    /* Fix for Web Preview: Ensure the internal container doesn't overflow its parent */
+    #pdfPrintArea > div {
+      overflow: hidden;
+      height: auto !important;
+    }
   </style>
 </head>
 <body class="p-4 md:p-8 text-slate-800">
@@ -291,8 +297,8 @@
         </button>
       </div>
     </div>
-    <div class="flex-grow overflow-y-auto p-8 flex justify-center bg-gray-100">
-      <div id="pdfPrintArea" class="bg-white w-full max-w-4xl shadow-2xl text-black mx-auto relative">
+    <div class="flex-grow overflow-y-auto bg-gray-100 p-4 md:p-8">
+      <div id="pdfPrintArea" class="bg-white w-full max-w-[210mm] shadow-2xl text-black mx-auto relative min-h-screen mb-10">
         </div>
     </div>
   </div> <div id="clientModal" class="hidden fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
@@ -736,9 +742,9 @@
         printStyle.innerHTML = `@page { margin: 15mm 10mm 15mm 10mm; }`;
       }
 
-      // Web View padding (Cosmetic for screen only)
-      let padClass = isLetterhead ? 'pt-16 px-8 pb-12' : 'p-8';
-      let html = `<div class="${isAr ? 'arabic-text' : ''} ${padClass}" dir="${isAr ? 'rtl' : 'ltr'}" style="font-size: 13px; font-family: ${isAr ? "'Cairo', sans-serif" : "'Inter', sans-serif"};">`;
+      // Adjusted Padding: Reduced bottom padding to prevent ghosting at the end of the page
+      let padClass = isLetterhead ? 'pt-16 px-8 pb-6' : 'p-8 pb-6';
+      let html = `<div class="${isAr ? 'arabic-text' : ''} ${padClass}" dir="${isAr ? 'rtl' : 'ltr'}" style="font-size: 13px; font-family: ${isAr ? "'Cairo', sans-serif" : "'Inter', sans-serif"}; min-height: 100%;">`;
 
       // 2. THE MASTER PRINT TABLE (Forces repeating headers/footers)
       html += `<table style="width: 100%; border-collapse: collapse; border: none;">`;

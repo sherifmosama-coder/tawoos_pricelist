@@ -119,34 +119,42 @@ function saveToLogAndSignatories(payload) {
   const ss = SpreadsheetApp.openById(ssId);
   const logSheet = ss.getSheetByName('Log');
   
-  // 1. Generate PDF in Drive and get URL
-  let fileUrl = "No File Generated";
+  // 1. Create PDF in Google Drive
+  let fileUrl = "";
   try {
-    const folderId = "YOUR_FOLDER_ID_HERE"; // Replace with your target Folder ID
+    const folderId = "1MwSDzthUTaXuEYQlSrCWvcXKDn-2fABK"; // Dedicated Archive Folder
     const folder = DriveApp.getFolderById(folderId);
     
-    // Create a PDF blob from the HTML content sent from the frontend
-    const htmlBlob = Utilities.newBlob(payload.htmlContent, 'text/html', payload.refNum + ".html");
-    const pdfBlob = htmlBlob.getAs('application/pdf').setName(payload.refNum + ".pdf");
-    
+    // Decode the Base64 PDF string sent from html2pdf in the browser
+    const decodedPdf = Utilities.base64Decode(payload.pdfData);
+    const pdfBlob = Utilities.newBlob(decodedPdf, 'application/pdf', payload.refNum + ".pdf");
     const file = folder.createFile(pdfBlob);
     fileUrl = file.getUrl();
   } catch (e) {
-    Logger.log("Drive Save Error: " + e.toString());
+    Logger.log("Drive Error: " + e.toString());
+    fileUrl = "Error Saving to Drive";
   }
 
-  // 2. Map Signatory if New
+  // 2. Map URL to specific columns (S = index 18, T = index 19)
+  const urlColIndex = (payload.lang === 'EN') ? 18 : 19;
+
+  // 3. Save New Signatory if provided
   if (payload.newSignatory) {
-    const sigSheet = ss.getSheetByName('Signatories');
+    let sigSheet = ss.getSheetByName('Signatories');
     sigSheet.appendRow([payload.newSignatory.name, payload.newSignatory.title, payload.newSignatory.phone]);
   }
 
-  // 3. Append Logs with the new File URL
-  payload.logData.forEach(row => {
-    // We add the fileUrl to the last column of the log
-    row[18] = fileUrl; 
-    logSheet.appendRow(row);
-  });
+  // 4. Save to Log Sheet
+  if (logSheet && payload.logData && payload.logData.length > 0) {
+    payload.logData.forEach(row => {
+      // row[18] is Col S, row[19] is Col T
+      row[urlColIndex] = fileUrl; 
+      logSheet.appendRow(row);
+    });
+  }
+  return { success: true, fileUrl: fileUrl };
+}
 
-  return { success: true, ref: payload.refNum };
+function forceDriveWriteScope() {
+  DriveApp.createFile("Temp Auth File.txt", "You can delete this.", "text/plain");
 }

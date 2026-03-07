@@ -88,27 +88,22 @@
           <i class="fas fa-file-invoice-dollar text-2xl"></i>
         </div>
         <div>
-          <h1 class="text-2xl font-black tracking-tight text-slate-900">Document Engine</h1>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900">Price-List Engine</h1>
           <p id="loading-indicator" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Initializing Systems...</p>
         </div>
-      </div>
-      <div class="mt-4 md:mt-0">
-         <button onclick="openPreview()" class="bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-blue-100 btn-hover flex items-center">
-          <i class="fas fa-eye mr-2 rtl:ml-2"></i> Preview Document
-        </button>
       </div>
     </div>
 
     <div class="space-y-6">
       
-      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4 hover-card">
+      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-5 hover-card">
         <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
           <i class="fas fa-cog mr-2 rtl:ml-2 text-blue-900"></i> Global Settings
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Date <span class="text-red-500">*</span></label>
-            <input type="date" id="docDate" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Date <span class="text-red-600 font-black text-sm">*</span></label>
+            <input type="date" id="docDate" required class="w-full p-3 bg-slate-50 border-y border-r border-l-4 border-l-red-500 rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Type</label>
@@ -138,6 +133,56 @@
             </select>
           </div>
         </div>
+
+        <div class="border-t border-slate-100 pt-4">
+          <h3 class="text-xs font-black text-slate-400 uppercase mb-3"><i class="fas fa-signature mr-2"></i> Document Authorization</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+               <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Signatory <span class="text-red-600 font-black text-sm">*</span></label>
+               <select id="signatorySelect" onchange="checkNewSignatory()" required class="w-full p-3 bg-white border-y border-r border-l-4 border-l-red-500 border-slate-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-900 text-sm font-bold text-slate-800">
+                  <option value="">-- Assign Signatory --</option>
+                  <option value="new" class="font-bold text-blue-600">+ Add New Signatory</option>
+               </select>
+            </div>
+            <div id="sigDisplay" class="hidden bg-blue-50 p-3 rounded-xl border border-blue-100 flex flex-col justify-center">
+               <p id="sigDisplayName" class="text-sm font-bold text-blue-900"></p>
+               <p id="sigDisplayTitle" class="text-xs text-blue-700"></p>
+               <p id="sigDisplayPhone" class="text-xs text-blue-500"></p>
+            </div>
+          </div>
+          <div id="newSignatoryFields" class="hidden grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 mt-3">
+             <input type="text" id="sigName" placeholder="Name *" class="w-full p-2 bg-white border-y border-r border-l-4 border-l-red-500 rounded-lg text-sm focus:ring-2 focus:ring-blue-900">
+             <input type="text" id="sigTitle" placeholder="Title" class="w-full p-2 bg-white border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-900">
+             <input type="text" id="sigPhone" placeholder="Phone" class="w-full p-2 bg-white border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-900">
+          </div>
+        </div>
+
+        <div id="promoSettings" class="hidden bg-indigo-50 border border-indigo-100 p-5 rounded-2xl">
+          <h3 class="text-xs font-black text-indigo-900 uppercase mb-3"><i class="fas fa-tags mr-2"></i> Promotion Constraints <span class="text-red-600">*</span></h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <div>
+                <label class="block text-xs font-bold text-indigo-700 mb-1">Limit Type</label>
+                <select id="promoLimitType" onchange="toggleLimitInputs()" class="w-full p-2.5 rounded-xl border-none bg-white text-sm font-bold shadow-sm focus:ring-2 focus:ring-indigo-500">
+                  <option value="date">Validity Dates</option>
+                  <option value="qty">Max Quantity</option>
+                </select>
+             </div>
+             <div id="limitDateInputs" class="md:col-span-2 flex space-x-3 rtl:space-x-reverse">
+                <div class="w-1/2">
+                   <label class="block text-xs font-bold text-indigo-700 mb-1">Start Date <span class="text-red-600">*</span></label>
+                   <input type="date" id="promoStart" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="w-1/2">
+                   <label class="block text-xs font-bold text-indigo-700 mb-1">End Date <span class="text-red-600">*</span></label>
+                   <input type="date" id="promoEnd" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+             </div>
+             <div id="limitQtyInput" class="hidden md:col-span-2">
+                <label class="block text-xs font-bold text-indigo-700 mb-1">Max Qty Limit <span class="text-red-600">*</span></label>
+                <input type="text" id="promoQty" placeholder="e.g. 500 Cartons" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
+             </div>
+          </div>
+        </div>
       </div>
 
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4 hover-card">
@@ -147,44 +192,25 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="relative">
             <div class="flex justify-between items-center mb-1">
-              <label class="block text-xs font-bold text-slate-500 ml-1">Search & Select Client <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-slate-500 ml-1">Search & Select Client <span class="text-red-600 font-black text-sm">*</span></label>
               <button onclick="toggleModal('clientModal')" class="text-blue-900 hover:text-blue-700 text-xs font-black uppercase"><i class="fas fa-plus-circle mr-1"></i> New Client</button>
             </div>
             <div class="relative">
-              <i class="fas fa-search absolute left-4 top-4 text-slate-300"></i>
-              <input type="text" id="clientSearch" onkeyup="filterDropdown('clientSearch', 'clientSelect')" placeholder="Type client name..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
-              <select id="clientSelect" required class="w-full mt-2 p-3 bg-white border border-slate-100 rounded-xl focus:ring-2 focus:ring-blue-900 text-sm arabic-text">
-                <option value="">-- Choose from Results --</option>
+              <i class="fas fa-search absolute left-4 top-4 text-slate-400"></i>
+              <input type="text" id="clientSearch" onkeyup="filterDropdown('clientSearch', 'clientSelect')" placeholder="Search..." class="w-full pl-10 pr-4 py-3 bg-blue-50/50 border-2 border-blue-100 rounded-xl focus:border-blue-500 focus:ring-0 text-sm font-semibold text-blue-900 placeholder-blue-300 transition-colors">
+              <select id="clientSelect" required class="w-full mt-2 p-3 bg-white border-y border-r border-l-4 border-l-red-500 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-900 text-sm arabic-text font-bold shadow-sm">
+                <option value="">-- Select Target Client --</option>
               </select>
             </div>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">English Name Override</label>
-            <input type="text" id="clientEng" placeholder="Optional" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+            <input type="text" id="clientEng" placeholder="Optional" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Send to Mr/Mrs <span class="text-red-500">*</span></label>
-            <input type="text" id="sendTo" required placeholder="Name" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Send to Mr/Mrs <span class="text-red-600 font-black text-sm">*</span></label>
+            <input type="text" id="sendTo" required placeholder="Name" class="w-full p-3 bg-white border-y border-r border-l-4 border-l-red-500 border-slate-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-900 text-sm font-bold">
           </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Signatory <span class="text-red-500">*</span></label>
-             <select id="signatorySelect" onchange="checkNewSignatory()" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
-                <option value="">-- Select Signatory --</option>
-                <option value="new">+ Add New Signatory</option>
-             </select>
-          </div>
-          <div id="sigDisplay" class="hidden bg-blue-50 p-3 rounded-xl border border-blue-100 flex flex-col justify-center">
-             <p id="sigDisplayName" class="text-sm font-bold text-blue-900"></p>
-             <p id="sigDisplayTitle" class="text-xs text-blue-700"></p>
-             <p id="sigDisplayPhone" class="text-xs text-blue-500"></p>
-          </div>
-        </div>
-        <div id="newSignatoryFields" class="hidden grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-           <input type="text" id="sigName" placeholder="Name" class="w-full p-2 bg-white border-none rounded-lg text-sm">
-           <input type="text" id="sigTitle" placeholder="Title" class="w-full p-2 bg-white border-none rounded-lg text-sm">
-           <input type="text" id="sigPhone" placeholder="Phone" class="w-full p-2 bg-white border-none rounded-lg text-sm">
         </div>
       </div>
 
@@ -193,42 +219,16 @@
           <i class="fas fa-boxes mr-2 rtl:ml-2 text-blue-900"></i> Product Selection
         </h2>
         
-        <div id="promoSettings" class="hidden bg-blue-900 p-5 rounded-2xl text-white">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-             <div>
-                <label class="block text-[10px] font-bold opacity-70 mb-1">Limit Type</label>
-                <select id="promoLimitType" onchange="toggleLimitInputs()" class="w-full p-2 rounded-lg border-none text-slate-900 text-xs font-bold">
-                  <option value="date">Validity</option>
-                  <option value="qty">Quantity</option>
-                </select>
-             </div>
-             <div id="limitDateInputs" class="md:col-span-2 flex space-x-2">
-                <div class="w-1/2">
-                   <label class="block text-[10px] font-bold opacity-70 mb-1">Start</label>
-                   <input type="date" id="promoStart" class="w-full p-2 rounded-lg border-none text-slate-900 text-xs">
-                </div>
-                <div class="w-1/2">
-                   <label class="block text-[10px] font-bold opacity-70 mb-1">End</label>
-                   <input type="date" id="promoEnd" class="w-full p-2 rounded-lg border-none text-slate-900 text-xs">
-                </div>
-             </div>
-             <div id="limitQtyInput" class="hidden md:col-span-2">
-                <label class="block text-[10px] font-bold opacity-70 mb-1">Max Qty</label>
-                <input type="text" id="promoQty" placeholder="e.g. 500 Cartons" class="w-full p-2 rounded-lg border-none text-slate-900 text-xs">
-             </div>
-          </div>
-        </div>
-
         <div class="flex justify-between items-center mb-2">
-           <label class="block text-xs font-bold text-slate-500 ml-1">Select Product</label>
+           <label class="block text-xs font-bold text-slate-500 ml-1">Select Product <span class="text-red-600 font-black text-sm">*</span></label>
            <button onclick="toggleModal('productModal')" class="text-blue-900 hover:text-blue-700 text-xs font-black uppercase"><i class="fas fa-plus-circle mr-1"></i> New Product</button>
         </div>
         <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 rtl:space-x-reverse">
           <div class="relative flex-grow">
-            <i class="fas fa-search absolute left-4 top-4 text-slate-300"></i>
-            <input type="text" id="productSearch" onkeyup="filterDropdown('productSearch', 'productSelect')" placeholder="Search product name..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
-            <select id="productSelect" class="w-full mt-2 p-3 bg-white border border-slate-100 rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
-              <option value="">-- Choose from Results --</option>
+            <i class="fas fa-search absolute left-4 top-4 text-slate-400"></i>
+            <input type="text" id="productSearch" onkeyup="filterDropdown('productSearch', 'productSelect')" placeholder="Search inventory..." class="w-full pl-10 pr-4 py-3 bg-blue-50/50 border-2 border-blue-100 rounded-xl focus:border-blue-500 focus:ring-0 text-sm font-semibold text-blue-900 placeholder-blue-300 transition-colors">
+            <select id="productSelect" class="w-full mt-2 p-3 bg-white border-2 border-blue-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-900 text-sm font-bold text-slate-800">
+              <option value="">-- Browse & Add to Document --</option>
             </select>
           </div>
           <button onclick="addProduct()" class="bg-blue-900 text-white px-10 py-3 rounded-xl font-bold btn-hover flex items-center justify-center">
@@ -379,6 +379,17 @@
     </div>
   </div>
 
+    <div id="customAlertModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" style="opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6" id="customAlertBox" style="transform: scale(0.95); transition: transform 0.3s;">
+      <div class="flex items-center space-x-4 rtl:space-x-reverse mb-4">
+        <div id="customAlertIcon" class="p-3 rounded-full"></div>
+        <h3 id="customAlertTitle" class="text-lg font-black text-slate-800"></h3>
+      </div>
+      <p id="customAlertMessage" class="text-sm text-slate-600 mb-6 font-medium leading-relaxed"></p>
+      <button onclick="closeCustomAlert()" class="w-full bg-blue-900 text-white font-bold py-3 rounded-xl btn-hover shadow-lg shadow-blue-100">Acknowledged</button>
+    </div>
+  </div>
+
   <script>
     function toggleModal(id) {
       document.getElementById(id).classList.toggle('hidden');
@@ -386,7 +397,7 @@
 
     function saveClient() {
       const name = document.getElementById('newClientName').value;
-      if(!name) return alert('Name required');
+      if(!name) return customAlert('Name required','error');
       document.getElementById('loading-indicator').innerText = 'Saving Client...';
       google.script.run.withSuccessHandler(data => {
         initializeUI(data);
@@ -399,12 +410,12 @@
       const barcode = document.getElementById('npBar').value.trim();
       
       // Validation Logic
-      if (!document.getElementById('npAr').value) return alert('Arabic Name is mandatory');
-      if (!document.getElementById('npTax').value) return alert('Tax Rate is mandatory');
+      if (!document.getElementById('npAr').value) return customAlert('Arabic Name is mandatory','error');
+      if (!document.getElementById('npTax').value) return customAlert('Tax Rate is mandatory','error');
       
       // EAN-13 Validation (Only if provided)
       if (barcode !== "" && barcode.length !== 13) {
-        return alert('Barcode must be exactly 13 digits (EAN-13 format)');
+        return customAlert('Barcode must be exactly 13 digits (EAN-13 format)','error');
       }
 
       const p = {
@@ -536,22 +547,20 @@
       const prodIndex = select.value;
       
       if (!prodIndex) {
-        alert("Please select a product from the list first.");
+        customAlert("Please select a product from the list first.", "info");
         return;
       }
-
+      
       const product = globalProducts.find(p => p.index == prodIndex);
       if (product && !selectedProducts.some(p => p.index == prodIndex)) {
         selectedProducts.push({...product, officialPrice: 0, promoPrice: 0, rsp: 0});
         renderProductTable();
         
-        // Clear inputs for the next selection
         select.value = "";
         searchInput.value = "";
-        // Reset the dropdown visibility so all products appear again
         filterDropdown('productSearch', 'productSelect');
       } else if (selectedProducts.some(p => p.index == prodIndex)) {
-        alert("This product is already in the list.");
+        customAlert("This product is already in the document list.", "info");
       }
     }
 
@@ -642,38 +651,68 @@
     }
 
     function openPreview() {
-      const docDate = document.getElementById('docDate').value;
-      const sendTo = document.getElementById('sendTo').value;
-      const clientAr = document.getElementById('clientSelect').value;
-      const sigVal = document.getElementById('signatorySelect').value;
-      const isPromo = document.getElementById('docType').value === 'promo';
+      try {
+        const docDate = document.getElementById('docDate').value;
+        const sendTo = document.getElementById('sendTo').value;
+        const clientAr = document.getElementById('clientSelect').value;
+        const sigVal = document.getElementById('signatorySelect').value;
+        const isPromo = document.getElementById('docType').value === 'promo';
 
-      // 1. Basic Field Validation
-      if (!docDate || !sendTo || !clientAr || !sigVal) {
-        alert('Please fill in all required fields: Date, Client, Recipient, and Signatory.');
-        return;
-      }
-
-      // 2. Product Count Validation
-      if (selectedProducts.length === 0) {
-        alert('Please add at least one product to the list.');
-        return;
-      }
-
-      // 3. Product Data Validation (Check prices for each added item)
-      for (let prod of selectedProducts) {
-        if (!prod.officialPrice || prod.officialPrice <= 0) {
-          alert(`Official Price is required for: ${prod.arabicName}`);
+        // 1. Basic Field Validation
+        if (!docDate || !sendTo || !clientAr || !sigVal) {
+          customAlert('Please fill in all mandatory fields indicated by a red border and asterisk (*).', 'error');
           return;
         }
-        if (isPromo && (!prod.promoPrice || prod.promoPrice <= 0)) {
-          alert(`Promo Price is required for: ${prod.arabicName}`);
+
+        // 1.2 Signatory Validation
+        if (sigVal === 'new') {
+          const sigName = document.getElementById('sigName').value.trim();
+          if (!sigName) {
+             customAlert('Please enter a Name for the New Signatory.', 'error');
+             return;
+          }
+        }
+
+        // 1.5 Promo Settings Validation
+        if (isPromo) {
+          const limitType = document.getElementById('promoLimitType').value;
+          if (limitType === 'date') {
+            if (!document.getElementById('promoStart').value || !document.getElementById('promoEnd').value) {
+              customAlert('Promo Start Date and End Date are mandatory for Date-limited promotions.', 'error');
+              return;
+            }
+          } else if (limitType === 'qty') {
+            if (!document.getElementById('promoQty').value) {
+              customAlert('Maximum Quantity Limit is mandatory for Qty-limited promotions.', 'error');
+              return;
+            }
+          }
+        }
+
+        // 2. Product Count Validation
+        if (selectedProducts.length === 0) {
+          customAlert('You must add at least one product to the document.', 'error');
           return;
         }
+
+        // 3. Product Data Validation
+        for (let prod of selectedProducts) {
+          if (!prod.officialPrice || prod.officialPrice <= 0) {
+            customAlert(`Official Price is required for: ${prod.arabicName}`, 'error');
+            return;
+          }
+          if (isPromo && (!prod.promoPrice || prod.promoPrice <= 0)) {
+            customAlert(`Promo Price is required for: ${prod.arabicName}`, 'error');
+            return;
+          }
+        }
+        
+        renderPreviewTemplate();
+        document.getElementById('previewModal').classList.remove('hidden');
+      } catch (e) {
+        console.error("Validation Error: ", e);
+        alert("An error occurred during validation: " + e.message); // Ultimate Fallback
       }
-      
-      renderPreviewTemplate();
-      document.getElementById('previewModal').classList.remove('hidden');
     }
 
     function closePreview() {
@@ -1052,10 +1091,89 @@
            printBtn.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
            printBtn.classList.add('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
            
-           alert(`Document Approved!\nRef: ${refNum}\nExact PDF styled copy saved to Google Drive.`);
+           customAlert('Document Approved! File saved to Google Drive.', 'success');
         }).saveToLogAndSignatories(payload);
 
       }); // End of html2pdf promise
+    }
+
+    // --- CUSTOM ALERT SYSTEM (WITH DEBUGGING & DOM FORCING) ---
+    function customAlert(message, type = 'error') {
+      console.log("🚨 [DEBUG] customAlert CALLED!");
+      console.log("🚨 [DEBUG] Message:", message, "| Type:", type);
+
+      try {
+        const modal = document.getElementById('customAlertModal');
+        const box = document.getElementById('customAlertBox');
+        const iconContainer = document.getElementById('customAlertIcon');
+        const title = document.getElementById('customAlertTitle');
+        const msg = document.getElementById('customAlertMessage');
+
+        if (!modal) {
+          console.error("🚨 [ERROR] customAlertModal NOT FOUND in DOM!");
+          alert("NATIVE FALLBACK: " + message);
+          return;
+        }
+
+        console.log("🚨 [DEBUG] All DOM elements found. Updating content...");
+
+        // CRITICAL FIX: Move the modal to the very end of the body. 
+        // This prevents it from being trapped by parent z-index or overflow rules.
+        document.body.appendChild(modal);
+
+        msg.innerText = message;
+
+        if (type === 'error') {
+          iconContainer.className = 'p-3 rounded-full bg-red-100 text-red-600';
+          iconContainer.innerHTML = '<i class="fas fa-exclamation-triangle text-xl"></i>';
+          title.innerText = 'Attention Required';
+        } else if (type === 'success') {
+          iconContainer.className = 'p-3 rounded-full bg-emerald-100 text-emerald-600';
+          iconContainer.innerHTML = '<i class="fas fa-check-circle text-xl"></i>';
+          title.innerText = 'Success';
+        } else {
+          iconContainer.className = 'p-3 rounded-full bg-blue-100 text-blue-600';
+          iconContainer.innerHTML = '<i class="fas fa-info-circle text-xl"></i>';
+          title.innerText = 'Information';
+        }
+
+        console.log("🚨 [DEBUG] Applying absolute inline styles...");
+
+        // Strip class-based hidden states
+        modal.classList.remove('hidden');
+
+        // Force inline styling, overriding everything else
+        modal.setAttribute("style", "position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2147483647; padding: 1rem; opacity: 1; transition: opacity 0.3s ease;");
+        
+        if (box) {
+           box.setAttribute("style", "background-color: white; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 100%; max-width: 24rem; padding: 1.5rem; transform: scale(1); transition: transform 0.3s ease;");
+        }
+
+        console.log("🚨 [DEBUG] customAlert should now be VISIBLE.");
+      } catch (e) {
+        console.error("🚨 [ERROR] customAlert crashed:", e);
+        alert("NATIVE FALLBACK: " + message);
+      }
+    }
+
+    function closeCustomAlert() {
+      console.log("🚨 [DEBUG] closeCustomAlert CALLED!");
+      const modal = document.getElementById('customAlertModal');
+      const box = document.getElementById('customAlertBox');
+
+      if (modal) {
+        modal.style.opacity = '0';
+      }
+      if (box) {
+        box.style.transform = 'scale(0.95)';
+      }
+
+      setTimeout(() => {
+        if (modal) {
+          modal.style.display = 'none';
+          console.log("🚨 [DEBUG] Modal hidden.");
+        }
+      }, 300);
     }
   </script>
 </body>

@@ -69,6 +69,7 @@
         padding: 0 !important;
         margin: 0 !important;
       }
+      .border-dotted { border-style: dotted !important; border-bottom-width: 1.5px !important; }
     }
   </style>
 </head>
@@ -100,8 +101,8 @@
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Date</label>
-            <input type="date" id="docDate" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Date <span class="text-red-500">*</span></label>
+            <input type="date" id="docDate" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Type</label>
@@ -135,11 +136,14 @@
 
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4 hover-card">
         <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
-          <i class="fas fa-user-tie mr-2 rtl:ml-2 text-blue-900"></i> Client & Recipient
+          <i class="fas fa-file-signature mr-2 rtl:ml-2 text-blue-900"></i> Client & Recipient
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="relative">
-            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Search & Select Client</label>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-bold text-slate-500 ml-1">Search & Select Client <span class="text-red-500">*</span></label>
+              <button onclick="toggleModal('clientModal')" class="text-blue-900 hover:text-blue-700 text-xs font-black uppercase"><i class="fas fa-plus-circle mr-1"></i> New Client</button>
+            </div>
             <div class="relative">
               <i class="fas fa-search absolute left-4 top-4 text-slate-300"></i>
               <input type="text" id="clientSearch" onkeyup="filterDropdown('clientSearch', 'clientSelect')" placeholder="Type client name..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
@@ -153,16 +157,23 @@
             <input type="text" id="clientEng" placeholder="Optional" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Send to Mr/Mrs</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Send to Mr/Mrs <span class="text-red-500">*</span></label>
             <input type="text" id="sendTo" required placeholder="Name" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
           </div>
         </div>
-        <div>
-           <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Signatory</label>
-           <select id="signatorySelect" onchange="checkNewSignatory()" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
-              <option value="">-- Select Signatory --</option>
-              <option value="new">+ Add New Signatory</option>
-           </select>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Signatory <span class="text-red-500">*</span></label>
+             <select id="signatorySelect" onchange="checkNewSignatory()" required class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 text-sm">
+                <option value="">-- Select Signatory --</option>
+                <option value="new">+ Add New Signatory</option>
+             </select>
+          </div>
+          <div id="sigDisplay" class="hidden bg-blue-50 p-3 rounded-xl border border-blue-100 flex flex-col justify-center">
+             <p id="sigDisplayName" class="text-sm font-bold text-blue-900"></p>
+             <p id="sigDisplayTitle" class="text-xs text-blue-700"></p>
+             <p id="sigDisplayPhone" class="text-xs text-blue-500"></p>
+          </div>
         </div>
         <div id="newSignatoryFields" class="hidden grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
            <input type="text" id="sigName" placeholder="Name" class="w-full p-2 bg-white border-none rounded-lg text-sm">
@@ -202,6 +213,10 @@
           </div>
         </div>
 
+        <div class="flex justify-between items-center mb-2">
+           <label class="block text-xs font-bold text-slate-500 ml-1">Select Product</label>
+           <button onclick="toggleModal('productModal')" class="text-blue-900 hover:text-blue-700 text-xs font-black uppercase"><i class="fas fa-plus-circle mr-1"></i> New Product</button>
+        </div>
         <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 rtl:space-x-reverse">
           <div class="relative flex-grow">
             <i class="fas fa-search absolute left-4 top-4 text-slate-300"></i>
@@ -230,10 +245,10 @@
           <i class="fas fa-sticky-note mr-2 rtl:ml-2 text-blue-900"></i> Document Notes
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-           <input type="text" id="note1" placeholder="Condition 1" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
-           <input type="text" id="note2" placeholder="Condition 2" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
-           <input type="text" id="note3" placeholder="Condition 3" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
-           <input type="text" id="note4" placeholder="Condition 4" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+           <input type="text" id="note1" placeholder="Line 1" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+           <input type="text" id="note2" placeholder="Line 2" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+           <input type="text" id="note3" placeholder="Line 3" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+           <input type="text" id="note4" placeholder="Line 4" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
         </div>
       </div>
 
@@ -280,9 +295,128 @@
       <div id="pdfPrintArea" class="bg-white w-full max-w-4xl shadow-2xl text-black mx-auto relative">
         </div>
     </div>
+  </div> <div id="clientModal" class="hidden fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 transform transition-all">
+      <h3 class="text-xl font-black text-blue-900 mb-6 flex items-center"><i class="fas fa-user-plus mr-3"></i> Add New Client</h3>
+      <label class="block text-xs font-bold text-slate-500 mb-2">Arabic Company Name (Unique)</label>
+      <input type="text" id="newClientName" class="w-full p-4 bg-slate-100 border-none rounded-2xl mb-6 arabic-text text-lg">
+      <div class="flex space-x-3 rtl:space-x-reverse">
+        <button onclick="saveClient()" class="flex-grow bg-blue-900 text-white font-bold py-4 rounded-2xl btn-hover">Save Client</button>
+        <button onclick="toggleModal('clientModal')" class="px-6 bg-slate-100 text-slate-500 font-bold rounded-2xl">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="productModal" class="hidden fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl p-8 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-black text-blue-900 flex items-center"><i class="fas fa-box-open mr-3"></i> Add New Product</h3>
+        <span class="text-[10px] font-bold text-red-500 uppercase tracking-widest">* Mandatory Fields</span>
+      </div>
+
+      <div class="space-y-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="col-span-2"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Product Identity</p></div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Arabic Name *</label>
+            <input type="text" id="npAr" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm arabic-text focus:ring-2 focus:ring-blue-900" placeholder="اسم الصنف بالعربي">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">English Name</label>
+            <input type="text" id="npEn" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900" placeholder="Product English Name">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Barcode</label>
+            <input type="text" id="npBar" maxlength="13" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-900" placeholder="EAN-13 Barcode">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Tax Rate *</label>
+            <select id="npTax" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900">
+              <option value="0.14">14% (Standard)</option>
+              <option value="0">0% (Exempt)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="col-span-2"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Packing & Units</p></div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Unit Type - Ar</label>
+            <input list="unitTypes" id="npUnitType" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+            <datalist id="unitTypes">
+              <option value="شرنك"> <option value="كرتونة"> <option value="باستلة"> <option value="كيس">
+            </datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Piece Qty per Unit</label>
+            <input type="number" id="npCap" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-900">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Small Unit (Piece) - Ar</label>
+            <input type="text" id="npSmallAr" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm arabic-text focus:ring-2 focus:ring-blue-900" placeholder="مثلاً: زجاجة">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Piece Description</label>
+            <input type="text" id="npPieceCap" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900" placeholder="e.g. 1000 ml">
+          </div>
+        </div>
+
+      <div class="flex space-x-3 rtl:space-x-reverse mt-10">
+        <button onclick="saveProduct()" class="flex-grow bg-blue-900 text-white font-bold py-4 rounded-2xl btn-hover shadow-lg shadow-blue-100">Register Product</button>
+        <button onclick="toggleModal('productModal')" class="px-8 bg-slate-100 text-slate-500 font-bold rounded-2xl">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <script>
+    function toggleModal(id) {
+      document.getElementById(id).classList.toggle('hidden');
+    }
+
+    function saveClient() {
+      const name = document.getElementById('newClientName').value;
+      if(!name) return alert('Name required');
+      document.getElementById('loading-indicator').innerText = 'Saving Client...';
+      google.script.run.withSuccessHandler(data => {
+        initializeUI(data);
+        toggleModal('clientModal');
+        document.getElementById('newClientName').value = "";
+      }).addNewClient(name);
+    }
+
+    function saveProduct() {
+      const barcode = document.getElementById('npBar').value.trim();
+      
+      // Validation Logic
+      if (!document.getElementById('npAr').value) return alert('Arabic Name is mandatory');
+      if (!document.getElementById('npTax').value) return alert('Tax Rate is mandatory');
+      
+      // EAN-13 Validation (Only if provided)
+      if (barcode !== "" && barcode.length !== 13) {
+        return alert('Barcode must be exactly 13 digits (EAN-13 format)');
+      }
+
+      const p = {
+        arabicName: document.getElementById('npAr').value,
+        englishName: document.getElementById('npEn').value,
+        barcode: barcode,
+        taxRate: parseFloat(document.getElementById('npTax').value),
+        unitType: document.getElementById('npUnitType').value,
+        unitCapacity: document.getElementById('npCap').value,
+        smallUnitAr: document.getElementById('npSmallAr').value,
+        pieceCap: document.getElementById('npPieceCap').value
+      };
+
+      document.getElementById('loading-indicator').innerText = 'Saving Product...';
+      google.script.run.withSuccessHandler(data => {
+        initializeUI(data);
+        toggleModal('productModal');
+        // Clear all fields
+        document.querySelectorAll('#productModal input').forEach(i => i.value = "");
+        document.getElementById('loading-indicator').innerText = 'Product Saved Successfully';
+      }).addNewProduct(p);
+    }
+
     let globalProducts = [];
     let selectedProducts = [];
     let globalSignatories = [];
@@ -326,10 +460,23 @@
       renderProductTable();
     }
     function checkNewSignatory() {
-      if (document.getElementById('signatorySelect').value === 'new') {
-        document.getElementById('newSignatoryFields').classList.remove('hidden');
+      const sigVal = document.getElementById('signatorySelect').value;
+      const display = document.getElementById('sigDisplay');
+      const newFields = document.getElementById('newSignatoryFields');
+      
+      if (sigVal === 'new') {
+        newFields.classList.remove('hidden');
+        display.classList.add('hidden');
+      } else if (sigVal !== '') {
+        const sig = globalSignatories[sigVal];
+        document.getElementById('sigDisplayName').innerText = sig.name;
+        document.getElementById('sigDisplayTitle').innerText = sig.title;
+        document.getElementById('sigDisplayPhone').innerText = sig.phone;
+        display.classList.remove('hidden');
+        newFields.classList.add('hidden');
       } else {
-        document.getElementById('newSignatoryFields').classList.add('hidden');
+        display.classList.add('hidden');
+        newFields.classList.add('hidden');
       }
     }
 
@@ -484,14 +631,34 @@
     }
 
     function openPreview() {
-      if(selectedProducts.length === 0) { alert('Add products first!'); return; }
       const docDate = document.getElementById('docDate').value;
       const sendTo = document.getElementById('sendTo').value;
       const clientAr = document.getElementById('clientSelect').value;
-      
-      if (!docDate || !sendTo || !clientAr) {
-        alert('Please fill in all required fields: Document Date, Client, and Send to Mr/Mrs.');
+      const sigVal = document.getElementById('signatorySelect').value;
+      const isPromo = document.getElementById('docType').value === 'promo';
+
+      // 1. Basic Field Validation
+      if (!docDate || !sendTo || !clientAr || !sigVal) {
+        alert('Please fill in all required fields: Date, Client, Recipient, and Signatory.');
         return;
+      }
+
+      // 2. Product Count Validation
+      if (selectedProducts.length === 0) {
+        alert('Please add at least one product to the list.');
+        return;
+      }
+
+      // 3. Product Data Validation (Check prices for each added item)
+      for (let prod of selectedProducts) {
+        if (!prod.officialPrice || prod.officialPrice <= 0) {
+          alert(`Official Price is required for: ${prod.arabicName}`);
+          return;
+        }
+        if (isPromo && (!prod.promoPrice || prod.promoPrice <= 0)) {
+          alert(`Promo Price is required for: ${prod.arabicName}`);
+          return;
+        }
       }
       
       renderPreviewTemplate();
@@ -522,9 +689,13 @@
         date: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="inline align-text-bottom mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`,
         user: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="inline align-text-bottom mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`,
         building: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="inline align-text-bottom mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>`,
-        logo: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" class="text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>`,
-        stamp: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" class="text-red-500 opacity-50 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>`,
-        signature: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`
+        logo: `<img src="https://lh3.googleusercontent.com/d/1KuZm8n-1MFpWNTUIVbnHBONCVnkWZh7z" style="height: 60px; width: auto;" alt="Logo">`,
+        stamp: `<img src="https://lh3.googleusercontent.com/d/12fsJ5nsam4YLpyLpvEcGkqdP3A91LtOn" style="height: 100px; width: auto; opacity: 0.8;" alt="Stamp">`,
+        signature: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" class="text-blue-900 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M5 19c-1 0-2-1-2-2v-1c0-1 1-2 2-2h1m10 0h1c1 0 2 1 2 2v1c0 1-1 2-2 2h-1"></path>
+        </svg>`
       };
 
       const t = {
@@ -578,9 +749,9 @@
       if (!isLetterhead) {
         html += `
           <div class="flex justify-between items-center mb-6 border-b-2 border-slate-200 pb-4">
-            <div class="flex items-center space-x-3 rtl:space-x-reverse">
+            <div class="flex items-center space-x-4 rtl:space-x-reverse">
               ${icons.logo}
-              <div class="font-black text-xl text-slate-800">${t.footerText}</div>
+              <div class="font-black text-xl text-slate-800 leading-tight">${t.footerText}</div>
             </div>
           </div>
         `;
@@ -727,13 +898,29 @@
       }
       
       html += `
-        <div class="mt-4 flex justify-end text-sm">
-          <div class="w-72 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm p-5 flex flex-col items-center">
-            ${icons.signature}
-            <p class="font-bold text-slate-800 text-lg mb-1">${sName}</p>
-            <p class="text-slate-600 font-medium">${sTitle}</p>
-            <p class="text-slate-500 text-xs mt-1 mb-3">${sPhone}</p>
-            ${!isLetterhead ? `<div class="mt-2 pt-4 border-t border-slate-300 w-full flex justify-center">${icons.stamp}</div>` : ''}
+        <div class="mt-8 flex justify-end">
+          <div class="w-72 space-y-3">
+            <div class="flex items-center space-x-2 rtl:space-x-reverse mb-4">
+               ${icons.signature}
+               <span class="font-black text-blue-900 uppercase tracking-widest text-xs">${isAr ? 'التوقيع' : 'SIGNATURE'}</span>
+            </div>
+            
+            <div class="border-b border-dotted border-slate-400 pb-1 flex items-center">
+              <span class="text-slate-400 mr-2 rtl:ml-2"><i class="fas fa-user-check text-[10px]"></i></span>
+              <p class="font-bold text-slate-800 text-sm">${sName}</p>
+            </div>
+
+            <div class="border-b border-dotted border-slate-400 pb-1 flex items-center">
+              <span class="text-slate-400 mr-2 rtl:ml-2"><i class="fas fa-briefcase text-[10px]"></i></span>
+              <p class="text-slate-700 text-xs font-medium">${sTitle}</p>
+            </div>
+
+            <div class="border-b border-dotted border-slate-400 pb-1 flex items-center">
+              <span class="text-slate-400 mr-2 rtl:ml-2"><i class="fas fa-phone text-[10px]"></i></span>
+              <p class="text-slate-600 text-[11px]">${sPhone}</p>
+            </div>
+
+            ${!isLetterhead ? `<div class="pt-4 flex justify-center">${icons.stamp}</div>` : ''}
           </div>
         </div>
       `;
@@ -755,8 +942,13 @@
     }
 
     function confirmAndSave() {
-      const btnSpinner = document.getElementById('save-spinner');
-      btnSpinner.classList.remove('hidden');
+      const btn = event.currentTarget;
+      const originalHtml = btn.innerHTML;
+      
+      // 1. Loading State Animation
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      btn.innerHTML = `<i class="fas fa-circle-notch fa-spin mr-2"></i> Syncing to Drive...`;
 
       const isPromo = document.getElementById('docType').value === 'promo';
       const hasVat = document.getElementById('toggleVAT').checked;
@@ -766,11 +958,15 @@
       const sendTo = document.getElementById('sendTo').value;
       const currency = document.getElementById('currency').value;
       
-      // Toggle Switches Values
-      const lang = document.getElementById('previewLang').checked ? 'AR' : 'EN';
-      const isLetterhead = document.getElementById('previewFormat').checked;
+      // Capture the exact HTML being printed
+      const printHtml = document.getElementById('pdfPrintArea').innerHTML;
       
-      let payload = { logData: [] };
+      let payload = { 
+        logData: [], 
+        htmlContent: printHtml,
+        refNum: refNum 
+      };
+
       const sigVal = document.getElementById('signatorySelect').value;
       if (sigVal === 'new') {
         payload.newSignatory = { 
@@ -789,23 +985,24 @@
           prod.officialPrice, finalPromoPrice, currency, prod.rsp || '', sendTo, 
           document.getElementById('note1').value || '', document.getElementById('note2').value || '', 
           document.getElementById('note3').value || '', document.getElementById('note4').value || '', 
-          '', '', new Date().toString()
+          '', '', new Date().toLocaleString() // Column 18 is reserved for URL in backend
         ]);
       });
 
-      google.script.run.withSuccessHandler(function() {
+      google.script.run.withSuccessHandler(function(response) {
          nextSeqNumber++;
          
-         const element = document.getElementById('pdfPrintArea');
-         
-         btnSpinner.classList.add('hidden');
-         
-         // Trigger the browser's native, flawless print engine
+         // Reset Button
+         btn.disabled = false;
+         btn.classList.remove('opacity-75', 'cursor-not-allowed');
+         btn.innerHTML = originalHtml;
+
+         // Trigger Native Print for the user
          setTimeout(() => {
            window.print();
-           alert(`Saved to Log successfully! Reference Number: ${refNum}`);
-           // Note: You can optionally call closePreview(); here if you want the modal to close after printing.
-         }, 300);
+           alert(`Success!\n1. Reference: ${response.ref}\n2. Log Updated\n3. Saved to Google Drive`);
+           closePreview();
+         }, 500);
          
       }).saveToLogAndSignatories(payload);
     }

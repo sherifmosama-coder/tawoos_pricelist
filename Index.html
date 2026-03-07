@@ -292,8 +292,13 @@
           <span class="text-sm font-bold text-gray-600">AR</span>
         </div>
 
-        <button onclick="confirmAndSave()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 shadow flex items-center">
-          <span id="save-spinner" class="hidden mr-2">⏳</span> Confirm & Save
+        <button id="approveBtn" onclick="approveDocument()" class="bg-blue-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-800 shadow flex items-center transition-all">
+          <span id="approve-spinner" class="hidden mr-2"><i class="fas fa-circle-notch fa-spin"></i></span>
+          <i class="fas fa-check-circle mr-2"></i> Approve Document
+        </button>
+
+        <button id="printBtn" onclick="window.print()" disabled class="bg-slate-200 text-slate-400 px-6 py-2 rounded-lg font-bold cursor-not-allowed flex items-center transition-all">
+          <i class="fas fa-print mr-2"></i> Print Document
         </button>
       </div>
     </div>
@@ -947,70 +952,110 @@
       document.getElementById('pdfPrintArea').innerHTML = html;
     }
 
-    function confirmAndSave() {
-      const btn = event.currentTarget;
-      const originalHtml = btn.innerHTML;
-      
-      // 1. Loading State Animation
-      btn.disabled = true;
-      btn.classList.add('opacity-75', 'cursor-not-allowed');
-      btn.innerHTML = `<i class="fas fa-circle-notch fa-spin mr-2"></i> Syncing to Drive...`;
+    function approveDocument() {
+      const approveBtn = document.getElementById('approveBtn');
+      const printBtn = document.getElementById('printBtn');
+      const spinner = document.getElementById('approve-spinner');
+
+      // 1. Visual Feedback
+      approveBtn.disabled = true;
+      approveBtn.classList.add('opacity-75', 'cursor-not-allowed');
+      if (spinner) spinner.classList.remove('hidden');
 
       const isPromo = document.getElementById('docType').value === 'promo';
       const hasVat = document.getElementById('toggleVAT').checked;
       const refNum = generateReferenceNumber(isPromo, hasVat);
-      const docDate = document.getElementById('docDate').value;
-      const clientAr = document.getElementById('clientSelect').value;
-      const sendTo = document.getElementById('sendTo').value;
-      const currency = document.getElementById('currency').value;
+      const isAr = document.getElementById('previewLang').checked;
       
-      // Capture the exact HTML being printed
-      const printHtml = document.getElementById('pdfPrintArea').innerHTML;
+      const element = document.getElementById('pdfPrintArea');
       
-      let payload = { 
-        logData: [], 
-        htmlContent: printHtml,
-        refNum: refNum 
+      // 1. Force scroll to top to prevent "blank space" rendering offsets
+      if (element.parentElement) {
+        element.parentElement.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+      
+      // 2. html2pdf configuration for perfect rendering
+      const opt = {
+        margin:       [0.3, 0.3, 0.3, 0.3], // Top, Left, Bottom, Right margins in inches
+        filename:     refNum + '.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+          scale: 2, 
+          useCORS: true,
+          scrollY: 0, 
+          scrollX: 0
+        },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
       };
 
-      const sigVal = document.getElementById('signatorySelect').value;
-      if (sigVal === 'new') {
-        payload.newSignatory = { 
-          name: document.getElementById('sigName').value, 
-          title: document.getElementById('sigTitle').value, 
-          phone: document.getElementById('sigPhone').value 
+      // 3. Generate PDF in browser, convert to Base64, then send to backend
+      html2pdf().set(opt).from(element).outputPdf('datauristring').then(function(pdfBase64) {
+        
+        // Extract raw base64 string
+        const base64String = pdfBase64.split(',')[1];
+        
+        let payload = { 
+          logData: [], 
+          pdfData: base64String, // Send the binary PDF data, not HTML
+          refNum: refNum,
+          lang: isAr ? 'AR' : 'EN'
         };
-      }
 
-      selectedProducts.forEach(prod => {
-        let finalPromoPrice = isPromo ? prod.promoPrice : '';
-        payload.logData.push([
-          refNum, docDate, isPromo ? 'Yes' : 'No', 
-          document.getElementById('promoQty').value || '', document.getElementById('promoStart').value || '', document.getElementById('promoEnd').value || '', 
-          clientAr, hasVat ? `${(prod.taxRate * 100)}%` : '0%', prod.arabicName, 
-          prod.officialPrice, finalPromoPrice, currency, prod.rsp || '', sendTo, 
-          document.getElementById('note1').value || '', document.getElementById('note2').value || '', 
-          document.getElementById('note3').value || '', document.getElementById('note4').value || '', 
-          '', '', new Date().toLocaleString() // Column 18 is reserved for URL in backend
-        ]);
-      });
+        // Handle Signatories
+        const sigVal = document.getElementById('signatorySelect').value;
+        if (sigVal === 'new') {
+          payload.newSignatory = { 
+            name: document.getElementById('sigName').value, 
+            title: document.getElementById('sigTitle').value, 
+            phone: document.getElementById('sigPhone').value 
+          };
+        }
 
-      google.script.run.withSuccessHandler(function(response) {
-         nextSeqNumber++;
-         
-         // Reset Button
-         btn.disabled = false;
-         btn.classList.remove('opacity-75', 'cursor-not-allowed');
-         btn.innerHTML = originalHtml;
+        // Build Log Data Array
+        selectedProducts.forEach(prod => {
+          payload.logData.push([
+            refNum, 
+            document.getElementById('docDate').value, 
+            isPromo ? 'Yes' : 'No', 
+            document.getElementById('promoQty') ? document.getElementById('promoQty').value : '', 
+            document.getElementById('promoStart') ? document.getElementById('promoStart').value : '', 
+            document.getElementById('promoEnd') ? document.getElementById('promoEnd').value : '', 
+            document.getElementById('clientSelect').value, 
+            hasVat ? `${(prod.taxRate * 100)}%` : '0%', 
+            prod.arabicName, 
+            prod.officialPrice, 
+            isPromo ? prod.promoPrice : '', 
+            document.getElementById('currency').value, 
+            prod.rsp || '', 
+            document.getElementById('sendTo').value, 
+            document.getElementById('note1').value || '', 
+            document.getElementById('note2').value || '', 
+            document.getElementById('note3').value || '', 
+            document.getElementById('note4').value || '', 
+            '', // Col S (URL EN)
+            '', // Col T (URL AR)
+            new Date().toLocaleString()
+          ]);
+        });
 
-         // Trigger Native Print for the user
-         setTimeout(() => {
-           window.print();
-           alert(`Success!\n1. Reference: ${response.ref}\n2. Log Updated\n3. Saved to Google Drive`);
-           closePreview();
-         }, 500);
-         
-      }).saveToLogAndSignatories(payload);
+        // 3. Send to Backend
+        google.script.run.withSuccessHandler(function(response) {
+           nextSeqNumber++;
+           if (spinner) spinner.classList.add('hidden');
+           
+           // Transition Buttons
+           approveBtn.innerHTML = `<i class="fas fa-cloud-upload-alt mr-2"></i> Synced to Drive`;
+           approveBtn.classList.replace('bg-blue-900', 'bg-emerald-600');
+           
+           printBtn.disabled = false;
+           printBtn.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
+           printBtn.classList.add('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
+           
+           alert(`Document Approved!\nRef: ${refNum}\nExact PDF styled copy saved to Google Drive.`);
+        }).saveToLogAndSignatories(payload);
+
+      }); // End of html2pdf promise
     }
   </script>
 </body>

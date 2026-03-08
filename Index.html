@@ -81,15 +81,82 @@
 </head>
 <body class="p-4 md:p-8 text-slate-800">
 
-  <div class="max-w-5xl mx-auto space-y-6 no-print">
+  <div id="dashboardView" class="max-w-7xl mx-auto space-y-6 no-print">
+    <div class="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+      <div class="flex items-center space-x-4 rtl:space-x-reverse">
+        <div class="bg-blue-900 text-white p-3 rounded-2xl shadow-lg shadow-blue-200">
+          <i class="fas fa-folder-open text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900">Document Archives</h1>
+          <p id="loading-indicator-dash" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Records...</p>
+        </div>
+      </div>
+      <button onclick="openEngine('new')" class="mt-4 md:mt-0 bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-blue-100 btn-hover flex items-center">
+        <i class="fas fa-plus mr-2 rtl:ml-2"></i> Create Price List
+      </button>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Client Name</label>
+             <select id="filterClient" onchange="renderDashboardTable()" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900 arabic-text">
+               <option value="">-- All Clients --</option>
+             </select>
+          </div>
+          <div>
+             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Document Type</label>
+             <select id="filterType" onchange="renderDashboardTable()" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900">
+                <option value="">-- All Types --</option>
+                <option value="Yes">Promotional</option>
+                <option value="No">Standard</option>
+             </select>
+          </div>
+          <div>
+             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Date (Exact)</label>
+             <input type="date" id="filterDate" onchange="renderDashboardTable()" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900">
+          </div>
+          <div>
+             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Included Product</label>
+             <select id="filterProduct" onchange="renderDashboardTable()" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900 arabic-text">
+               <option value="">-- All Products --</option>
+             </select>
+          </div>
+       </div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left rtl:text-right">
+          <thead class="bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest">
+            <tr>
+              <th class="px-6 py-4">Ref #</th>
+              <th class="px-6 py-4">Date</th>
+              <th class="px-6 py-4">Client</th>
+              <th class="px-6 py-4">Items</th>
+              <th class="px-6 py-4 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardTableBody" class="divide-y divide-slate-100">
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="engineView" class="hidden max-w-5xl mx-auto space-y-6 no-print">
     <div class="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover-card">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
+        <button onclick="closeEngine()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
         <div class="bg-blue-900 text-white p-3 rounded-2xl shadow-lg shadow-blue-200">
           <i class="fas fa-file-invoice-dollar text-2xl"></i>
         </div>
         <div>
-          <h1 class="text-2xl font-black tracking-tight text-slate-900">Price-List Engine</h1>
-          <p id="loading-indicator" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Initializing Systems...</p>
+          <h1 id="engineTitle" class="text-2xl font-black tracking-tight text-slate-900">New Price List</h1>
+          <p id="loading-indicator" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Ready</p>
         </div>
       </div>
     </div>
@@ -379,6 +446,17 @@
     </div>
   </div>
 
+    <div id="historyModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8 max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h3 class="text-xl font-black text-slate-800 flex items-center"><i class="fas fa-history mr-3 text-blue-900"></i> Edit Audit Trail</h3>
+        <button onclick="toggleModal('historyModal')" class="text-slate-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <div id="historyContent" class="space-y-4 text-sm text-slate-600">
+        <p class="text-center font-bold text-slate-400 py-10"><i class="fas fa-circle-notch fa-spin mr-2"></i> Loading History...</p>
+      </div>
+    </div>
+  </div>
     <div id="customAlertModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" style="opacity: 0; transition: opacity 0.3s; z-index: 9999;">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6" id="customAlertBox" style="transform: scale(0.95); transition: transform 0.3s;">
       <div class="flex items-center space-x-4 rtl:space-x-reverse mb-4">
@@ -442,17 +520,42 @@
     let globalProducts = [];
     let selectedProducts = [];
     let globalSignatories = [];
+    let globalDocLogs = []; // Stores grouped dashboard items
     let nextSeqNumber = 1;
+    
+    // Engine State
+    let currentMode = 'new';
+    let currentEditRef = null;
+
     // Initialize data from Google Apps Script
     window.onload = function() {
       google.script.run.withSuccessHandler(initializeUI).getInitialData();
     };
 
     function initializeUI(data) {
-      document.getElementById('loading-indicator').innerText = 'Data Loaded Successfully';
+      document.getElementById('loading-indicator').innerText = 'Ready';
+      if(document.getElementById('loading-indicator-dash')) document.getElementById('loading-indicator-dash').innerText = 'System Ready';
+      
       globalProducts = data.products;
       globalSignatories = data.signatories;
       nextSeqNumber = data.nextSeq;
+      
+      // Group Raw Logs by RefNum
+      const grouped = {};
+      if(data.docLogs) {
+        data.docLogs.forEach(r => {
+          if(!grouped[r.refNum]) {
+            grouped[r.refNum] = {
+              refNum: r.refNum, docDate: r.docDate, client: r.client, isPromo: r.isPromo,
+              promoQty: r.promoQty, promoStart: r.promoStart, promoEnd: r.promoEnd,
+              currency: r.currency, sendTo: r.sendTo, items: []
+            };
+          }
+          grouped[r.refNum].items.push(r);
+        });
+        globalDocLogs = Object.values(grouped).sort((a,b) => new Date(b.docDate) - new Date(a.docDate));
+        renderDashboardTable();
+      }
       
       const clientSelect = document.getElementById('clientSelect');
       data.clients.forEach(client => {
@@ -471,11 +574,29 @@
       });
 
       const productSelect = document.getElementById('productSelect');
+      const filterProduct = document.getElementById('filterProduct');
+      const filterClient = document.getElementById('filterClient');
+
+      // Populate Client Filter List
+      data.clients.forEach(client => {
+        let fOpt = document.createElement('option');
+        fOpt.value = client.toLowerCase();
+        fOpt.innerText = client;
+        filterClient.appendChild(fOpt);
+      });
+
       globalProducts.forEach(prod => {
+        // Populate Form Product List
         let opt = document.createElement('option');
         opt.value = prod.index;
         opt.innerText = `${prod.englishName} | ${prod.arabicName}`;
         productSelect.appendChild(opt);
+
+        // Populate Filter Product List
+        let fOpt = document.createElement('option');
+        fOpt.value = prod.arabicName.toLowerCase();
+        fOpt.innerText = `${prod.englishName} | ${prod.arabicName}`;
+        filterProduct.appendChild(fOpt);
       });
 
       document.getElementById('docDate').valueAsDate = new Date(); // Set default date
@@ -541,6 +662,210 @@
       }
     }
 
+// ================= DASHBOARD & NAVIGATION LOGIC =================
+    function renderDashboardTable() {
+      const tbody = document.getElementById('dashboardTableBody');
+      const fClient = document.getElementById('filterClient').value.toLowerCase();
+      const fType = document.getElementById('filterType').value;
+      const fDate = document.getElementById('filterDate').value;
+      const fProduct = document.getElementById('filterProduct').value.toLowerCase();
+      
+      tbody.innerHTML = '';
+      
+      let filtered = globalDocLogs.filter(doc => {
+        let matchClient = doc.client.toLowerCase().includes(fClient);
+        let matchType = fType === "" || doc.isPromo === fType;
+        
+        let docDateObj = new Date(doc.docDate);
+        let matchDate = true;
+        if(fDate) {
+          matchDate = docDateObj.toISOString().split('T')[0] === fDate;
+        }
+        
+        let matchProduct = true;
+        if(fProduct) {
+          matchProduct = doc.items.some(i => i.productAr.toLowerCase().includes(fProduct));
+        }
+        return matchClient && matchType && matchDate && matchProduct;
+      });
+
+      if(filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 font-bold">No archives found matching criteria.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(doc => {
+        let dateStr = new Date(doc.docDate).toLocaleDateString();
+        let badge = doc.isPromo === 'Yes' 
+          ? `<span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Promo</span>`
+          : `<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Standard</span>`;
+          
+        let pList = doc.items.map(i => i.productAr).join(', ');
+        if(pList.length > 40) pList = pList.substring(0, 40) + '...';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-blue-50/50 transition border-b border-slate-50 last:border-none">
+            <td class="px-6 py-4 text-xs font-bold text-slate-400">${doc.refNum}</td>
+            <td class="px-6 py-4 font-semibold text-slate-600">${dateStr}</td>
+            <td class="px-6 py-4 text-lg font-black text-blue-900">${doc.client}</td>
+            <td class="px-6 py-4">${badge}<br><span class="text-xs text-slate-400 mt-1 block">${doc.items.length} Items: ${pList}</span></td>
+            <td class="px-6 py-4 text-center space-x-2 rtl:space-x-reverse">
+              <button onclick="openEngine('view', '${doc.refNum}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg" title="View & Print"><i class="fas fa-eye"></i></button>
+              <button onclick="openEngine('edit', '${doc.refNum}')" class="text-amber-600 hover:text-amber-900 bg-amber-50 p-2 rounded-lg" title="Edit & Update"><i class="fas fa-edit"></i></button>
+              <button onclick="openEngine('copy', '${doc.refNum}')" class="text-emerald-600 hover:text-emerald-900 bg-emerald-50 p-2 rounded-lg" title="Duplicate"><i class="fas fa-copy"></i></button>
+              <button onclick="viewHistory('${doc.refNum}')" class="text-slate-500 hover:text-slate-800 bg-slate-100 p-2 rounded-lg" title="Audit Trail"><i class="fas fa-history"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openEngine(mode, refNum = null) {
+      currentMode = mode;
+      currentEditRef = refNum;
+      
+      document.getElementById('dashboardView').classList.add('hidden');
+      document.getElementById('engineView').classList.remove('hidden');
+      
+      // Reset the form fully
+      document.querySelectorAll('#engineView input:not([type="checkbox"]), #engineView select').forEach(el => el.value = '');
+      document.getElementById('docDate').valueAsDate = new Date();
+      selectedProducts = [];
+      document.getElementById('promoSettings').classList.add('hidden');
+      document.getElementById('sigDisplay').classList.add('hidden');
+      
+      const title = document.getElementById('engineTitle');
+      const inputs = document.querySelectorAll('#engineView input, #engineView select, #engineView button');
+      
+      // Reset Read-Only visual locks
+      inputs.forEach(el => el.disabled = false);
+      
+      // Default Preview Modal Buttons
+      document.getElementById('printBtn').disabled = true;
+      document.getElementById('printBtn').classList.add('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
+      document.getElementById('printBtn').classList.remove('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
+      document.getElementById('approveBtn').classList.remove('hidden');
+      
+      if (mode === 'new') {
+        title.innerHTML = 'New Price List';
+        renderProductTable();
+        return;
+      }
+
+      const doc = globalDocLogs.find(d => d.refNum === refNum);
+      if(!doc) return;
+
+      // Lock Form if Viewing
+      if (mode === 'view') {
+        title.innerHTML = `Viewing Document <span class="text-blue-500">#${refNum}</span>`;
+        inputs.forEach(el => {
+          // Allow exit, preview, and modal buttons
+          if(el.innerText.includes('Preview') || el.innerText.includes('Back') || el.closest('#previewModal')) {
+            el.disabled = false;
+          } else {
+            el.disabled = true;
+          }
+        });
+        
+        // Setup direct Print bypass for View mode
+        document.getElementById('approveBtn').classList.add('hidden');
+        document.getElementById('printBtn').disabled = false;
+        document.getElementById('printBtn').classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
+        document.getElementById('printBtn').classList.add('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
+        
+      } else if (mode === 'edit') {
+        title.innerHTML = `Editing Document <span class="text-amber-500">#${refNum}</span>`;
+      } else if (mode === 'copy') {
+        title.innerHTML = `Duplicating <span class="text-emerald-500">#${refNum}</span> as Draft`;
+      }
+
+      // Pre-fill Core Data
+      if(doc.docDate) document.getElementById('docDate').value = new Date(doc.docDate).toISOString().split('T')[0];
+      document.getElementById('clientSelect').value = doc.client;
+      document.getElementById('sendTo').value = doc.sendTo;
+      document.getElementById('currency').value = doc.currency;
+      document.getElementById('docType').value = doc.isPromo === 'Yes' ? 'promo' : 'standard';
+      
+      if(doc.isPromo === 'Yes') {
+        document.getElementById('promoSettings').classList.remove('hidden');
+        document.getElementById('promoQty').value = doc.promoQty || '';
+        if(doc.promoStart) document.getElementById('promoStart').value = new Date(doc.promoStart).toISOString().split('T')[0];
+        if(doc.promoEnd) document.getElementById('promoEnd').value = new Date(doc.promoEnd).toISOString().split('T')[0];
+      }
+
+      // Pre-fill Signatory (Bulletproof matching)
+      document.getElementById('signatorySelect').value = ""; // Reset to default
+      if(doc.signatory && String(doc.signatory).trim() !== '') {
+        const cleanDocSig = String(doc.signatory).trim().toLowerCase();
+        const sigIdx = globalSignatories.findIndex(s => String(s.name).trim().toLowerCase() === cleanDocSig);
+        
+        if(sigIdx !== -1) {
+          document.getElementById('signatorySelect').value = String(sigIdx);
+        }
+      }
+      checkNewSignatory(); // Updates UI to show the selected signatory
+
+      // Reconstruct Products Array
+      doc.items.forEach(item => {
+        let p = globalProducts.find(x => x.arabicName === item.productAr);
+        if(p) {
+          selectedProducts.push({
+            ...p,
+            officialPrice: parseFloat(item.offPrice) || 0,
+            promoPrice: parseFloat(item.promoPrice) || 0,
+            rsp: parseFloat(item.rsp) || 0
+          });
+          
+          if(parseFloat(item.vatRate) > 0) document.getElementById('toggleVAT').checked = true;
+          if(parseFloat(item.rsp) > 0) document.getElementById('toggleRSP').checked = true;
+          
+          // Populate notes from the first row found
+          document.getElementById('note1').value = item.notes[0] || '';
+          document.getElementById('note2').value = item.notes[1] || '';
+          document.getElementById('note3').value = item.notes[2] || '';
+          document.getElementById('note4').value = item.notes[3] || '';
+        }
+      });
+      renderProductTable();
+    }
+
+    function closeEngine() {
+      document.getElementById('dashboardView').classList.remove('hidden');
+      document.getElementById('engineView').classList.add('hidden');
+    }
+
+    function viewHistory(refNum) {
+      toggleModal('historyModal');
+      const container = document.getElementById('historyContent');
+      container.innerHTML = `<p class="text-center font-bold text-slate-400 py-10"><i class="fas fa-circle-notch fa-spin mr-2"></i> Analyzing Audit Trail...</p>`;
+      
+      google.script.run.withSuccessHandler(history => {
+        if(!history || history.length === 0) {
+          container.innerHTML = `<div class="bg-slate-50 p-6 rounded-2xl text-center"><i class="fas fa-check-circle text-4xl text-emerald-300 mb-3"></i><p class="font-bold text-slate-500">Pristine Document</p><p class="text-xs text-slate-400 mt-1">No historical edits have been made to this record.</p></div>`;
+          return;
+        }
+        
+        let html = `<div class="relative border-l-2 border-slate-200 ml-3 rtl:mr-3 rtl:ml-0 rtl:border-r-2 rtl:border-l-0 pl-4 rtl:pr-4 space-y-6">`;
+        history.forEach(log => {
+          let parts = log.note.split('\n'); // Notes might contain multiple timestamped lines
+          parts.forEach(p => {
+            if(p.trim()) {
+              html += `
+                <div class="relative">
+                  <div class="absolute -left-[23px] rtl:-right-[23px] top-1 w-4 h-4 rounded-full bg-blue-100 border-2 border-blue-500"></div>
+                  <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${log.product} • ${log.column}</p>
+                    <p class="text-xs font-medium text-slate-700 font-mono">${p}</p>
+                  </div>
+                </div>`;
+            }
+          });
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+      }).getEditHistory(refNum);
+    }
+    
     function addProduct() {
       const select = document.getElementById('productSelect');
       const searchInput = document.getElementById('productSearch');
@@ -1003,18 +1328,25 @@
 
       const isPromo = document.getElementById('docType').value === 'promo';
       const hasVat = document.getElementById('toggleVAT').checked;
-      const refNum = generateReferenceNumber(isPromo, hasVat);
-      const isAr = document.getElementById('previewLang').checked;
       
+      // Determine Reference Number based on current mode
+      let refNum;
+      if (currentMode === 'edit' && currentEditRef) {
+        refNum = currentEditRef; // Keep original ID for edits
+      } else {
+        refNum = generateReferenceNumber(isPromo, hasVat); // Generate new for 'new' or 'copy'
+      }
+      
+      const isAr = document.getElementById('previewLang').checked;
       const element = document.getElementById('pdfPrintArea');
       
-      // 1. Force scroll to top to prevent "blank space" rendering offsets
+      // Force scroll to top to prevent "blank space" rendering offsets
       if (element.parentElement) {
         element.parentElement.scrollTop = 0;
       }
       window.scrollTo(0, 0);
       
-      // 2. html2pdf configuration for perfect rendering
+      // html2pdf configuration for perfect rendering
       const opt = {
         margin:       [0.3, 0.3, 0.3, 0.3], // Top, Left, Bottom, Right margins in inches
         filename:     refNum + '.pdf',
@@ -1028,7 +1360,7 @@
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
       };
 
-      // 3. Generate PDF in browser, convert to Base64, then send to backend
+      // 2. Generate PDF in browser, convert to Base64, then send to backend
       html2pdf().set(opt).from(element).outputPdf('datauristring').then(function(pdfBase64) {
         
         // Extract raw base64 string
@@ -1036,19 +1368,23 @@
         
         let payload = { 
           logData: [], 
-          pdfData: base64String, // Send the binary PDF data, not HTML
+          pdfData: base64String, // Send the binary PDF data
           refNum: refNum,
           lang: isAr ? 'AR' : 'EN'
         };
 
         // Handle Signatories
         const sigVal = document.getElementById('signatorySelect').value;
+        let chosenSigName = '';
         if (sigVal === 'new') {
+          chosenSigName = document.getElementById('sigName').value;
           payload.newSignatory = { 
-            name: document.getElementById('sigName').value, 
+            name: chosenSigName, 
             title: document.getElementById('sigTitle').value, 
             phone: document.getElementById('sigPhone').value 
           };
+        } else if (sigVal !== '') {
+          chosenSigName = globalSignatories[sigVal].name;
         }
 
         // Build Log Data Array
@@ -1074,25 +1410,37 @@
             document.getElementById('note4').value || '', 
             '', // Col S (URL EN)
             '', // Col T (URL AR)
-            new Date().toLocaleString()
+            new Date().toLocaleString(), // Col U (Timestamp)
+            chosenSigName // Col V (Signatory Name)
           ]);
         });
 
-        // 3. Send to Backend
-        google.script.run.withSuccessHandler(function(response) {
-           nextSeqNumber++;
+        // 3. Define Success Handler to manage UI transition and Dashboard refresh
+        const successHandler = function(response) {
+           if(currentMode !== 'edit') nextSeqNumber++; // Only increment sequence for New/Copy
            if (spinner) spinner.classList.add('hidden');
            
            // Transition Buttons
-           approveBtn.innerHTML = `<i class="fas fa-cloud-upload-alt mr-2"></i> Synced to Drive`;
+           approveBtn.innerHTML = `<i class="fas fa-cloud-upload-alt mr-2"></i> Synced & Authorized`;
            approveBtn.classList.replace('bg-blue-900', 'bg-emerald-600');
            
            printBtn.disabled = false;
            printBtn.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
            printBtn.classList.add('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
            
-           customAlert('Document Approved! File saved to Google Drive.', 'success');
-        }).saveToLogAndSignatories(payload);
+           customAlert(currentMode === 'edit' ? 'Document Successfully Updated and History Logged.' : 'Document Approved! File saved to Google Drive.', 'success');
+           
+           // Refresh Dashboard Data in background so the new/edited document shows up
+           google.script.run.withSuccessHandler(initializeUI).getInitialData();
+        };
+
+        // 4. Route to proper Backend function (Edit vs. New/Copy)
+        if (currentMode === 'edit') {
+           payload.refNum = currentEditRef; // Ensure we overwrite the correct ID
+           google.script.run.withSuccessHandler(successHandler).updatePriceList(payload);
+        } else {
+           google.script.run.withSuccessHandler(successHandler).saveToLogAndSignatories(payload);
+        }
 
       }); // End of html2pdf promise
     }

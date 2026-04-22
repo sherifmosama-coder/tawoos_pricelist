@@ -7,7 +7,68 @@ function doGet() {
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-function getInitialData() {
+// --- PASSCODE SECURITY ENGINE ---
+function verifyPasscode(pin) {
+  const props = PropertiesService.getScriptProperties();
+  const now = new Date().getTime();
+  
+  // 1. Check if currently locked out
+  let lockoutUntil = parseInt(props.getProperty('lockoutUntil') || '0');
+  if (now < lockoutUntil) {
+    let remaining = Math.ceil((lockoutUntil - now) / 1000);
+    return { success: false, message: `System locked.`, locked: true, remaining: remaining };
+  }
+  
+  // 2. Success Case
+  if (pin === "3334") {
+    props.setProperty('failedAttempts', '0'); // Reset counters
+    return { success: true };
+  } 
+  
+  // 3. Failure Case
+  let attempts = parseInt(props.getProperty('failedAttempts') || '0');
+  let firstFailure = parseInt(props.getProperty('firstFailureTime') || '0');
+  
+  // Reset the rolling window if it's been more than 1 hour since the first failure
+  if (now - firstFailure > 60 * 60 * 1000) {
+    attempts = 0;
+    firstFailure = now;
+    props.setProperty('firstFailureTime', firstFailure.toString());
+  }
+  
+  attempts++;
+  props.setProperty('failedAttempts', attempts.toString());
+  
+  // 4. Send Email Alert if 10 attempts reached
+  if (attempts === 10) {
+    try {
+      MailApp.sendEmail({
+        to: "sherif.m.osama@gmail.com",
+        subject: "SECURITY ALERT: Multiple Failed Login Attempts",
+        body: "SECURITY ALERT:\n\nThere have been 10 failed login attempts to your Tawoos Price list Engine within the last hour.\n\nPlease monitor your application."
+      });
+    } catch(e) {
+      console.log("MailApp not authorized or failed.");
+    }
+  }
+  
+  // 5. Trigger 30-second Lockout every 3 attempts
+  if (attempts % 3 === 0) {
+    let cooldownSeconds = 30;
+    props.setProperty('lockoutUntil', (now + cooldownSeconds * 1000).toString());
+    return { success: false, message: `Too many attempts.`, locked: true, remaining: cooldownSeconds };
+  }
+  
+  return { success: false, message: `Incorrect passcode. Attempt ${attempts % 3}/3`, locked: false };
+}
+
+function getInitialData(pin) {
+  // --- GATEWAY CHECK ---
+  let auth = verifyPasscode(pin);
+  if (!auth.success) {
+    return { authError: true, message: auth.message, locked: auth.locked, remaining: auth.remaining };
+  }
+
   const ssId = '1ojtygvWrUn1Zmb0CowQqbCOMtFL4z47u2ov3Elf8YQw';
   const ss = SpreadsheetApp.openById(ssId);
   
@@ -17,10 +78,13 @@ function getInitialData() {
   const products = [];
   
   for (let i = 1; i < productsData.length; i++) {
-    if (productsData[i][0]) { 
+    
+    // 1. Process Imported Products (Column A)
+    let impName = String(productsData[i][0] || '');
+    if (impName) { 
       products.push({
-        index: i,
-        arabicName: String(productsData[i][0] || ''),      
+        index: 'imp_' + i, // Unique ID for imported
+        arabicName: impName,      
         englishName: String(productsData[i][1] || ''),     
         unit: String(productsData[i][2] || ''),            
         barcode: String(productsData[i][9] || ''),         
@@ -31,6 +95,26 @@ function getInitialData() {
         netCapacity: String(productsData[i][15] || '')     
       });
     }
+
+    // 2. Process Manual Products (Column V)
+    // First, ensure the row actually extends to column V to avoid errors
+    if (productsData[i].length > 21) {
+      let manName = String(productsData[i][21] || '');
+      if (manName) {
+        products.push({
+          index: 'man_' + i, // Unique ID for manual
+          arabicName: manName,      
+          englishName: String(productsData[i][22] || ''),     
+          unit: String(productsData[i][23] || ''),            
+          barcode: String(productsData[i][30] || ''),         
+          unitCapacity: parseFloat(productsData[i][25]) || 1, 
+          taxRate: parseFloat(productsData[i][28]) || 0,      
+          packDescAr: String(productsData[i][33] || ''),             
+          packDescEn: String(productsData[i][34] || ''),     
+          netCapacity: String(productsData[i][36] || '')     
+        });
+      }
+    }
   }
 
   // Fetch Clients
@@ -38,7 +122,11 @@ function getInitialData() {
   const clientsData = clientsSheet.getDataRange().getValues();
   const clients = [];
   for (let i = 1; i < clientsData.length; i++) {
-    if (clientsData[i][0]) clients.push(String(clientsData[i][0]));
+    let importedClient = String(clientsData[i][0] || ''); // Col A
+    let manualClient = String(clientsData[i][2] || '');   // Col C
+    
+    if (importedClient) clients.push(importedClient);
+    if (manualClient) clients.push(manualClient);
   }
 
   // Fetch Signatories 
@@ -98,53 +186,50 @@ function getInitialData() {
   return { products, clients, signatories, nextSeq, docLogs };
 }
 
-function addNewClient(clientName) {
+function addNewClient(clientName, pin) {
   const ss = SpreadsheetApp.openById('1ojtygvWrUn1Zmb0CowQqbCOMtFL4z47u2ov3Elf8YQw');
   const sheet = ss.getSheetByName('Clients');
-  const data = sheet.getDataRange().getValues();
   
-  // Check for duplicates
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === clientName) throw new Error('Client already exists');
-  }
-  
-  sheet.appendRow([clientName]);
-  return getInitialData(); // Refresh UI data
-}
-
-function addNewProduct(p) {
-  const ssId = '1ojtygvWrUn1Zmb0CowQqbCOMtFL4z47u2ov3Elf8YQw';
-  const ss = SpreadsheetApp.openById(ssId);
-  const sheet = ss.getSheetByName('Products');
-  
-  // Find first empty row based on Column A
-  const colA = sheet.getRange("A:A").getValues();
-  let nextRow = 1;
-  while (colA[nextRow - 1] && colA[nextRow - 1][0] !== "") {
+  // Find first empty row safely in Column C (Index 3)
+  const colC = sheet.getRange("C:C").getValues();
+  let nextRow = 2; // Always skip row 1 (headers) so read loop doesn't skip it
+  while (nextRow <= colC.length && colC[nextRow-1][0] !== "") {
     nextRow++;
   }
-
-  // Prepare 16-column row (A to P)
-  // Mapped Columns: A, B, C, E, F, H, J, P
-  // Formula Columns (Set to empty): D, G, M, N
-let rowData = new Array(16).fill(""); 
-  rowData[0] = p.arabicName;     // A
-  rowData[1] = p.englishName;    // B
-  rowData[2] = p.unitType;       // C
-  rowData[3] = "";               // D (EMPTY - Formula)
-  rowData[4] = p.unitCapacity;   // E
-  rowData[5] = p.smallUnitAr;    // F
-  rowData[6] = "";               // G (EMPTY - Formula)
-  rowData[7] = p.taxRate;        // H
-  rowData[9] = p.barcode;        // J
-  rowData[15] = p.pieceCap;      // P
-
-  // Write range A-L (indices 0-11)
-  sheet.getRange(nextRow, 1, 1, 12).setValues([rowData.slice(0, 12)]);
-  // Write range O-P (indices 14-15) - skips M and N
-  sheet.getRange(nextRow, 15, 1, 2).setValues([rowData.slice(14, 16)]);
   
-  return getInitialData();
+  sheet.getRange(nextRow, 3).setValue(clientName);
+  SpreadsheetApp.flush(); // Force immediate database commit
+  
+  return getInitialData(pin); 
+}
+
+function addNewProduct(product, pin) {
+  const ss = SpreadsheetApp.openById('1ojtygvWrUn1Zmb0CowQqbCOMtFL4z47u2ov3Elf8YQw');
+  const sheet = ss.getSheetByName('Products');
+  
+  // Find first empty row safely in Column V (Index 22)
+  const colV = sheet.getRange("V:V").getValues();
+  let nextRow = 2; // Always skip row 1 (headers)
+  while (nextRow <= colV.length && colV[nextRow-1][0] !== "") {
+    nextRow++;
+  }
+  
+  // Map exact data structure starting from Column V through AK
+  let rowData = new Array(16).fill("");
+  rowData[0] = product.arabicName;        // Col V
+  rowData[1] = product.englishName;       // Col W
+  rowData[2] = product.unitType;          // Col X
+  rowData[4] = product.unitCapacity;      // Col Z
+  rowData[7] = product.taxRate;           // Col AC
+  rowData[9] = product.barcode;           // Col AE
+  rowData[12] = product.smallUnitAr;      // Col AH
+  rowData[13] = product.pieceCap;         // Col AI
+  rowData[15] = product.pieceCap;         // Col AK (Net capacity)
+  
+  sheet.getRange(nextRow, 22, 1, 16).setValues([rowData]);
+  SpreadsheetApp.flush(); // Force immediate database commit
+  
+  return getInitialData(pin);
 }
 
 function saveToLogAndSignatories(payload) {
@@ -281,3 +366,5 @@ function getEditHistory(refNum) {
   }
   return history;
 }
+
+function authorizeEmailScope() { MailApp.sendEmail(Session.getActiveUser().getEmail(), "Auth", "Auth"); }

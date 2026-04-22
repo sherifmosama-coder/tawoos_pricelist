@@ -133,16 +133,19 @@ function getInitialData(pin) {
   let sigSheet = ss.getSheetByName('Signatories');
   if (!sigSheet) {
     sigSheet = ss.insertSheet('Signatories');
-    sigSheet.appendRow(['Name', 'Title', 'Phone']);
+    sigSheet.appendRow(['Name EN', 'Name AR', 'Title EN', 'Title AR', 'Phone', 'Email']);
   }
   const sigData = sigSheet.getDataRange().getValues();
   const signatories = [];
   for (let i = 1; i < sigData.length; i++) {
-    if (sigData[i][0]) {
+    if (sigData[i][0] || sigData[i][1]) {
       signatories.push({ 
-        name: String(sigData[i][0]), 
-        title: String(sigData[i][1]), 
-        phone: String(sigData[i][2]) 
+        nameEn: String(sigData[i][0] || ''), 
+        nameAr: String(sigData[i][1] || ''), 
+        titleEn: String(sigData[i][2] || ''),
+        titleAr: String(sigData[i][3] || ''),
+        phone: String(sigData[i][4] || ''),
+        email: String(sigData[i][5] || '')
       });
     }
   }
@@ -174,11 +177,11 @@ function getInitialData(pin) {
         currency: String(r[11] || ''),
         rsp: String(r[12] || ''),
         sendTo: String(r[13] || ''),
-        notes: [String(r[14] || ''), String(r[15] || ''), String(r[16] || ''), String(r[17] || '')],
-        urlEn: String(r[18] || ''),
-        urlAr: String(r[19] || ''),
-        timestamp: r[20] instanceof Date ? r[20].toISOString() : String(r[20] || ''),
-        signatory: String(r[21] || '') // Column V
+        notes: String(r[14] || ''), // Single Note Column
+        urlEn: String(r[15] || ''), // Shifted from 18 to 15
+        urlAr: String(r[16] || ''), // Shifted from 19 to 16
+        timestamp: r[17] instanceof Date ? r[17].toISOString() : String(r[17] || ''), // Shifted from 20 to 17
+        signatory: String(r[18] || '') // Shifted from 21 to 18 (Column S)
       });
     }
   }
@@ -253,13 +256,20 @@ function saveToLogAndSignatories(payload) {
     fileUrl = "Error Saving to Drive";
   }
 
-  // 2. Map URL to specific columns (S = index 18, T = index 19)
-  const urlColIndex = (payload.lang === 'EN') ? 18 : 19;
+  // 2. Map URL to specific columns (Shifted: P = index 15, Q = index 16)
+  const urlColIndex = (payload.lang === 'EN') ? 15 : 16;
 
   // 3. Save New Signatory if provided
   if (payload.newSignatory) {
     let sigSheet = ss.getSheetByName('Signatories');
-    sigSheet.appendRow([payload.newSignatory.name, payload.newSignatory.title, payload.newSignatory.phone]);
+    sigSheet.appendRow([
+      payload.newSignatory.nameEn, 
+      payload.newSignatory.nameAr, 
+      payload.newSignatory.titleEn, 
+      payload.newSignatory.titleAr, 
+      payload.newSignatory.phone, 
+      payload.newSignatory.email
+    ]);
   }
 
   // 4. Save to Log Sheet
@@ -294,7 +304,7 @@ function updatePriceList(payload) {
   } catch (e) {
     Logger.log("Drive Error: " + e.toString());
   }
-  const urlColIndex = (payload.lang === 'EN') ? 18 : 19;
+  const urlColIndex = (payload.lang === 'EN') ? 15 : 16;
   
   // 2. Find specific rows to overwrite
   const data = logSheet.getDataRange().getValues();
@@ -316,7 +326,7 @@ function updatePriceList(payload) {
       let oldRow = data[rowIndex - 1];
       
       for(let col=0; col<newRow.length; col++) {
-        if (col === 20 || col === 18 || col === 19) continue; // Skip Timestamp and URLs for notes
+        if (col === 17 || col === 15 || col === 16) continue; // Skip Timestamp and URLs for notes (Shifted left by 3)
         
         if (String(oldRow[col]) !== String(newRow[col])) {
           let cell = logSheet.getRange(rowIndex, col + 1);
@@ -326,7 +336,7 @@ function updatePriceList(payload) {
           cell.setValue(newRow[col]);
         }
       }
-      logSheet.getRange(rowIndex, 21).setValue(newRow[20]); // Force timestamp update
+      logSheet.getRange(rowIndex, 18).setValue(newRow[17]); // Force timestamp update (Shifted left by 3)
       if(fileUrl) logSheet.getRange(rowIndex, urlColIndex + 1).setValue(fileUrl);
       
     } else {

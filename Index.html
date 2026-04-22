@@ -6,6 +6,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f8fafc; transition: all 0.3s ease; }
@@ -94,12 +95,26 @@
       margin-top: 0.25rem !important;
       margin-bottom: 0.25rem !important;
     }
-    .rte-editor u {
-      text-decoration: underline !important;
+    .rte-editor ol {
+      list-style-type: decimal !important;
+      padding-left: 1.5rem !important;
+      margin-top: 0.25rem !important;
+      margin-bottom: 0.25rem !important;
     }
-    .rte-editor span {
-      border-radius: 0.25rem;
-      padding: 0 0.125rem;
+    .rte-editor u { text-decoration: underline !important; }
+    .rte-editor strike, .rte-editor s { text-decoration: line-through !important; }
+    .rte-editor span { border-radius: 0.25rem; padding: 0 0.125rem; }
+    .rte-editor hr { 
+      border: 0; 
+      border-top: 2px solid #e2e8f0 !important; 
+      margin: 1rem 0 !important; 
+    }
+    .rte-editor blockquote {
+      margin-left: 1.5rem !important;
+      margin-right: 1.5rem !important;
+      padding-left: 1rem !important;
+      border-left: 3px solid #cbd5e1 !important;
+      color: #64748b;
     }
   </style>
 </head>
@@ -125,7 +140,7 @@
   </div>
 
   <div id="dashboardView" class="hidden max-w-7xl mx-auto space-y-6 no-print">
-    <div class="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+    <div class="sticky top-4 z-40 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 transition-all">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
         <div class="bg-blue-900 text-white p-3 rounded-2xl shadow-lg shadow-blue-200">
           <i class="fas fa-folder-open text-2xl"></i>
@@ -140,7 +155,7 @@
       </button>
     </div>
 
-    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+    <div class="sticky top-28 z-30 bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 transition-all">
        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div class="relative w-full md:w-72">
             <input type="text" id="filterClientSearch" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-base text-blue-900 shadow-sm placeholder:font-medium placeholder:text-sm placeholder:text-slate-400" placeholder="🔍 Filter by Client..." autocomplete="off" oninput="filterCombo('filterClientList', this.value); if(!this.value) { document.getElementById('filterClient').value=''; renderDashboardTable(); }" onfocus="showCombo('filterClientList')" onblur="hideCombo('filterClientList')">
@@ -187,7 +202,7 @@
   </div>
 
   <div id="engineView" class="hidden max-w-5xl mx-auto space-y-6 no-print">
-    <div class="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover-card">
+    <div class="sticky top-4 z-40 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 hover-card transition-all">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
         <button onclick="closeEngine()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition">
           <i class="fas fa-arrow-left"></i> Back
@@ -300,10 +315,34 @@
                <p id="sigDisplayPhone" class="text-xs text-blue-500"></p>
             </div>
           </div>
-          <div id="newSignatoryFields" class="hidden grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 mt-3">
-             <input type="text" id="sigName" placeholder="Name *" class="w-full p-2 bg-white border-y border-r border-l-4 border-l-red-500 rounded-lg text-sm focus:ring-2 focus:ring-blue-900">
-             <input type="text" id="sigTitle" placeholder="Title" class="w-full p-2 bg-white border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-900">
-             <input type="tel" id="sigPhone" placeholder="Phone" class="w-full p-2 bg-white border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-900">
+          <div id="newSignatoryFields" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-white border border-slate-200 shadow-sm rounded-xl mt-3">
+            <div class="col-span-1 md:col-span-2 border-b border-slate-100 pb-2 mb-2">
+              <h4 class="text-xs font-black text-blue-900 uppercase tracking-widest"><i class="fas fa-id-card mr-2"></i> New Bilingual Contact</h4>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">English Name <span class="text-red-500">*</span></label>
+              <input type="text" id="sigNameEn" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm font-medium" placeholder="e.g. John Doe">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 text-right">الاسم بالعربية <span class="text-red-500">*</span></label>
+              <input type="text" id="sigNameAr" dir="rtl" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm font-medium" placeholder="مثال: جون دو">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">English Title</label>
+              <input type="text" id="sigTitleEn" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm font-medium" placeholder="e.g. Sales Manager">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 text-right">المسمى الوظيفي بالعربية</label>
+              <input type="text" id="sigTitleAr" dir="rtl" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm font-medium" placeholder="مثال: مدير مبيعات">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Phone Number</label>
+              <input type="tel" id="sigPhone" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm font-medium" placeholder="010...">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</label>
+              <input type="email" id="sigEmail" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm font-medium" placeholder="name@company.com">
+            </div>
           </div>
         </div>
 
@@ -396,52 +435,33 @@
          <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
           <i class="fas fa-sticky-note mr-2 rtl:ml-2 text-blue-900"></i> Document Notes
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          
+        <div class="mt-8">
           <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-3 py-2 flex space-x-3 text-slate-500 no-print">
-                <button type="button" onclick="document.execCommand('bold',false,null)" class="hover:text-blue-600 transition" title="Bold"><i class="fas fa-bold"></i></button>
-                <button type="button" onclick="document.execCommand('italic',false,null)" class="hover:text-blue-600 transition" title="Italic"><i class="fas fa-italic"></i></button>
-                <button type="button" onclick="document.execCommand('underline',false,null)" class="hover:text-blue-600 transition" title="Underline"><i class="fas fa-underline"></i></button>
-                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="hover:text-blue-600 transition" title="Bullet List"><i class="fas fa-list-ul"></i></button>
-                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="hover:text-blue-600 transition" title="Highlight"><i class="fas fa-highlighter"></i></button>
-             </div>
-             <div id="note1" contenteditable="true" class="rte-editor p-4 min-h-[100px] focus:outline-none text-sm text-slate-700"></div>
-          </div>
+             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap gap-y-2 text-slate-500 no-print items-center">
+                
+                <div class="flex space-x-1 rtl:space-x-reverse border-r border-slate-300 pr-3 rtl:pr-0 rtl:pl-3 mr-3 rtl:mr-0 rtl:ml-3">
+                  <button type="button" onclick="document.execCommand('bold',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Bold"><i class="fas fa-bold"></i></button>
+                  <button type="button" onclick="document.execCommand('italic',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Italic"><i class="fas fa-italic"></i></button>
+                  <button type="button" onclick="document.execCommand('underline',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Underline"><i class="fas fa-underline"></i></button>
+                  <button type="button" onclick="document.execCommand('strikeThrough',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Strikethrough"><i class="fas fa-strikethrough"></i></button>
+                  <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="w-8 h-8 flex items-center justify-center rounded hover:bg-amber-100 hover:text-amber-700 transition-colors" title="Highlight"><i class="fas fa-highlighter"></i></button>
+                </div>
+                
+                <div class="flex space-x-1 rtl:space-x-reverse border-r border-slate-300 pr-3 rtl:pr-0 rtl:pl-3 mr-3 rtl:mr-0 rtl:ml-3">
+                  <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                  <button type="button" onclick="document.execCommand('insertOrderedList',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                  <button type="button" onclick="document.execCommand('outdent',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Decrease Indent"><i class="fas fa-outdent"></i></button>
+                  <button type="button" onclick="document.execCommand('indent',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Increase Indent"><i class="fas fa-indent"></i></button>
+                </div>
 
-          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-3 py-2 flex space-x-3 text-slate-500 no-print">
-                <button type="button" onclick="document.execCommand('bold',false,null)" class="hover:text-blue-600 transition" title="Bold"><i class="fas fa-bold"></i></button>
-                <button type="button" onclick="document.execCommand('italic',false,null)" class="hover:text-blue-600 transition" title="Italic"><i class="fas fa-italic"></i></button>
-                <button type="button" onclick="document.execCommand('underline',false,null)" class="hover:text-blue-600 transition" title="Underline"><i class="fas fa-underline"></i></button>
-                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="hover:text-blue-600 transition" title="Bullet List"><i class="fas fa-list-ul"></i></button>
-                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="hover:text-blue-600 transition" title="Highlight"><i class="fas fa-highlighter"></i></button>
+                <div class="flex space-x-1 rtl:space-x-reverse">
+                  <button type="button" onclick="document.execCommand('insertHorizontalRule',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-slate-200 hover:text-slate-800 transition-colors" title="Insert Divider Line"><i class="fas fa-minus"></i></button>
+                  <button type="button" onclick="document.execCommand('removeFormat',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-red-100 hover:text-red-600 transition-colors" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
+                </div>
+                
              </div>
-             <div id="note2" contenteditable="true" class="rte-editor p-4 min-h-[100px] focus:outline-none text-sm text-slate-700"></div>
+             <div id="documentNotes" contenteditable="true" class="rte-editor p-6 min-h-[200px] focus:outline-none text-sm text-slate-700 placeholder:text-slate-400" placeholder="Type document notes, terms, or conditions here..."></div>
           </div>
-
-          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-3 py-2 flex space-x-3 text-slate-500 no-print">
-                <button type="button" onclick="document.execCommand('bold',false,null)" class="hover:text-blue-600 transition" title="Bold"><i class="fas fa-bold"></i></button>
-                <button type="button" onclick="document.execCommand('italic',false,null)" class="hover:text-blue-600 transition" title="Italic"><i class="fas fa-italic"></i></button>
-                <button type="button" onclick="document.execCommand('underline',false,null)" class="hover:text-blue-600 transition" title="Underline"><i class="fas fa-underline"></i></button>
-                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="hover:text-blue-600 transition" title="Bullet List"><i class="fas fa-list-ul"></i></button>
-                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="hover:text-blue-600 transition" title="Highlight"><i class="fas fa-highlighter"></i></button>
-             </div>
-             <div id="note3" contenteditable="true" class="rte-editor p-4 min-h-[100px] focus:outline-none text-sm text-slate-700"></div>
-          </div>
-
-          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-3 py-2 flex space-x-3 text-slate-500 no-print">
-                <button type="button" onclick="document.execCommand('bold',false,null)" class="hover:text-blue-600 transition" title="Bold"><i class="fas fa-bold"></i></button>
-                <button type="button" onclick="document.execCommand('italic',false,null)" class="hover:text-blue-600 transition" title="Italic"><i class="fas fa-italic"></i></button>
-                <button type="button" onclick="document.execCommand('underline',false,null)" class="hover:text-blue-600 transition" title="Underline"><i class="fas fa-underline"></i></button>
-                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="hover:text-blue-600 transition" title="Bullet List"><i class="fas fa-list-ul"></i></button>
-                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="hover:text-blue-600 transition" title="Highlight"><i class="fas fa-highlighter"></i></button>
-             </div>
-             <div id="note4" contenteditable="true" class="rte-editor p-4 min-h-[100px] focus:outline-none text-sm text-slate-700"></div>
-          </div>
-          
         </div>
       </div>
 
@@ -837,11 +857,13 @@
          if(filterClientList) filterClientList.insertAdjacentHTML('beforeend', `<li class="combo-item p-3 hover:bg-blue-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0" onmousedown="selectCombo('filterClient', 'filterClientSearch', 'filterClientList', '${safeClient.toLowerCase()}', '${safeClient}', 'renderDashboardTable')">${client}</li>`);
       });
 
-      // 3. POPULATE SIGNATORIES (Standard Options)
+      // 3. POPULATE SIGNATORIES (Bilingual Display)
       globalSignatories.forEach((sig, idx) => {
         let opt = document.createElement('option');
         opt.value = idx;
-        opt.innerText = sig.name;
+        let displayName = sig.nameEn;
+        if(sig.nameAr) displayName += ` | ${sig.nameAr}`;
+        opt.innerText = displayName;
         if(sigSelect) sigSelect.insertBefore(opt, sigSelect.lastElementChild);
       });
 
@@ -868,9 +890,9 @@
         display.classList.add('hidden');
       } else if (sigVal !== '') {
         const sig = globalSignatories[sigVal];
-        document.getElementById('sigDisplayName').innerText = sig.name;
-        document.getElementById('sigDisplayTitle').innerText = sig.title;
-        document.getElementById('sigDisplayPhone').innerText = sig.phone;
+        document.getElementById('sigDisplayName').innerText = `${sig.nameEn} | ${sig.nameAr}`;
+        document.getElementById('sigDisplayTitle').innerText = `${sig.titleEn} | ${sig.titleAr}`;
+        document.getElementById('sigDisplayPhone').innerText = `${sig.phone} | ${sig.email}`;
         display.classList.remove('hidden');
         newFields.classList.add('hidden');
       } else {
@@ -1126,7 +1148,10 @@
       sigSelect.value = ""; 
       if(doc.signatory && String(doc.signatory).trim() !== '') {
         let cleanSig = String(doc.signatory).trim().toLowerCase();
-        let matchedIndex = globalSignatories.findIndex(s => String(s.name).trim().toLowerCase() === cleanSig);
+        let matchedIndex = globalSignatories.findIndex(s => 
+          String(s.nameEn).trim().toLowerCase() === cleanSig || 
+          String(s.nameAr).trim().toLowerCase() === cleanSig
+        );
         
         if (matchedIndex !== -1) {
           sigSelect.value = matchedIndex; // Match exact index value
@@ -1148,11 +1173,9 @@
           if(parseFloat(item.vatRate) > 0) document.getElementById('toggleVAT').checked = true;
           if(parseFloat(item.rsp) > 0) document.getElementById('toggleRSP').checked = true;
           
-          // Populate Rich Text Notes
-          let n1 = document.getElementById('note1'); if(n1) n1.innerHTML = item.notes[0] || '';
-          let n2 = document.getElementById('note2'); if(n2) n2.innerHTML = item.notes[1] || '';
-          let n3 = document.getElementById('note3'); if(n3) n3.innerHTML = item.notes[2] || '';
-          let n4 = document.getElementById('note4'); if(n4) n4.innerHTML = item.notes[3] || '';
+          // Populate Single Rich Text Note
+          let docNotes = document.getElementById('documentNotes'); 
+          if(docNotes) docNotes.innerHTML = item.notes || '';
         }
       });
       
@@ -1653,9 +1676,10 @@
         let piecePriceNoVat = basePrice / (prod.unitCapacity || 1);
 
         // This prevents individual rows from splitting
+        let barcodeCell = prod.barcode ? `<svg class="ean-barcode" data-value="${prod.barcode}"></svg>` : '-';
         let tr = `<tr style="page-break-inside: avoid;" class="hover:bg-slate-50">
           <td class="p-2 text-left rtl:text-right font-semibold text-slate-800">${pName}</td>
-          <td class="p-2 text-slate-600">${prod.barcode}</td>
+          <td class="p-2 text-center align-middle text-slate-600">${barcodeCell}</td>
           <td class="p-2 text-slate-600">${pDesc}</td>
           <td class="p-2 font-medium">${prod.unitCapacity}</td>
           <td class="p-2 text-slate-600">${prod.netCapacity}</td>`;
@@ -1689,20 +1713,12 @@
       // --- THE UNBREAKABLE BLOCK (Notes + Signature grouped together) ---
       html += `<div style="page-break-inside: avoid; break-inside: avoid; display: block; width: 100%; padding-top: 10px;">`;
       
-      // Extract innerHTML for Rich Text, and clean up empty break tags
-      let getCleanRTE = (id) => {
-        let el = document.getElementById(id);
-        if (!el) return '';
-        let content = el.innerHTML.trim();
-        return (content === '<br>' || content === '<div><br></div>') ? '' : content;
-      };
-
-      let note1 = getCleanRTE('note1');
-      let note2 = getCleanRTE('note2');
-      let innerNote3 = getCleanRTE('note3');
-      let innerNote4 = getCleanRTE('note4');
+      // Extract innerHTML for Single Rich Text Note
+      let docNotesEl = document.getElementById('documentNotes');
+      let notesContent = docNotesEl ? docNotesEl.innerHTML.trim() : '';
+      if (notesContent === '<br>' || notesContent === '<div><br></div>') notesContent = '';
       
-      if(note1 || note2 || innerNote3 || innerNote4 || isPromo) {
+      if(notesContent || isPromo) {
          html += `<div class="mb-6 bg-amber-50 rounded-lg p-4 border border-amber-200">
                     <h4 class="font-bold text-amber-900 mb-2 flex items-center">
                       <svg class="w-4 h-4 mx-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -1720,26 +1736,26 @@
            html += `</ul>`;
          }
 
-         // Render Rich Text Notes inside an rte-editor wrapper so CSS carries over to the PDF
-         html += `<div class="rte-editor text-xs text-amber-900 space-y-3 px-2">`;
-         if(note1) html += `<div>${note1}</div>`;
-         if(note2) html += `<div>${note2}</div>`;
-         if(innerNote3) html += `<div>${innerNote3}</div>`;
-         if(innerNote4) html += `<div>${innerNote4}</div>`;
-         html += `</div></div>`;
+         // Render Single Rich Text Note
+         if(notesContent) {
+            html += `<div class="rte-editor text-xs text-amber-900 px-2">${notesContent}</div>`;
+         }
+         html += `</div>`;
       }
 
-      // Modern Signature Box
+      // Modern Signature Box (Bilingual Switcher)
       const sigVal = document.getElementById('signatorySelect').value;
-      let sName = "", sTitle = "", sPhone = "";
+      let sName = "", sTitle = "", sPhone = "", sEmail = "";
       if (sigVal === 'new') {
-        sName = document.getElementById('sigName').value;
-        sTitle = document.getElementById('sigTitle').value;
+        sName = isAr ? document.getElementById('sigNameAr').value : document.getElementById('sigNameEn').value;
+        sTitle = isAr ? document.getElementById('sigTitleAr').value : document.getElementById('sigTitleEn').value;
         sPhone = document.getElementById('sigPhone').value;
+        sEmail = document.getElementById('sigEmail').value;
       } else if (sigVal !== '') {
-        sName = globalSignatories[sigVal].name;
-        sTitle = globalSignatories[sigVal].title;
+        sName = isAr ? globalSignatories[sigVal].nameAr : globalSignatories[sigVal].nameEn;
+        sTitle = isAr ? globalSignatories[sigVal].titleAr : globalSignatories[sigVal].titleEn;
         sPhone = globalSignatories[sigVal].phone;
+        sEmail = globalSignatories[sigVal].email;
       }
       
       html += `
@@ -1765,6 +1781,13 @@
               <p class="text-slate-600 text-[11px]">${sPhone}</p>
             </div>
 
+            ${sEmail ? `
+            <div class="border-b border-dotted border-slate-400 pb-1 flex items-center">
+              <span class="text-slate-400 mr-2 rtl:ml-2"><i class="fas fa-envelope text-[10px]"></i></span>
+              <p class="text-slate-600 text-[11px]">${sEmail}</p>
+            </div>
+            ` : ''}
+
             ${!isLetterhead ? `<div class="pt-4 flex justify-center">${icons.stamp}</div>` : ''}
           </div>
         </div>
@@ -1784,6 +1807,30 @@
       
       html += `</table></div>`;
       document.getElementById('pdfPrintArea').innerHTML = html;
+
+      // 3. Render Barcodes (Convert SVG placeholders into actual barcodes)
+      document.querySelectorAll('.ean-barcode').forEach(el => {
+        let val = el.getAttribute('data-value');
+        if(val && val.length === 13) {
+          try {
+            JsBarcode(el, val, {
+              format: "EAN13",
+              width: 1.2,       // Thin bars to save horizontal space
+              height: 25,       // Short bars so rows don't expand vertically
+              fontSize: 11,     // Readable numbers underneath
+              textMargin: 0,
+              margin: 0,
+              displayValue: true
+            });
+          } catch(e) {
+            // Fallback to text if the barcode has an invalid EAN checksum
+            el.outerHTML = `<span class="text-xs font-mono">${val}</span>`; 
+          }
+        } else {
+           // Fallback to text for any non-EAN-13 lengths
+           el.outerHTML = `<span class="text-xs font-mono">${val}</span>`; 
+        }
+      });
     }
 
     function approveDocument() {
@@ -1843,19 +1890,23 @@
           lang: isAr ? 'AR' : 'EN'
         };
 
-        // Handle Signatories
+        // Handle Signatories (Bilingual Payload)
         const sigVal = document.getElementById('signatorySelect').value;
         let chosenSigName = '';
         if (sigVal === 'new') {
-          chosenSigName = document.getElementById('sigName').value;
+          let enName = document.getElementById('sigNameEn').value;
+          chosenSigName = enName; // Use English name as standard ID in the Log sheet
           let rawPhone = document.getElementById('sigPhone').value;
           payload.newSignatory = { 
-            name: chosenSigName, 
-            title: document.getElementById('sigTitle').value, 
-            phone: rawPhone ? "'" + rawPhone : "" // Prepend apostrophe to protect leading zeros in Sheets
+            nameEn: enName,
+            nameAr: document.getElementById('sigNameAr').value,
+            titleEn: document.getElementById('sigTitleEn').value, 
+            titleAr: document.getElementById('sigTitleAr').value, 
+            phone: rawPhone ? "'" + rawPhone : "", // Prepend apostrophe to protect leading zeros in Sheets
+            email: document.getElementById('sigEmail').value
           };
         } else if (sigVal !== '') {
-          chosenSigName = globalSignatories[sigVal].name;
+          chosenSigName = globalSignatories[sigVal].nameEn;
         }
 
         // Build Log Data Array
@@ -1875,14 +1926,11 @@
             document.getElementById('currency').value, 
             prod.rsp || '', 
             document.getElementById('sendTo').value, 
-            document.getElementById('note1').innerHTML || '', 
-            document.getElementById('note2').innerHTML || '', 
-            document.getElementById('note3').innerHTML || '', 
-            document.getElementById('note4').innerHTML || '', 
-            '', // Col S (URL EN)
-            '', // Col T (URL AR)
-            new Date().toLocaleString(), // Col U (Timestamp)
-            chosenSigName // Col V (Signatory Name)
+            document.getElementById('documentNotes').innerHTML || '', // Single Note Field (Now Col 14)
+            '', // Col P (URL EN) - Shifted left by 3
+            '', // Col Q (URL AR) - Shifted left by 3
+            new Date().toLocaleString(), // Col R (Timestamp) - Shifted left by 3
+            chosenSigName // Col S (Signatory Name) - Shifted left by 3
           ]);
         });
 

@@ -77,11 +77,54 @@
       overflow: hidden;
       height: auto !important;
     }
+
+    /* Security Gateway Animations */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      50% { transform: translateX(10px); }
+      75% { transform: translateX(-10px); }
+    }
+    .animate-shake { animation: shake 0.4s ease-in-out; }
+
+    /* Rich Text Editor Overrides for Tailwind */
+    .rte-editor ul {
+      list-style-type: disc !important;
+      padding-left: 1.5rem !important;
+      margin-top: 0.25rem !important;
+      margin-bottom: 0.25rem !important;
+    }
+    .rte-editor u {
+      text-decoration: underline !important;
+    }
+    .rte-editor span {
+      border-radius: 0.25rem;
+      padding: 0 0.125rem;
+    }
   </style>
 </head>
-<body class="p-4 md:p-8 text-slate-800">
+<body class="p-4 md:p-8 text-slate-800 bg-slate-200 min-h-screen">
 
-  <div id="dashboardView" class="max-w-7xl mx-auto space-y-6 no-print">
+  <div id="authGateway" class="fixed inset-0 bg-slate-900 z-[9999] flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center transform transition-all" id="authBox">
+      <div class="bg-blue-100 text-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+        <i class="fas fa-lock text-2xl"></i>
+      </div>
+      <h2 class="text-2xl font-black text-slate-800 mb-2">Secure Access</h2>
+      <p class="text-sm text-slate-500 font-medium mb-8">Enter your authorization passcode to access the system.</p>
+      
+      <input type="password" id="passcodeInput" maxlength="4" placeholder="••••" class="w-full text-center text-4xl tracking-[0.5em] font-black text-blue-900 bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all mb-4" onkeypress="if(event.key === 'Enter') submitPasscode()">
+      
+      <p id="authErrorMsg" class="text-red-500 text-sm font-bold mb-4 min-h-[20px] opacity-0 transition-opacity">Incorrect Passcode</p>
+      
+      <button id="authBtn" onclick="submitPasscode()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-800 transition-all flex items-center justify-center">
+        <span id="authBtnText">Unlock System</span>
+        <i id="authSpinner" class="fas fa-circle-notch fa-spin ml-2 hidden"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="dashboardView" class="hidden max-w-7xl mx-auto space-y-6 no-print">
     <div class="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
         <div class="bg-blue-900 text-white p-3 rounded-2xl shadow-lg shadow-blue-200">
@@ -167,38 +210,80 @@
         <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
           <i class="fas fa-cog mr-2 rtl:ml-2 text-blue-900"></i> Global Settings
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Date <span class="text-red-600 font-black text-sm">*</span></label>
+            <label class="block text-xs font-bold text-slate-500 mb-2 ml-1 uppercase tracking-wider">Doc Date <span class="text-red-600 font-black text-sm">*</span></label>
             <input type="date" id="docDate" required class="w-full p-3 bg-slate-50 border-y border-r border-l-4 border-l-red-500 rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
           </div>
+          
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Doc Type</label>
-            <select id="docType" onchange="togglePromoFields()" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
-              <option value="standard">Standard Price List</option>
-              <option value="promo">Promotional List</option>
-            </select>
+            <label class="block text-xs font-bold text-slate-500 mb-2 ml-1 uppercase tracking-wider">Document Type</label>
+            <div class="flex items-center space-x-4 rtl:space-x-reverse h-[46px]"> <label class="flex items-center cursor-pointer group">
+                <div class="relative flex-shrink-0">
+                  <input type="checkbox" id="docTypeToggle" class="sr-only peer" onchange="
+                    const dt = document.getElementById('docType');
+                    const lbl = document.getElementById('docTypeLabel');
+                    if(this.checked) {
+                      dt.value = 'promo';
+                      lbl.innerText = 'Promotional Price List';
+                      lbl.classList.replace('text-slate-500', 'text-blue-700');
+                      document.getElementById('promoSettings').classList.remove('hidden');
+                    } else {
+                      dt.value = 'standard';
+                      lbl.innerText = 'Standard Price List';
+                      lbl.classList.replace('text-blue-700', 'text-slate-500');
+                      document.getElementById('promoSettings').classList.add('hidden');
+                    }
+                    renderProductTable();
+                  ">
+                  <div class="w-12 h-7 bg-slate-200 rounded-full peer-checked:bg-blue-600 transition-colors shadow-inner border border-slate-300 peer-checked:border-blue-700"></div>
+                  <div class="absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5 shadow-md flex items-center justify-center"></div>
+                </div>
+                <span id="docTypeLabel" class="ml-3 rtl:mr-3 rtl:ml-0 font-bold text-slate-500 text-sm select-none transition-colors">Standard Price List</span>
+              </label>
+              <input type="hidden" id="docType" value="standard">
+            </div>
           </div>
-          <div class="flex items-center space-x-6 rtl:space-x-reverse bg-slate-50 px-4 rounded-xl">
-               <label class="flex items-center cursor-pointer group">
-                  <input type="checkbox" id="toggleVAT" class="sr-only peer">
-                  <div class="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-blue-900 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
-                  <span class="ml-2 rtl:mr-2 text-xs font-bold text-slate-600 group-hover:text-blue-900">VAT</span>
-               </label>
-               <label class="flex items-center cursor-pointer group">
-                  <input type="checkbox" id="toggleRSP" onchange="renderProductTable()" class="sr-only peer">
-                  <div class="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-blue-900 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
-                  <span class="ml-2 rtl:mr-2 text-xs font-bold text-slate-600 group-hover:text-blue-900">RSP</span>
-               </label>
-          </div>
+
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Currency</label>
-            <select id="currency" class="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
-               <option value="EGP">EGP</option>
-               <option value="USD">USD</option>
-               <option value="EUR">EUR</option>
-            </select>
+            <label class="block text-xs font-bold text-slate-500 mb-2 ml-1 uppercase tracking-wider">Currency</label>
+            <div class="flex bg-slate-100 p-1 rounded-xl w-full max-w-[200px] shadow-inner h-[46px]">
+              <label class="flex-1 text-center cursor-pointer relative h-full">
+                <input type="radio" name="currencyRadio" value="EGP" class="peer sr-only" checked onchange="document.getElementById('currency').value = 'EGP'; renderProductTable();">
+                <div class="peer-checked:bg-white peer-checked:shadow-sm peer-checked:text-blue-700 text-slate-500 font-bold py-1.5 px-4 rounded-lg transition-all text-sm h-full flex items-center justify-center">EGP</div>
+              </label>
+              <label class="flex-1 text-center cursor-pointer relative h-full">
+                <input type="radio" name="currencyRadio" value="USD" class="peer sr-only" onchange="document.getElementById('currency').value = 'USD'; renderProductTable();">
+                <div class="peer-checked:bg-white peer-checked:shadow-sm peer-checked:text-blue-700 text-slate-500 font-bold py-1.5 px-4 rounded-lg transition-all text-sm h-full flex items-center justify-center">USD</div>
+              </label>
+            </div>
+            <input type="hidden" id="currency" value="EGP">
           </div>
+
+        </div>
+
+        <div class="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-8 rtl:space-x-reverse bg-slate-50 p-4 rounded-xl border border-slate-100 mt-2">
+          
+          <label class="flex items-center cursor-pointer group">
+            <div class="relative flex items-center justify-center w-6 h-6 bg-white border-2 border-slate-300 rounded-md group-hover:border-blue-500 transition-colors mr-3 rtl:ml-3 rtl:mr-0 flex-shrink-0">
+              <input type="checkbox" id="toggleVAT" onchange="renderProductTable()" class="peer sr-only">
+              <div class="absolute inset-0 bg-blue-600 rounded-sm scale-0 peer-checked:scale-100 transition-transform origin-center"></div>
+              <i class="fas fa-check text-white opacity-0 peer-checked:opacity-100 text-xs z-10 transition-opacity absolute"></i>
+            </div>
+            <span class="font-bold text-slate-700 select-none text-sm">Value Added Tax (VAT)</span>
+          </label>
+
+          <label class="flex items-center cursor-pointer group">
+            <div class="relative flex items-center justify-center w-6 h-6 bg-white border-2 border-slate-300 rounded-md group-hover:border-blue-500 transition-colors mr-3 rtl:ml-3 rtl:mr-0 flex-shrink-0">
+              <input type="checkbox" id="toggleRSP" onchange="renderProductTable()" class="peer sr-only">
+              <div class="absolute inset-0 bg-blue-600 rounded-sm scale-0 peer-checked:scale-100 transition-transform origin-center"></div>
+              <i class="fas fa-check text-white opacity-0 peer-checked:opacity-100 text-xs z-10 transition-opacity absolute"></i>
+            </div>
+            <span class="font-bold text-slate-700 select-none text-sm">Recommended Selling Price</span>
+          </label>
+          
         </div>
 
         <div class="border-t border-slate-100 pt-4">
@@ -317,11 +402,52 @@
          <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
           <i class="fas fa-sticky-note mr-2 rtl:ml-2 text-blue-900"></i> Document Notes
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-           <input type="text" id="note1" placeholder="Line 1" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
-           <input type="text" id="note2" placeholder="Line 2" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
-           <input type="text" id="note3" placeholder="Line 3" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
-           <input type="text" id="note4" placeholder="Line 4" class="p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-3 py-2 flex space-x-3 text-slate-500 no-print">
+                <button type="button" onclick="document.execCommand('bold',false,null)" class="hover:text-blue-600 transition" title="Bold"><i class="fas fa-bold"></i></button>
+                <button type="button" onclick="document.execCommand('italic',false,null)" class="hover:text-blue-600 transition" title="Italic"><i class="fas fa-italic"></i></button>
+                <button type="button" onclick="document.execCommand('underline',false,null)" class="hover:text-blue-600 transition" title="Underline"><i class="fas fa-underline"></i></button>
+                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="hover:text-blue-600 transition" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="hover:text-blue-600 transition" title="Highlight"><i class="fas fa-highlighter"></i></button>
+             </div>
+             <div id="note1" contenteditable="true" class="rte-editor p-4 min-h-[100px] focus:outline-none text-sm text-slate-700"></div>
+          </div>
+
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-3 py-2 flex space-x-3 text-slate-500 no-print">
+                <button type="button" onclick="document.execCommand('bold',false,null)" class="hover:text-blue-600 transition" title="Bold"><i class="fas fa-bold"></i></button>
+                <button type="button" onclick="document.execCommand('italic',false,null)" class="hover:text-blue-600 transition" title="Italic"><i class="fas fa-italic"></i></button>
+                <button type="button" onclick="document.execCommand('underline',false,null)" class="hover:text-blue-600 transition" title="Underline"><i class="fas fa-underline"></i></button>
+                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="hover:text-blue-600 transition" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="hover:text-blue-600 transition" title="Highlight"><i class="fas fa-highlighter"></i></button>
+             </div>
+             <div id="note2" contenteditable="true" class="rte-editor p-4 min-h-[100px] focus:outline-none text-sm text-slate-700"></div>
+          </div>
+
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-3 py-2 flex space-x-3 text-slate-500 no-print">
+                <button type="button" onclick="document.execCommand('bold',false,null)" class="hover:text-blue-600 transition" title="Bold"><i class="fas fa-bold"></i></button>
+                <button type="button" onclick="document.execCommand('italic',false,null)" class="hover:text-blue-600 transition" title="Italic"><i class="fas fa-italic"></i></button>
+                <button type="button" onclick="document.execCommand('underline',false,null)" class="hover:text-blue-600 transition" title="Underline"><i class="fas fa-underline"></i></button>
+                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="hover:text-blue-600 transition" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="hover:text-blue-600 transition" title="Highlight"><i class="fas fa-highlighter"></i></button>
+             </div>
+             <div id="note3" contenteditable="true" class="rte-editor p-4 min-h-[100px] focus:outline-none text-sm text-slate-700"></div>
+          </div>
+
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-3 py-2 flex space-x-3 text-slate-500 no-print">
+                <button type="button" onclick="document.execCommand('bold',false,null)" class="hover:text-blue-600 transition" title="Bold"><i class="fas fa-bold"></i></button>
+                <button type="button" onclick="document.execCommand('italic',false,null)" class="hover:text-blue-600 transition" title="Italic"><i class="fas fa-italic"></i></button>
+                <button type="button" onclick="document.execCommand('underline',false,null)" class="hover:text-blue-600 transition" title="Underline"><i class="fas fa-underline"></i></button>
+                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="hover:text-blue-600 transition" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="hover:text-blue-600 transition" title="Highlight"><i class="fas fa-highlighter"></i></button>
+             </div>
+             <div id="note4" contenteditable="true" class="rte-editor p-4 min-h-[100px] focus:outline-none text-sm text-slate-700"></div>
+          </div>
+          
         </div>
       </div>
 
@@ -379,7 +505,7 @@
       <label class="block text-xs font-bold text-slate-500 mb-2">Arabic Company Name (Unique)</label>
       <input type="text" id="newClientName" class="w-full p-4 bg-slate-100 border-none rounded-2xl mb-6 arabic-text text-lg">
       <div class="flex space-x-3 rtl:space-x-reverse">
-        <button onclick="saveClient()" class="flex-grow bg-blue-900 text-white font-bold py-4 rounded-2xl btn-hover">Save Client</button>
+        <button id="btnSaveClient" onclick="saveClient()" class="flex-grow bg-blue-900 text-white font-bold py-4 rounded-2xl btn-hover transition-all">Save Client</button>
         <button onclick="toggleModal('clientModal')" class="px-6 bg-slate-100 text-slate-500 font-bold rounded-2xl">Cancel</button>
       </div>
     </div>
@@ -440,21 +566,20 @@
         </div>
 
       <div class="flex space-x-3 rtl:space-x-reverse mt-10">
-        <button onclick="saveProduct()" class="flex-grow bg-blue-900 text-white font-bold py-4 rounded-2xl btn-hover shadow-lg shadow-blue-100">Register Product</button>
+        <button id="btnSaveProduct" onclick="saveProduct()" class="flex-grow bg-blue-900 text-white font-bold py-4 rounded-2xl btn-hover shadow-lg shadow-blue-100 transition-all">Register Product</button>
         <button onclick="toggleModal('productModal')" class="px-8 bg-slate-100 text-slate-500 font-bold rounded-2xl">Cancel</button>
       </div>
     </div>
   </div>
 
-    <div id="historyModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8 max-h-[80vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-6 border-b pb-4">
-        <h3 class="text-xl font-black text-slate-800 flex items-center"><i class="fas fa-history mr-3 text-blue-900"></i> Edit Audit Trail</h3>
-        <button onclick="toggleModal('historyModal')" class="text-slate-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+    <div id="historyModal" class="hidden" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8 max-h-[80vh] overflow-y-auto transform transition-transform duration-300 scale-100" id="historyBox">
+      <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+        <h3 class="text-xl font-black text-slate-800 flex items-center"><i class="fas fa-history mr-3 text-blue-900"></i> Document Audit Trail</h3>
+        <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-red-500 transition-colors bg-slate-50 hover:bg-red-50 w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
       </div>
       <div id="historyContent" class="space-y-4 text-sm text-slate-600">
-        <p class="text-center font-bold text-slate-400 py-10"><i class="fas fa-circle-notch fa-spin mr-2"></i> Loading History...</p>
-      </div>
+        </div>
     </div>
   </div>
     <div id="customAlertModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" style="opacity: 0; transition: opacity 0.3s; z-index: 9999;">
@@ -474,14 +599,33 @@
     }
 
     function saveClient() {
-      const name = document.getElementById('newClientName').value;
+      const name = document.getElementById('newClientName').value.trim();
       if(!name) return customAlert('Name required','error');
+      
+      // UI Loading State
+      const btn = document.getElementById('btnSaveClient');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      btn.innerHTML = `<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...`;
+      
       document.getElementById('loading-indicator').innerText = 'Saving Client...';
+      
+      // Pass the PIN so backend can refresh data safely
       google.script.run.withSuccessHandler(data => {
         initializeUI(data);
         toggleModal('clientModal');
         document.getElementById('newClientName').value = "";
-      }).addNewClient(name);
+        
+        // Restore Button State
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = originalText;
+        
+        // Auto-select the newly added client in the active form
+        document.getElementById('clientSelect').value = name;
+        
+      }).addNewClient(name, currentAuthPin); 
     }
 
     function saveProduct() {
@@ -497,8 +641,8 @@
       }
 
       const p = {
-        arabicName: document.getElementById('npAr').value,
-        englishName: document.getElementById('npEn').value,
+        arabicName: document.getElementById('npAr').value.trim(),
+        englishName: document.getElementById('npEn').value.trim(),
         barcode: barcode,
         taxRate: parseFloat(document.getElementById('npTax').value),
         unitType: document.getElementById('npUnitType').value,
@@ -507,14 +651,34 @@
         pieceCap: document.getElementById('npPieceCap').value
       };
 
+      // UI Loading State
+      const btn = document.getElementById('btnSaveProduct');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      btn.innerHTML = `<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...`;
+
       document.getElementById('loading-indicator').innerText = 'Saving Product...';
+      
+      // Pass the PIN so backend can refresh data safely
       google.script.run.withSuccessHandler(data => {
         initializeUI(data);
         toggleModal('productModal');
-        // Clear all fields
         document.querySelectorAll('#productModal input').forEach(i => i.value = "");
         document.getElementById('loading-indicator').innerText = 'Product Saved Successfully';
-      }).addNewProduct(p);
+        
+        // Restore Button State
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = originalText;
+        
+        // Auto-select the newly added product
+        const newlyAdded = globalProducts.find(prod => prod.arabicName === p.arabicName);
+        if (newlyAdded) {
+          document.getElementById('productSelect').value = newlyAdded.index;
+        }
+        
+      }).addNewProduct(p, currentAuthPin);
     }
 
     let globalProducts = [];
@@ -527,10 +691,105 @@
     let currentMode = 'new';
     let currentEditRef = null;
 
-    // Initialize data from Google Apps Script
+    // Initialize App Environment
     window.onload = function() {
-      google.script.run.withSuccessHandler(initializeUI).getInitialData();
+      // Hide main app views; require Auth first
+      document.getElementById('dashboardView').classList.add('hidden');
+      document.getElementById('engineView').classList.add('hidden');
+      document.getElementById('passcodeInput').focus();
     };
+
+    let lockTimer = null;
+    let currentAuthPin = ''; // Store the PIN globally
+
+    function submitPasscode() {
+      const pin = document.getElementById('passcodeInput').value;
+      const btn = document.getElementById('authBtn');
+      const btnText = document.getElementById('authBtnText');
+      const spinner = document.getElementById('authSpinner');
+      const errorMsg = document.getElementById('authErrorMsg');
+      
+      if(!pin) return;
+      
+      // UI Loading State
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      btnText.innerText = "Verifying...";
+      errorMsg.style.opacity = '0';
+      
+      // Send PIN to Server
+      google.script.run.withSuccessHandler(response => {
+        if (response.authError) {
+          // Failure Logic
+          document.getElementById('passcodeInput').value = '';
+          spinner.classList.add('hidden');
+          
+          if (response.locked) {
+            startLockout(response.remaining);
+          } else {
+            btn.disabled = false;
+            btnText.innerText = "Unlock System";
+            errorMsg.innerText = response.message;
+            errorMsg.style.opacity = '1';
+            shakeAuthBox();
+          }
+        } else {
+          // Success Logic
+          currentAuthPin = pin; // Save PIN to use for auto-refreshing UI later
+          btnText.innerText = "Access Granted";
+          btn.classList.replace('bg-blue-900', 'bg-emerald-500');
+          spinner.classList.add('hidden');
+          
+          setTimeout(() => {
+            document.getElementById('authGateway').style.opacity = '0';
+            setTimeout(() => {
+              document.getElementById('authGateway').classList.add('hidden');
+              document.getElementById('dashboardView').classList.remove('hidden');
+              initializeUI(response); // Build the dashboard with the secure data
+            }, 500);
+          }, 500);
+        }
+      }).getInitialData(pin);
+    }
+
+    function startLockout(seconds) {
+      const btn = document.getElementById('authBtn');
+      const btnText = document.getElementById('authBtnText');
+      const input = document.getElementById('passcodeInput');
+      const errorMsg = document.getElementById('authErrorMsg');
+      
+      input.disabled = true;
+      input.classList.add('opacity-50', 'cursor-not-allowed');
+      btn.disabled = true;
+      btn.classList.replace('bg-blue-900', 'bg-slate-400');
+      
+      errorMsg.innerText = "Too many attempts.";
+      errorMsg.style.opacity = '1';
+      shakeAuthBox();
+      
+      let remaining = seconds;
+      
+      if(lockTimer) clearInterval(lockTimer);
+      lockTimer = setInterval(() => {
+        btnText.innerText = `Locked (${remaining}s)`;
+        remaining--;
+        if (remaining < 0) {
+          clearInterval(lockTimer);
+          input.disabled = false;
+          input.classList.remove('opacity-50', 'cursor-not-allowed');
+          btn.disabled = false;
+          btn.classList.replace('bg-slate-400', 'bg-blue-900');
+          btnText.innerText = "Unlock System";
+          errorMsg.style.opacity = '0';
+        }
+      }, 1000);
+    }
+
+    function shakeAuthBox() {
+      const box = document.getElementById('authBox');
+      box.classList.add('animate-shake');
+      setTimeout(() => box.classList.remove('animate-shake'), 400);
+    }
 
     function initializeUI(data) {
       document.getElementById('loading-indicator').innerText = 'Ready';
@@ -548,7 +807,7 @@
             grouped[r.refNum] = {
               refNum: r.refNum, docDate: r.docDate, client: r.client, isPromo: r.isPromo,
               promoQty: r.promoQty, promoStart: r.promoStart, promoEnd: r.promoEnd,
-              currency: r.currency, sendTo: r.sendTo, items: []
+              currency: r.currency, sendTo: r.sendTo, signatory: r.signatory, items: []
             };
           }
           grouped[r.refNum].items.push(r);
@@ -558,45 +817,50 @@
       }
       
       const clientSelect = document.getElementById('clientSelect');
-      data.clients.forEach(client => {
-        let opt = document.createElement('option');
-        opt.value = client;
-        opt.innerText = client;
-        clientSelect.appendChild(opt);
-      });
-
       const sigSelect = document.getElementById('signatorySelect');
-      globalSignatories.forEach((sig, idx) => {
-        let opt = document.createElement('option');
-        opt.value = idx;
-        opt.innerText = sig.name;
-        sigSelect.insertBefore(opt, sigSelect.lastElementChild);
-      });
-
       const productSelect = document.getElementById('productSelect');
       const filterProduct = document.getElementById('filterProduct');
       const filterClient = document.getElementById('filterClient');
 
-      // Populate Client Filter List
+      // 1. CLEAR EXISTING OPTIONS (Prevents infinite duplication on auto-refresh)
+      if(clientSelect) clientSelect.innerHTML = '<option value="">-- Select Target Client --</option>';
+      if(filterClient) filterClient.innerHTML = '<option value="">-- All Clients --</option>';
+      if(productSelect) productSelect.innerHTML = '<option value="">-- Browse & Add to Document --</option>';
+      if(filterProduct) filterProduct.innerHTML = '<option value="">-- All Products --</option>';
+      if(sigSelect) sigSelect.innerHTML = '<option value="">-- Assign Signatory --</option><option value="new" class="font-bold text-blue-600">+ Add New Signatory</option>';
+
+      // 2. POPULATE CLIENTS
       data.clients.forEach(client => {
+        let opt = document.createElement('option');
+        opt.value = client;
+        opt.innerText = client;
+        if(clientSelect) clientSelect.appendChild(opt);
+
         let fOpt = document.createElement('option');
         fOpt.value = client.toLowerCase();
         fOpt.innerText = client;
-        filterClient.appendChild(fOpt);
+        if(filterClient) filterClient.appendChild(fOpt);
       });
 
+      // 3. POPULATE SIGNATORIES
+      globalSignatories.forEach((sig, idx) => {
+        let opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = sig.name;
+        if(sigSelect) sigSelect.insertBefore(opt, sigSelect.lastElementChild);
+      });
+
+      // 4. POPULATE PRODUCTS
       globalProducts.forEach(prod => {
-        // Populate Form Product List
         let opt = document.createElement('option');
         opt.value = prod.index;
         opt.innerText = `${prod.englishName} | ${prod.arabicName}`;
-        productSelect.appendChild(opt);
+        if(productSelect) productSelect.appendChild(opt);
 
-        // Populate Filter Product List
         let fOpt = document.createElement('option');
         fOpt.value = prod.arabicName.toLowerCase();
         fOpt.innerText = `${prod.englishName} | ${prod.arabicName}`;
-        filterProduct.appendChild(fOpt);
+        if(filterProduct) filterProduct.appendChild(fOpt);
       });
 
       document.getElementById('docDate').valueAsDate = new Date(); // Set default date
@@ -710,7 +974,7 @@
             <td class="px-6 py-4 text-lg font-black text-blue-900">${doc.client}</td>
             <td class="px-6 py-4">${badge}<br><span class="text-xs text-slate-400 mt-1 block">${doc.items.length} Items: ${pList}</span></td>
             <td class="px-6 py-4 text-center space-x-2 rtl:space-x-reverse">
-              <button onclick="openEngine('view', '${doc.refNum}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg" title="View & Print"><i class="fas fa-eye"></i></button>
+              <button onclick="openEngine('view', '${doc.refNum}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg" title="Print Preview"><i class="fas fa-print"></i></button>
               <button onclick="openEngine('edit', '${doc.refNum}')" class="text-amber-600 hover:text-amber-900 bg-amber-50 p-2 rounded-lg" title="Edit & Update"><i class="fas fa-edit"></i></button>
               <button onclick="openEngine('copy', '${doc.refNum}')" class="text-emerald-600 hover:text-emerald-900 bg-emerald-50 p-2 rounded-lg" title="Duplicate"><i class="fas fa-copy"></i></button>
               <button onclick="viewHistory('${doc.refNum}')" class="text-slate-500 hover:text-slate-800 bg-slate-100 p-2 rounded-lg" title="Audit Trail"><i class="fas fa-history"></i></button>
@@ -724,23 +988,28 @@
       currentMode = mode;
       currentEditRef = refNum;
       
-      document.getElementById('dashboardView').classList.add('hidden');
-      document.getElementById('engineView').classList.remove('hidden');
+      // Visual transition handler
+      if (mode === 'view') {
+        document.getElementById('engineView').classList.remove('hidden');
+        document.getElementById('engineView').style.opacity = '0'; // Render in DOM to allow data injection, but keep invisible
+        document.getElementById('engineView').style.position = 'absolute';
+        document.getElementById('engineView').style.pointerEvents = 'none';
+      } else {
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('engineView').classList.remove('hidden');
+      }
       
       // Reset the form fully
       document.querySelectorAll('#engineView input:not([type="checkbox"]), #engineView select').forEach(el => el.value = '');
+      document.querySelectorAll('#engineView [contenteditable]').forEach(el => el.innerHTML = ''); // Reset Rich Text
       document.getElementById('docDate').valueAsDate = new Date();
       selectedProducts = [];
       document.getElementById('promoSettings').classList.add('hidden');
       document.getElementById('sigDisplay').classList.add('hidden');
       
       const title = document.getElementById('engineTitle');
-      const inputs = document.querySelectorAll('#engineView input, #engineView select, #engineView button');
       
-      // Reset Read-Only visual locks
-      inputs.forEach(el => el.disabled = false);
-      
-      // Default Preview Modal Buttons
+      // Reset Default UI Buttons
       document.getElementById('printBtn').disabled = true;
       document.getElementById('printBtn').classList.add('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
       document.getElementById('printBtn').classList.remove('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
@@ -749,30 +1018,20 @@
       if (mode === 'new') {
         title.innerHTML = 'New Price List';
         renderProductTable();
+        applyViewModeLockdown(); // Ensures fields are unlocked
         return;
       }
 
       const doc = globalDocLogs.find(d => d.refNum === refNum);
       if(!doc) return;
 
-      // Lock Form if Viewing
+      // Set Titles and Print Bypasses
       if (mode === 'view') {
         title.innerHTML = `Viewing Document <span class="text-blue-500">#${refNum}</span>`;
-        inputs.forEach(el => {
-          // Allow exit, preview, and modal buttons
-          if(el.innerText.includes('Preview') || el.innerText.includes('Back') || el.closest('#previewModal')) {
-            el.disabled = false;
-          } else {
-            el.disabled = true;
-          }
-        });
-        
-        // Setup direct Print bypass for View mode
         document.getElementById('approveBtn').classList.add('hidden');
         document.getElementById('printBtn').disabled = false;
         document.getElementById('printBtn').classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
         document.getElementById('printBtn').classList.add('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
-        
       } else if (mode === 'edit') {
         title.innerHTML = `Editing Document <span class="text-amber-500">#${refNum}</span>`;
       } else if (mode === 'copy') {
@@ -783,8 +1042,29 @@
       if(doc.docDate) document.getElementById('docDate').value = new Date(doc.docDate).toISOString().split('T')[0];
       document.getElementById('clientSelect').value = doc.client;
       document.getElementById('sendTo').value = doc.sendTo;
-      document.getElementById('currency').value = doc.currency;
-      document.getElementById('docType').value = doc.isPromo === 'Yes' ? 'promo' : 'standard';
+      // Pre-fill Currency & Update Visual Segmented Toggle
+      let currVal = doc.currency || 'EGP';
+      document.getElementById('currency').value = currVal;
+      document.querySelectorAll('input[name="currencyRadio"]').forEach(r => {
+        r.checked = (r.value === currVal);
+      });
+
+      // Pre-fill Doc Type & Update Visual Sliding Toggle
+      let isPromoVal = doc.isPromo === 'Yes';
+      document.getElementById('docType').value = isPromoVal ? 'promo' : 'standard';
+      
+      let dtToggle = document.getElementById('docTypeToggle');
+      let dtLabel = document.getElementById('docTypeLabel');
+      if(dtToggle && dtLabel) {
+        dtToggle.checked = isPromoVal;
+        if(isPromoVal) {
+          dtLabel.innerText = 'Promotional Price List';
+          dtLabel.classList.replace('text-slate-500', 'text-blue-700');
+        } else {
+          dtLabel.innerText = 'Standard Price List';
+          dtLabel.classList.replace('text-blue-700', 'text-slate-500');
+        }
+      }
       
       if(doc.isPromo === 'Yes') {
         document.getElementById('promoSettings').classList.remove('hidden');
@@ -793,19 +1073,20 @@
         if(doc.promoEnd) document.getElementById('promoEnd').value = new Date(doc.promoEnd).toISOString().split('T')[0];
       }
 
-      // Pre-fill Signatory (Bulletproof matching)
-      document.getElementById('signatorySelect').value = ""; // Reset to default
+      // Pre-fill Signatory (Memory Array Matching)
+      let sigSelect = document.getElementById('signatorySelect');
+      sigSelect.value = ""; 
       if(doc.signatory && String(doc.signatory).trim() !== '') {
-        const cleanDocSig = String(doc.signatory).trim().toLowerCase();
-        const sigIdx = globalSignatories.findIndex(s => String(s.name).trim().toLowerCase() === cleanDocSig);
+        let cleanSig = String(doc.signatory).trim().toLowerCase();
+        let matchedIndex = globalSignatories.findIndex(s => String(s.name).trim().toLowerCase() === cleanSig);
         
-        if(sigIdx !== -1) {
-          document.getElementById('signatorySelect').value = String(sigIdx);
+        if (matchedIndex !== -1) {
+          sigSelect.value = matchedIndex; // Match exact index value
         }
       }
-      checkNewSignatory(); // Updates UI to show the selected signatory
+      checkNewSignatory();
 
-      // Reconstruct Products Array
+      // Reconstruct Products & Notes Array
       doc.items.forEach(item => {
         let p = globalProducts.find(x => x.arabicName === item.productAr);
         if(p) {
@@ -819,14 +1100,80 @@
           if(parseFloat(item.vatRate) > 0) document.getElementById('toggleVAT').checked = true;
           if(parseFloat(item.rsp) > 0) document.getElementById('toggleRSP').checked = true;
           
-          // Populate notes from the first row found
-          document.getElementById('note1').value = item.notes[0] || '';
-          document.getElementById('note2').value = item.notes[1] || '';
-          document.getElementById('note3').value = item.notes[2] || '';
-          document.getElementById('note4').value = item.notes[3] || '';
+          // Populate Rich Text Notes
+          let n1 = document.getElementById('note1'); if(n1) n1.innerHTML = item.notes[0] || '';
+          let n2 = document.getElementById('note2'); if(n2) n2.innerHTML = item.notes[1] || '';
+          let n3 = document.getElementById('note3'); if(n3) n3.innerHTML = item.notes[2] || '';
+          let n4 = document.getElementById('note4'); if(n4) n4.innerHTML = item.notes[3] || '';
         }
       });
+      
       renderProductTable();
+      applyViewModeLockdown(); // Apply strict lockdown if in view mode
+      
+      // Instantly open the Print Preview without flashing the locked form
+      if (mode === 'view') {
+        setTimeout(() => {
+          // 1. Find and click your native preview button to guarantee exact modal behavior
+          const allBtns = Array.from(document.querySelectorAll('#engineView button, #engineView a'));
+          const previewBtn = allBtns.find(b => 
+            (b.innerText && b.innerText.toLowerCase().includes('preview')) || 
+            (b.getAttribute('onclick') && b.getAttribute('onclick').toLowerCase().includes('preview'))
+          );
+          
+          if (previewBtn) {
+            previewBtn.click();
+          } else {
+            // Fallback if button text is different
+            if(typeof renderPreviewTemplate === 'function') renderPreviewTemplate();
+            let pm = document.getElementById('previewModal');
+            if(pm) pm.classList.remove('hidden');
+          }
+          
+          // 2. Restore normal form layout (it will now be safely hidden behind the active preview modal)
+          document.getElementById('dashboardView').classList.add('hidden');
+          document.getElementById('engineView').style.opacity = '1';
+          document.getElementById('engineView').style.position = '';
+          document.getElementById('engineView').style.pointerEvents = 'auto';
+        }, 150); // 150ms gives the DOM time to paint the loaded values before generating the PDF
+      }
+    }
+
+    function applyViewModeLockdown() {
+      // Define the selector for everything that should be hidden in view mode globally
+      const actionSelectors = '[onclick*="addProduct"], [onclick*="removeProduct"], .rte-toolbar, [onclick*="clientModal"], [onclick*="productModal"]';
+      
+      if (currentMode === 'view') {
+        // Lock inputs
+        document.querySelectorAll('#engineView input, #engineView select, #engineView textarea').forEach(el => el.disabled = true);
+        document.querySelectorAll('#engineView [contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
+        
+        // Hide action elements globally
+        document.querySelectorAll(actionSelectors).forEach(el => el.style.display = 'none');
+        
+        // Text-based fallback specifically for buttons without direct onclick attributes
+        document.querySelectorAll('#engineView button').forEach(btn => {
+           let txt = btn.innerText.toLowerCase();
+           if (txt.includes('new client') || txt.includes('new product')) {
+               btn.style.display = 'none';
+           }
+        });
+      } else {
+        // Unlock inputs
+        document.querySelectorAll('#engineView input, #engineView select, #engineView textarea').forEach(el => el.disabled = false);
+        document.querySelectorAll('#engineView [contenteditable]').forEach(el => el.setAttribute('contenteditable', 'true'));
+        
+        // Restore action elements globally
+        document.querySelectorAll(actionSelectors).forEach(el => el.style.display = '');
+        
+        // Restore text fallback buttons
+        document.querySelectorAll('#engineView button').forEach(btn => {
+           let txt = btn.innerText.toLowerCase();
+           if (txt.includes('new client') || txt.includes('new product')) {
+               btn.style.display = '';
+           }
+        });
+      }
     }
 
     function closeEngine() {
@@ -834,28 +1181,71 @@
       document.getElementById('engineView').classList.add('hidden');
     }
 
+    // --- AUDIT TRAIL MODAL LOGIC ---
     function viewHistory(refNum) {
-      toggleModal('historyModal');
+      console.log("🛠️ [DEBUG] viewHistory triggered for Ref:", refNum);
+      const modal = document.getElementById('historyModal');
+
+      if (!modal) {
+        console.error("🚨 [ERROR] historyModal element NOT FOUND in HTML!");
+        customAlert("Audit trail UI missing. Please check your HTML.", "error");
+        return;
+      }
+
+      // 1. DOM Forcing: Move to absolute top level to escape parent visibility constraints
+      document.body.appendChild(modal);
+
+      // 2. Aggressive Visibility Styling
+      modal.classList.remove('hidden');
+      modal.style.cssText = "position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); display: flex !important; align-items: center; justify-content: center; z-index: 2147483647 !important; padding: 1rem; opacity: 1;";
+
       const container = document.getElementById('historyContent');
-      container.innerHTML = `<p class="text-center font-bold text-slate-400 py-10"><i class="fas fa-circle-notch fa-spin mr-2"></i> Analyzing Audit Trail...</p>`;
+      container.innerHTML = `<p class="text-center font-bold text-slate-400 py-10"><i class="fas fa-circle-notch fa-spin text-3xl mb-4 block text-blue-500"></i> Analyzing Records...</p>`;
+
+      // 3. Fetch Baseline Data
+      const doc = globalDocLogs.find(d => String(d.refNum) === String(refNum));
+      let baselineHtml = '';
+      if (doc) {
+        let dDate = new Date(doc.docDate).toLocaleDateString();
+        baselineHtml = `
+          <div class="bg-blue-50 p-4 rounded-2xl mb-8 border border-blue-100 flex justify-between items-center shadow-inner">
+            <div>
+              <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Original Draft</p>
+              <h4 class="font-bold text-blue-900 mt-1">Created: ${dDate}</h4>
+            </div>
+            <div class="text-right rtl:text-left">
+              <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Signed By</p>
+              <h4 class="font-bold text-blue-900 mt-1">${doc.signatory || 'System Draft'}</h4>
+            </div>
+          </div>
+        `;
+      }
+
+      console.log("🛠️ [DEBUG] Fetching history from backend...");
       
-      google.script.run.withSuccessHandler(history => {
+      // 4. Request history with Failure Handler fallback
+      google.script.run.withFailureHandler(err => {
+         console.error("🚨 [ERROR] Backend getEditHistory failed:", err);
+         container.innerHTML = `<p class="text-center font-bold text-red-500 py-10">Failed to load history data.</p>`;
+      }).withSuccessHandler(history => {
+        console.log("🛠️ [DEBUG] History data received:", history);
+        
         if(!history || history.length === 0) {
-          container.innerHTML = `<div class="bg-slate-50 p-6 rounded-2xl text-center"><i class="fas fa-check-circle text-4xl text-emerald-300 mb-3"></i><p class="font-bold text-slate-500">Pristine Document</p><p class="text-xs text-slate-400 mt-1">No historical edits have been made to this record.</p></div>`;
+          container.innerHTML = baselineHtml + `<div class="bg-slate-50 p-8 rounded-3xl text-center border border-slate-100"><i class="fas fa-check-circle text-5xl text-emerald-400 mb-4 drop-shadow-sm"></i><p class="font-black text-slate-700 text-lg">Pristine Document</p><p class="text-sm font-medium text-slate-400 mt-2">No historical edits have been made to this record.</p></div>`;
           return;
         }
-        
-        let html = `<div class="relative border-l-2 border-slate-200 ml-3 rtl:mr-3 rtl:ml-0 rtl:border-r-2 rtl:border-l-0 pl-4 rtl:pr-4 space-y-6">`;
+
+        let html = baselineHtml + `<div class="relative border-l-2 border-slate-200 ml-4 rtl:mr-4 rtl:ml-0 rtl:border-r-2 rtl:border-l-0 pl-6 rtl:pr-6 space-y-8">`;
         history.forEach(log => {
-          let parts = log.note.split('\n'); // Notes might contain multiple timestamped lines
+          let parts = log.note.split('\n');
           parts.forEach(p => {
             if(p.trim()) {
               html += `
-                <div class="relative">
-                  <div class="absolute -left-[23px] rtl:-right-[23px] top-1 w-4 h-4 rounded-full bg-blue-100 border-2 border-blue-500"></div>
-                  <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${log.product} • ${log.column}</p>
-                    <p class="text-xs font-medium text-slate-700 font-mono">${p}</p>
+                <div class="relative group">
+                  <div class="absolute -left-[31px] rtl:-right-[31px] top-1 w-4 h-4 rounded-full bg-white border-[3px] border-blue-500 shadow-sm group-hover:scale-125 transition-transform"></div>
+                  <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">${log.product} • ${log.column}</p>
+                    <p class="text-[13px] font-medium text-slate-700 font-mono bg-slate-50 p-3 rounded-xl border border-slate-100">${p}</p>
                   </div>
                 </div>`;
             }
@@ -863,7 +1253,19 @@
         });
         html += `</div>`;
         container.innerHTML = html;
+        
       }).getEditHistory(refNum);
+    }
+
+    function closeHistoryModal() {
+      const modal = document.getElementById('historyModal');
+      if(modal) {
+         modal.style.opacity = '0';
+         setTimeout(() => {
+           modal.style.display = 'none';
+           modal.classList.add('hidden');
+         }, 300);
+      }
     }
     
     function addProduct() {
@@ -964,6 +1366,7 @@
         `;
         tbody.innerHTML += row;
       });
+      applyViewModeLockdown();
     }
 
     function generateReferenceNumber(isPromo, hasVat) {
@@ -1233,30 +1636,44 @@
       // --- THE UNBREAKABLE BLOCK (Notes + Signature grouped together) ---
       html += `<div style="page-break-inside: avoid; break-inside: avoid; display: block; width: 100%; padding-top: 10px;">`;
       
-      let note1 = document.getElementById('note1').value;
-      let note2 = document.getElementById('note2').value;
-      let note3 = document.getElementById('note3').value;
-      let note4 = document.getElementById('note4').value;
+      // Extract innerHTML for Rich Text, and clean up empty break tags
+      let getCleanRTE = (id) => {
+        let el = document.getElementById(id);
+        if (!el) return '';
+        let content = el.innerHTML.trim();
+        return (content === '<br>' || content === '<div><br></div>') ? '' : content;
+      };
+
+      let note1 = getCleanRTE('note1');
+      let note2 = getCleanRTE('note2');
+      let innerNote3 = getCleanRTE('note3');
+      let innerNote4 = getCleanRTE('note4');
       
-      if(note1 || note2 || note3 || note4 || isPromo) {
+      if(note1 || note2 || innerNote3 || innerNote4 || isPromo) {
          html += `<div class="mb-6 bg-amber-50 rounded-lg p-4 border border-amber-200">
                     <h4 class="font-bold text-amber-900 mb-2 flex items-center">
                       <svg class="w-4 h-4 mx-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                       ${t.notes}
-                    </h4>
-                    <ul class="list-disc list-inside text-xs space-y-1 text-amber-800 px-2">`;
+                    </h4>`;
+                    
+         // Render Promo Rules as standard bullets
          if (isPromo) {
+           html += `<ul class="list-disc list-inside text-xs space-y-1 text-amber-800 px-2 mb-3">`;
            let q = document.getElementById('promoQty').value;
            let s = document.getElementById('promoStart').value;
            let e = document.getElementById('promoEnd').value;
            if(q) html += `<li><span class="font-bold">${isAr ? 'الكمية المتاحة للعرض:' : 'Promo Available Qty:'}</span> ${q}</li>`;
            if(s && e) html += `<li><span class="font-bold">${isAr ? 'العرض ساري من' : 'Promo valid from'}</span> ${s} ${isAr ? 'إلى' : 'to'} ${e}</li>`;
+           html += `</ul>`;
          }
-         if(note1) html += `<li>${note1}</li>`;
-         if(note2) html += `<li>${note2}</li>`;
-         if(note3) html += `<li>${note3}</li>`;
-         if(note4) html += `<li>${note4}</li>`;
-         html += `</ul></div>`;
+
+         // Render Rich Text Notes inside an rte-editor wrapper so CSS carries over to the PDF
+         html += `<div class="rte-editor text-xs text-amber-900 space-y-3 px-2">`;
+         if(note1) html += `<div>${note1}</div>`;
+         if(note2) html += `<div>${note2}</div>`;
+         if(innerNote3) html += `<div>${innerNote3}</div>`;
+         if(innerNote4) html += `<div>${innerNote4}</div>`;
+         html += `</div></div>`;
       }
 
       // Modern Signature Box
@@ -1404,10 +1821,10 @@
             document.getElementById('currency').value, 
             prod.rsp || '', 
             document.getElementById('sendTo').value, 
-            document.getElementById('note1').value || '', 
-            document.getElementById('note2').value || '', 
-            document.getElementById('note3').value || '', 
-            document.getElementById('note4').value || '', 
+            document.getElementById('note1').innerHTML || '', 
+            document.getElementById('note2').innerHTML || '', 
+            document.getElementById('note3').innerHTML || '', 
+            document.getElementById('note4').innerHTML || '', 
             '', // Col S (URL EN)
             '', // Col T (URL AR)
             new Date().toLocaleString(), // Col U (Timestamp)

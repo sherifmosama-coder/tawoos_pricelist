@@ -9,6 +9,17 @@ function doGet() {
 
 // --- PASSCODE SECURITY ENGINE ---
 function verifyPasscode(pin) {
+  const ssId = '1ojtygvWrUn1Zmb0CowQqbCOMtFL4z47u2ov3Elf8YQw';
+  const ss = SpreadsheetApp.openById(ssId);
+  
+  // Multi-User Engine Initialization
+  let usersSheet = ss.getSheetByName('Users');
+  if (!usersSheet) {
+    usersSheet = ss.insertSheet('Users');
+    usersSheet.appendRow(['User Name', 'Passcode']);
+    usersSheet.appendRow(['Admin', '3334']); // Default fallback
+  }
+
   const props = PropertiesService.getScriptProperties();
   const now = new Date().getTime();
   
@@ -19,10 +30,19 @@ function verifyPasscode(pin) {
     return { success: false, message: `System locked.`, locked: true, remaining: remaining };
   }
   
-  // 2. Success Case
-  if (pin === "3334") {
-    props.setProperty('failedAttempts', '0'); // Reset counters
-    return { success: true };
+  // 2. Dynamic Success Case
+  const usersData = usersSheet.getDataRange().getValues();
+  let matchedUser = null;
+  for (let i = 1; i < usersData.length; i++) {
+    if (String(usersData[i][1]) === String(pin)) {
+      matchedUser = String(usersData[i][0]);
+      break;
+    }
+  }
+
+  if (matchedUser) {
+    props.setProperty('failedAttempts', '0');
+    return { success: true, userName: matchedUser };
   } 
   
   // 3. Failure Case
@@ -68,6 +88,7 @@ function getInitialData(pin) {
   if (!auth.success) {
     return { authError: true, message: auth.message, locked: auth.locked, remaining: auth.remaining };
   }
+  let currentUser = auth.userName;
 
   const ssId = '1ojtygvWrUn1Zmb0CowQqbCOMtFL4z47u2ov3Elf8YQw';
   const ss = SpreadsheetApp.openById(ssId);
@@ -138,7 +159,13 @@ function getInitialData(pin) {
   const sigData = sigSheet.getDataRange().getValues();
   const signatories = [];
   for (let i = 1; i < sigData.length; i++) {
-    if (sigData[i][0] || sigData[i][1]) {
+    let ownerRaw = String(sigData[i][6] || '').trim(); // Column G
+    
+    // Split the cell by commas and trim spaces (e.g. "Sherif, Admin" becomes ["Sherif", "Admin"])
+    let ownersList = ownerRaw.split(',').map(name => name.trim());
+    
+    // Load if the cell is empty (legacy) OR the currentUser's name is found anywhere in the list
+    if ((sigData[i][0] || sigData[i][1]) && (ownerRaw === '' || ownersList.includes(currentUser))) {
       signatories.push({ 
         nameEn: String(sigData[i][0] || ''), 
         nameAr: String(sigData[i][1] || ''), 
@@ -181,12 +208,13 @@ function getInitialData(pin) {
         urlEn: String(r[15] || ''), // Shifted from 18 to 15
         urlAr: String(r[16] || ''), // Shifted from 19 to 16
         timestamp: r[17] instanceof Date ? r[17].toISOString() : String(r[17] || ''), // Shifted from 20 to 17
-        signatory: String(r[18] || '') // Shifted from 21 to 18 (Column S)
+        signatory: String(r[18] || ''), // Shifted from 21 to 18 (Column S)
+        createdBy: String(r[19] || '')  // Column T (Creator Name)
       });
     }
   }
 
-  return { products, clients, signatories, nextSeq, docLogs };
+  return { products, clients, signatories, nextSeq, docLogs, userName: currentUser };
 }
 
 function addNewClient(clientName, pin) {
@@ -259,6 +287,10 @@ function saveToLogAndSignatories(payload) {
   // 2. Map URL to specific columns (Shifted: P = index 15, Q = index 16)
   const urlColIndex = (payload.lang === 'EN') ? 15 : 16;
 
+  // Authenticate user to link the new signatory to them
+  let auth = verifyPasscode(payload.authPin);
+  let currentUser = auth.success ? auth.userName : 'Unknown User';
+
   // 3. Save New Signatory if provided
   if (payload.newSignatory) {
     let sigSheet = ss.getSheetByName('Signatories');
@@ -268,15 +300,16 @@ function saveToLogAndSignatories(payload) {
       payload.newSignatory.titleEn, 
       payload.newSignatory.titleAr, 
       payload.newSignatory.phone, 
-      payload.newSignatory.email
+      payload.newSignatory.email,
+      currentUser // Column G (Owner)
     ]);
   }
 
   // 4. Save to Log Sheet
   if (logSheet && payload.logData && payload.logData.length > 0) {
     payload.logData.forEach(row => {
-      // row[18] is Col S, row[19] is Col T
       row[urlColIndex] = fileUrl; 
+      row[19] = currentUser; // Add Created By to Column T (Index 19)
       logSheet.appendRow(row);
     });
   }
@@ -314,7 +347,10 @@ function updatePriceList(payload) {
   }
   
   let timestampStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT", "yyyy-MM-dd HH:mm");
-  let userEmail = Session.getActiveUser().getEmail() || 'User';
+  
+  // Authenticate user to get their real name for the audit log
+  let auth = verifyPasscode(payload.authPin);
+  let currentUser = auth.success ? auth.userName : 'Unknown User';
 
   // 3. Update Existing Rows & Add Native Notes
   for(let p=0; p < payload.logData.length; p++) {
@@ -331,7 +367,7 @@ function updatePriceList(payload) {
         if (String(oldRow[col]) !== String(newRow[col])) {
           let cell = logSheet.getRange(rowIndex, col + 1);
           let oldNote = cell.getNote() || "";
-          let changeLog = `[${timestampStr}] ${userEmail}: Changed from "${oldRow[col]}" to "${newRow[col]}"`;
+          let changeLog = `[${timestampStr}] ${currentUser}: Changed from "${oldRow[col]}" to "${newRow[col]}"`;
           cell.setNote(oldNote ? oldNote + "\n" + changeLog : changeLog);
           cell.setValue(newRow[col]);
         }

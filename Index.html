@@ -140,6 +140,20 @@
   </div>
 
   <div id="dashboardView" class="hidden max-w-7xl mx-auto space-y-6 no-print">
+  <div class="bg-gradient-to-r from-blue-900 to-slate-800 rounded-3xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden mt-2">
+          <div class="relative z-10">
+            <h1 id="userGreeting" class="text-3xl md:text-4xl font-black mb-2 tracking-tight text-white">Welcome!</h1>
+            <div class="flex items-start space-x-3 rtl:space-x-reverse mt-4 bg-white/10 p-4 rounded-xl backdrop-blur-md border border-white/20 w-fit max-w-3xl shadow-sm">
+              <i class="fas fa-bolt text-amber-400 text-xl mt-1"></i>
+              <div>
+                <p class="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1 opacity-80">Sales Motivation</p>
+                <p id="motivationQuote" class="text-sm font-medium leading-relaxed text-slate-50 italic">"Let's win today."</p>
+              </div>
+            </div>
+          </div>
+          <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
+          <div class="absolute -left-10 -bottom-20 w-48 h-48 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
+        </div>
     <div class="sticky top-4 z-40 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 transition-all">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
         <div class="bg-blue-900 text-white p-3 rounded-2xl shadow-lg shadow-blue-200">
@@ -718,6 +732,58 @@
     let lockTimer = null;
     let currentAuthPin = ''; // Store the PIN globally
 
+    function updateDashboardGreeting(userName) {
+      const now = new Date();
+      const hour = now.getHours();
+      const day = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 4 = Thursday
+
+      // 1. Set Greeting based on local time
+      let timeGreeting = "Good Evening";
+      if (hour < 12) timeGreeting = "Good Morning";
+      else if (hour < 17) timeGreeting = "Good Afternoon";
+      
+      let firstName = userName ? userName.split(' ')[0] : 'Champion';
+      document.getElementById('userGreeting').innerText = `${timeGreeting}, ${firstName}!`;
+
+      // 2. The 10-Quote Bank (Categorized by Egyptian Work Week)
+      let quoteBank = [];
+      
+      if (day === 0 || day === 1) {
+        // Sunday & Monday (Start of Week - Pipeline & Pacing)
+        quoteBank = [
+          "A new week means new targets. Set the pace today and the rest of the week will follow.",
+          "The deals you close on Thursday are born from the calls you make today. Build that pipeline!",
+          "Start strong. The energy you bring on day one sets the standard for the entire week."
+        ];
+      } else if (day === 4) {
+        // Thursday (End of Week - Closing & Urgency)
+        quoteBank = [
+          "Finish strong! Push through the final objections and close out the week on top.",
+          "Thursday is for closers. Review your pipeline and make those final asks count.",
+          "Don't leave deals on the table for next week. Create urgency and ask for the business today!"
+        ];
+      } else {
+        // Tuesday & Wednesday (Mid-Week)
+        if (hour < 12) {
+           // Mid-Week Morning (Energy & Conviction)
+           quoteBank = [
+             "Momentum is everything. Keep the energy high and attack the morning!",
+             "Your attitude determines your altitude. Bring absolute conviction to every client meeting today."
+           ];
+        } else {
+           // Mid-Week Afternoon (Consistency & Push)
+           quoteBank = [
+             "The afternoon slump is a myth for top performers. Push through and make those extra follow-ups.",
+             "Consistency is the ultimate differentiator. Finish today just as strong as you started."
+           ];
+        }
+      }
+
+      // 3. Pick a random quote from the active bank
+      const randomQuote = quoteBank[Math.floor(Math.random() * quoteBank.length)];
+      document.getElementById('motivationQuote').innerText = `"${randomQuote}"`;
+    }
+
     function submitPasscode() {
       const pin = document.getElementById('passcodeInput').value;
       const btn = document.getElementById('authBtn');
@@ -752,9 +818,12 @@
         } else {
           // Success Logic
           currentAuthPin = pin; // Save PIN to use for auto-refreshing UI later
-          btnText.innerText = "Access Granted";
+          let firstName = response.userName ? response.userName.split(' ')[0] : 'User';
+          btnText.innerText = `Welcome, ${firstName}`;
           btn.classList.replace('bg-blue-900', 'bg-emerald-500');
-          spinner.classList.add('hidden');
+          
+          // Inject the personalized greeting and motivation quote
+          updateDashboardGreeting(response.userName);
           
           setTimeout(() => {
             document.getElementById('authGateway').style.opacity = '0';
@@ -823,7 +892,7 @@
             grouped[r.refNum] = {
               refNum: r.refNum, docDate: r.docDate, client: r.client, isPromo: r.isPromo,
               promoQty: r.promoQty, promoStart: r.promoStart, promoEnd: r.promoEnd,
-              currency: r.currency, sendTo: r.sendTo, signatory: r.signatory, items: []
+              currency: r.currency, sendTo: r.sendTo, signatory: r.signatory, createdBy: r.createdBy, items: []
             };
           }
           grouped[r.refNum].items.push(r);
@@ -1282,7 +1351,8 @@
           <div class="bg-blue-50 p-4 rounded-2xl mb-8 border border-blue-100 flex justify-between items-center shadow-inner">
             <div>
               <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Original Draft</p>
-              <h4 class="font-bold text-blue-900 mt-1">Created: ${dDate}</h4>
+              <h4 class="font-bold text-blue-900 mt-1 mb-1">Created: ${dDate}</h4>
+              <p class="text-[11px] font-bold text-blue-600 bg-white px-2 py-1 rounded shadow-sm inline-block"><i class="fas fa-user-edit mr-1"></i> By: ${doc.createdBy || 'Unknown User'}</p>
             </div>
             <div class="text-right rtl:text-left">
               <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Signed By</p>
@@ -1887,7 +1957,8 @@
           logData: [], 
           pdfData: base64String, // Send the binary PDF data
           refNum: refNum,
-          lang: isAr ? 'AR' : 'EN'
+          lang: isAr ? 'AR' : 'EN',
+          authPin: currentAuthPin // Pass PIN to backend to tag signatories
         };
 
         // Handle Signatories (Bilingual Payload)

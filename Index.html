@@ -1746,7 +1746,8 @@
         let piecePriceNoVat = basePrice / (prod.unitCapacity || 1);
 
         // This prevents individual rows from splitting
-        let barcodeCell = prod.barcode ? `<svg class="ean-barcode" data-value="${prod.barcode}"></svg>` : '-';
+        // Added dir="ltr" so Arabic RTL layout doesn't push the first EAN digit out of bounds
+        let barcodeCell = prod.barcode ? `<svg class="ean-barcode" dir="ltr" data-value="${prod.barcode}"></svg>` : '-';
         let tr = `<tr style="page-break-inside: avoid;" class="hover:bg-slate-50">
           <td class="p-2 text-left rtl:text-right font-semibold text-slate-800">${pName}</td>
           <td class="p-2 text-center align-middle text-slate-600">${barcodeCell}</td>
@@ -1888,8 +1889,11 @@
               width: 1.2,       // Thin bars to save horizontal space
               height: 25,       // Short bars so rows don't expand vertically
               fontSize: 11,     // Readable numbers underneath
-              textMargin: 0,
-              margin: 0,
+              textMargin: 2,    // Space between bars and text
+              marginTop: 2,     // Small top buffer
+              marginBottom: 4,  // Prevents text from clipping at the bottom
+              marginLeft: 10,   // Crucial: Gives room for the first EAN digit on the left
+              marginRight: 10,  // Balance on the right side
               displayValue: true
             });
           } catch(e) {

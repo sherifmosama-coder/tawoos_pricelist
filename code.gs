@@ -191,7 +191,8 @@ function getInitialData(pin) {
       docLogs.push({
         rowIdx: i + 1,
         refNum: String(r[0]),
-        docDate: r[1] instanceof Date ? r[1].toISOString() : String(r[1] || ''),
+        // Force native formatting to prevent timezone shifts from altering the day
+        docDate: r[1] instanceof Date ? Utilities.formatDate(r[1], Session.getScriptTimeZone(), "yyyy-MM-dd") : String(r[1] || ''),
         isPromo: String(r[2] || ''),
         promoQty: String(r[3] || ''),
         promoStart: r[4] instanceof Date ? r[4].toISOString() : String(r[4] || ''),
@@ -207,7 +208,7 @@ function getInitialData(pin) {
         notes: String(r[14] || ''), // Single Note Column
         urlEn: String(r[15] || ''), // Shifted from 18 to 15
         urlAr: String(r[16] || ''), // Shifted from 19 to 16
-        timestamp: r[17] instanceof Date ? r[17].toISOString() : String(r[17] || ''), // Shifted from 20 to 17
+        timestamp: r[17] instanceof Date ? Utilities.formatDate(r[17], Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss") : String(r[17] || ''), // Shifted from 20 to 17
         signatory: String(r[18] || ''), // Shifted from 21 to 18 (Column S)
         createdBy: String(r[19] || '')  // Column T (Creator Name)
       });

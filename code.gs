@@ -215,7 +215,102 @@ function getInitialData(pin) {
     }
   }
 
-  return { products, clients, signatories, nextSeq, docLogs, userName: currentUser };
+  // ==========================================
+  // COMMERCIAL TERMS & CONTRACTS EXTRACTION
+  // ==========================================
+  let invoiceDiscounts = [];
+  let clientContracts = [];
+  let clientVolumes = {};
+
+  try {
+    // 1. MIGRATION FIX: Read directly from the Active Spreadsheet
+    const commSs = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // 2. Extract Invoice Discounts (خصومات فواتير ثابتة)
+    let invSheet = commSs.getSheetByName("خصومات فواتير ثابتة");
+    if (invSheet) {
+      let invData = invSheet.getDataRange().getValues();
+      let invDisplayData = invSheet.getDataRange().getDisplayValues(); // Grabs exact formatted string (e.g., "5%")
+      let productHeaders = invData[1]; // Row 2
+      
+      for (let i = 2; i < invData.length; i++) { 
+        let row = invData[i];
+        let displayRow = invDisplayData[i];
+        if (!row[0]) continue; 
+        
+        let clientDiscount = {
+          client: String(row[0]).trim(),
+          start: row[5] instanceof Date ? Utilities.formatDate(row[5], Session.getScriptTimeZone(), "yyyy-MM-dd") : row[5],
+          end: row[7] instanceof Date ? Utilities.formatDate(row[7], Session.getScriptTimeZone(), "yyyy-MM-dd") : row[7],
+          products: {}
+        };
+        
+        for (let j = 9; j < row.length; j++) {
+          let discountVal = String(displayRow[j]).trim(); 
+          if (discountVal && discountVal !== "0" && discountVal !== "0%" && discountVal !== "0.00%" && discountVal !== "") {
+            let pName = String(productHeaders[j]).trim();
+            // Automatically append % if the sheet didn't include it
+            clientDiscount.products[pName] = discountVal.includes('%') ? discountVal : discountVal + '%';
+          }
+        }
+        if (Object.keys(clientDiscount.products).length > 0) invoiceDiscounts.push(clientDiscount);
+      }
+    }
+
+    // 3. Extract Client Contracts (عقود عملاء)
+    let contractSheet = commSs.getSheetByName("عقود عملاء");
+    if (contractSheet) {
+      let cData = contractSheet.getDataRange().getValues();
+      let cDisplayData = contractSheet.getDataRange().getDisplayValues(); 
+      for (let i = 3; i < cData.length; i++) { 
+        let row = cData[i];
+        let displayRow = cDisplayData[i];
+        if (!row[7]) continue; 
+        
+        clientContracts.push({
+          start: row[3] instanceof Date ? Utilities.formatDate(row[3], Session.getScriptTimeZone(), "yyyy-MM-dd") : row[3],
+          end: row[4] instanceof Date ? Utilities.formatDate(row[4], Session.getScriptTimeZone(), "yyyy-MM-dd") : row[4],
+          client: String(row[7]).trim(),
+          isPrivateLabel: row[8] === true || String(row[8]).toLowerCase() === 'true',
+          payTerms: `${row[10] || 0} Days - ${row[11] || ''}`,
+          fees: {
+            monthlyFixed: parseFloat(row[14]) || 0,
+            monthlyPct: String(displayRow[16] || displayRow[18] || "0"), // Captures string exact value
+            q1Fixed: parseFloat(row[20]) || 0,
+            q2Fixed: parseFloat(row[22]) || 0,
+            q3Fixed: parseFloat(row[24]) || 0,
+            q4Fixed: parseFloat(row[26]) || 0,
+            quarterlyPct: String(displayRow[28] || "0"),
+            annualFixed: parseFloat(row[30]) || 0,
+            annualPct: String(displayRow[32] || "0")
+          }
+        });
+      }
+    }
+
+    // 4. Extract JSON Sales Volumes from Google Drive
+    let files = DriveApp.getFilesByName("Tawoos_Cache_Cadence.json");
+    if (files.hasNext()) {
+      let file = files.next();
+      let jsonData = JSON.parse(file.getBlob().getDataAsString());
+      if (jsonData && jsonData.data) {
+        jsonData.data.forEach(record => {
+          let cName = String(record.client).trim();
+          if (!clientVolumes[cName]) clientVolumes[cName] = { totalQty: 0, items: {} };
+          
+          clientVolumes[cName].totalQty += (parseFloat(record.qty) || 0);
+        });
+      }
+    }
+
+  } catch (e) {
+    console.error("Error fetching commercial terms: " + e.message);
+  }
+
+  return { 
+    products, clients, signatories, nextSeq, docLogs, userName: currentUser, 
+    commercialData: { invoiceDiscounts, clientContracts, clientVolumes } 
+  };
 }
 
 function addNewClient(clientName, pin) {

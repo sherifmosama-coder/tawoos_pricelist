@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f8fafc; transition: all 0.3s ease; }
@@ -518,6 +519,10 @@
           <i class="fas fa-check-circle mr-2"></i> Approve Document
         </button>
 
+        <button id="exportExcelBtn" onclick="exportToExcel()" class="hidden bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 shadow transition-all items-center">
+          <i class="fas fa-file-excel mr-2"></i> Export Excel
+        </button>
+
         <button id="printBtn" onclick="window.print()" disabled class="bg-slate-200 text-slate-400 px-6 py-2 rounded-lg font-bold cursor-not-allowed flex items-center transition-all">
           <i class="fas fa-print mr-2"></i> Print Document
         </button>
@@ -720,6 +725,147 @@
     // Engine State
     let currentMode = 'new';
     let currentEditRef = null;
+    let lastApprovedRef = null;
+
+    // --- EXCEL EXPORT ENGINE (WITH STYLING) ---
+    function exportToExcel(sourceRef = null) {
+       let docDate, client, refNum, isPromo, currency, notesHtml;
+       let itemsData = [];
+       let hasVat = false;
+       let hasRsp = false;
+
+       // Scenario 1: Exporting from Dashboard Archive
+       if (sourceRef && sourceRef !== currentEditRef && sourceRef !== lastApprovedRef) {
+           let doc = globalDocLogs.find(d => d.refNum === sourceRef);
+           if(!doc) return customAlert('Document data syncing, please wait a moment.', 'warning');
+           
+           docDate = new Date(doc.docDate).toLocaleDateString();
+           client = doc.client;
+           refNum = doc.refNum;
+           isPromo = doc.isPromo === 'Yes';
+           currency = doc.currency;
+           notesHtml = doc.notes || '';
+           
+           hasVat = doc.items.some(i => parseFloat(i.vatRate) > 0);
+           hasRsp = doc.items.some(i => parseFloat(i.rsp) > 0);
+           
+           doc.items.forEach(item => {
+              let p = globalProducts.find(x => x.arabicName === item.productAr) || {};
+              itemsData.push({
+                  pName: `${p.englishName || ''} | ${p.arabicName || item.productAr}`,
+                  barcode: p.barcode || '',
+                  desc: `${p.packDescEn || ''} | ${p.packDescAr || ''}`,
+                  unitCap: p.unitCapacity || 1,
+                  price: isPromo ? parseFloat(item.promoPrice) : parseFloat(item.offPrice),
+                  vatRate: parseFloat(item.vatRate) || 0,
+                  rsp: parseFloat(item.rsp) || 0
+              });
+           });
+       } else {
+           // Scenario 2: Exporting from Live Engine Screen
+           docDate = new Date(document.getElementById('docDate').value).toLocaleDateString();
+           client = document.getElementById('clientSelect').value;
+           let clientEng = document.getElementById('clientEng').value;
+           client = clientEng ? `${clientEng} | ${client}` : client;
+           refNum = currentMode === 'view' ? currentEditRef : (lastApprovedRef || "Draft"); 
+           isPromo = document.getElementById('docType').value === 'promo';
+           currency = document.getElementById('currency').value;
+           notesHtml = document.getElementById('documentNotes').innerHTML;
+           
+           hasVat = document.getElementById('toggleVAT').checked;
+           hasRsp = document.getElementById('toggleRSP').checked;
+           
+           selectedProducts.forEach(prod => {
+              itemsData.push({
+                  pName: `${prod.englishName || ''} | ${prod.arabicName || ''}`,
+                  barcode: prod.barcode || '',
+                  desc: `${prod.packDescEn || ''} | ${prod.packDescAr || ''}`,
+                  unitCap: prod.unitCapacity || 1,
+                  price: isPromo ? parseFloat(prod.promoPrice) : parseFloat(prod.officialPrice),
+                  vatRate: hasVat ? parseFloat(prod.taxRate) : 0,
+                  rsp: parseFloat(prod.rsp) || 0
+              });
+           });
+       }
+       
+       let wsData = [];
+       wsData.push(["PRICE LIST / عرض أسعار"]);
+       wsData.push(["Reference Number:", refNum]);
+       wsData.push(["Issuance Date:", docDate]);
+       wsData.push(["Client:", client]);
+       wsData.push([]); 
+       
+       let headers = ["Product Name", "Barcode", "Pack Description", "Unit Cap.", `Price (${currency})`];
+       if (hasVat) {
+          headers.push(`Unit + VAT (${currency})`);
+          headers.push(`Piece + VAT (${currency})`);
+       } else {
+          headers.push(`Piece Price (${currency})`);
+       }
+       if (hasRsp) headers.push("RSP");
+       wsData.push(headers);
+       
+       itemsData.forEach(item => {
+          let unitVatPrice = item.price + (item.price * item.vatRate);
+          let piecePriceCalc = unitVatPrice / item.unitCap;
+          let piecePriceNoVat = item.price / item.unitCap;
+
+          let row = [item.pName, item.barcode, item.desc, item.unitCap, item.price];
+          if (hasVat) { row.push(unitVatPrice); row.push(piecePriceCalc); } 
+          else { row.push(piecePriceNoVat); }
+          if (hasRsp) row.push(item.rsp);
+          wsData.push(row);
+       });
+       
+       wsData.push([]); 
+       wsData.push(["Notes & Terms:"]);
+       
+       let tempDiv = document.createElement("div");
+       tempDiv.innerHTML = notesHtml;
+       let cleanNotes = tempDiv.innerText.trim();
+       if (cleanNotes) {
+          let noteLines = cleanNotes.split('\n');
+          noteLines.forEach(line => {
+              if (line.trim() !== '') wsData.push([line.trim()]);
+          });
+       }
+       
+       let wb = XLSX.utils.book_new();
+       let ws = XLSX.utils.aoa_to_sheet(wsData);
+       
+       for (let i in ws) {
+         if (i[0] === '!') continue; 
+         let col = i.replace(/[0-9]/g, '');
+         let row = parseInt(i.replace(/\D/g, ''));
+         
+         if (row === 1) { 
+           ws[i].s = { font: { bold: true, sz: 16, color: { rgb: "1E3A8A" } }, alignment: { horizontal: "center" } };
+         } else if (row >= 2 && row <= 4) { 
+           if (col === 'A') ws[i].s = { font: { bold: true, color: { rgb: "64748B" } } };
+           else ws[i].s = { font: { bold: true } };
+         } else if (row === 6) { 
+           ws[i].s = { 
+             font: { bold: true, color: { rgb: "FFFFFF" } }, 
+             fill: { fgColor: { rgb: "1E3A8A" } }, 
+             alignment: { horizontal: "center", vertical: "center" },
+             border: { top: {style:"thin"}, bottom: {style:"thin"}, left: {style:"thin"}, right: {style:"thin"} }
+           };
+         } else if (row > 6 && row <= 6 + itemsData.length) { 
+           ws[i].s = {
+             border: { top: {style:"thin", color:{rgb:"CBD5E1"}}, bottom: {style:"thin", color:{rgb:"CBD5E1"}}, left: {style:"thin", color:{rgb:"CBD5E1"}}, right: {style:"thin", color:{rgb:"CBD5E1"}} },
+             alignment: { vertical: "center", wrapText: true }
+           };
+           if(typeof ws[i].v === 'number' && col !== 'D') ws[i].z = '#,##0.00';
+         } else if (row > 6 + itemsData.length && ws[i].v === "Notes & Terms:") {
+           ws[i].s = { font: { bold: true, color: { rgb: "1E3A8A" } } };
+         }
+       }
+       
+       ws['!merges'] = [ { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } } ];
+       ws['!cols'] = [{wch: 45}, {wch: 15}, {wch: 35}, {wch: 10}, {wch: 15}, {wch: 15}, {wch: 15}];
+       XLSX.utils.book_append_sheet(wb, ws, "PriceList");
+       XLSX.writeFile(wb, `${refNum}.xlsx`);
+    }
 
     // Initialize App Environment
     window.onload = function() {
@@ -892,7 +1038,7 @@
             grouped[r.refNum] = {
               refNum: r.refNum, docDate: r.docDate, client: r.client, isPromo: r.isPromo,
               promoQty: r.promoQty, promoStart: r.promoStart, promoEnd: r.promoEnd,
-              currency: r.currency, sendTo: r.sendTo, signatory: r.signatory, createdBy: r.createdBy, items: []
+              currency: r.currency, sendTo: r.sendTo, signatory: r.signatory, createdBy: r.createdBy, notes: r.notes, items: []
             };
           }
           grouped[r.refNum].items.push(r);
@@ -1101,7 +1247,8 @@
             <td class="px-6 py-4 font-semibold text-slate-600">${dateStr}</td>
             <td class="px-6 py-4 text-lg font-black text-blue-900">${doc.client}</td>
             <td class="px-6 py-4">${badge}<br><span class="text-xs text-slate-400 mt-1 block">${doc.items.length} Items: ${pList}</span></td>
-            <td class="px-6 py-4 text-center space-x-2 rtl:space-x-reverse">
+            <td class="px-6 py-4 text-center space-x-2 rtl:space-x-reverse whitespace-nowrap">
+              <button onclick="exportToExcel('${doc.refNum}')" class="text-green-600 hover:text-green-800 bg-green-50 p-2 rounded-lg transition-colors" title="Export Excel"><i class="fas fa-file-excel"></i></button>
               <button onclick="openEngine('view', '${doc.refNum}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg" title="Print Preview"><i class="fas fa-print"></i></button>
               <button onclick="openEngine('edit', '${doc.refNum}')" class="text-amber-600 hover:text-amber-900 bg-amber-50 p-2 rounded-lg" title="Edit & Update"><i class="fas fa-edit"></i></button>
               <button onclick="openEngine('copy', '${doc.refNum}')" class="text-emerald-600 hover:text-emerald-900 bg-emerald-50 p-2 rounded-lg" title="Duplicate"><i class="fas fa-copy"></i></button>
@@ -1115,6 +1262,7 @@
     function openEngine(mode, refNum = null) {
       currentMode = mode;
       currentEditRef = refNum;
+      if (mode === 'new' || mode === 'copy') lastApprovedRef = null; // Clear old approved IDs
       
       // Visual transition handler
       if (mode === 'view') {
@@ -1151,6 +1299,9 @@
       document.getElementById('printBtn').classList.remove('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
       document.getElementById('approveBtn').classList.remove('hidden');
       
+      const exportBtn = document.getElementById('exportExcelBtn');
+      if (exportBtn) { exportBtn.classList.add('hidden'); exportBtn.classList.remove('flex'); }
+      
       if (mode === 'new') {
         title.innerHTML = 'New Price List';
         renderProductTable();
@@ -1168,6 +1319,9 @@
         document.getElementById('printBtn').disabled = false;
         document.getElementById('printBtn').classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
         document.getElementById('printBtn').classList.add('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
+        
+        const exportBtn = document.getElementById('exportExcelBtn');
+        if (exportBtn) { exportBtn.classList.remove('hidden'); exportBtn.classList.add('flex'); }
       } else if (mode === 'edit') {
         title.innerHTML = `Editing Document <span class="text-amber-500">#${refNum}</span>`;
       } else if (mode === 'copy') {
@@ -1606,7 +1760,16 @@
       const hasVat = document.getElementById('toggleVAT').checked;
       const hasRsp = document.getElementById('toggleRSP').checked;
       const currency = document.getElementById('currency').value;
-      const refNum = generateReferenceNumber(isPromo, hasVat);
+      
+      // Logic to lock the correct Reference Number based on current engine state
+      let refNum;
+      if (currentMode === 'view' || currentMode === 'edit') {
+        refNum = currentEditRef;
+      } else if (lastApprovedRef) {
+        refNum = lastApprovedRef;
+      } else {
+        refNum = generateReferenceNumber(isPromo, hasVat);
+      }
 
       // UI Icons (With XML namespace for flawless rendering)
       const icons = {
@@ -1746,7 +1909,7 @@
         let piecePriceNoVat = basePrice / (prod.unitCapacity || 1);
 
         // This prevents individual rows from splitting
-        // Added dir="ltr" so Arabic RTL layout doesn't push the first EAN digit out of bounds
+        // Added dir="ltr" to protect barcode from Arabic layout flipping!
         let barcodeCell = prod.barcode ? `<svg class="ean-barcode" dir="ltr" data-value="${prod.barcode}"></svg>` : '-';
         let tr = `<tr style="page-break-inside: avoid;" class="hover:bg-slate-50">
           <td class="p-2 text-left rtl:text-right font-semibold text-slate-800">${pName}</td>
@@ -1927,6 +2090,7 @@
       } else {
         refNum = generateReferenceNumber(isPromo, hasVat); // Generate new for 'new' or 'copy'
       }
+      lastApprovedRef = refNum; // Make available for immediate Excel Export
       
       const isAr = document.getElementById('previewLang').checked;
       const element = document.getElementById('pdfPrintArea');
@@ -2021,6 +2185,9 @@
            printBtn.disabled = false;
            printBtn.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
            printBtn.classList.add('bg-blue-900', 'text-white', 'hover:bg-blue-800', 'shadow-lg');
+           
+           const exportBtn = document.getElementById('exportExcelBtn');
+           if (exportBtn) { exportBtn.classList.remove('hidden'); exportBtn.classList.add('flex'); }
            
            customAlert(currentMode === 'edit' ? 'Document Successfully Updated and History Logged.' : 'Document Approved! File saved to Google Drive.', 'success');
            

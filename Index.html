@@ -165,6 +165,9 @@
           <p id="loading-indicator-dash" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Records...</p>
         </div>
       </div>
+      <button onclick="openCommercialDirectory()" class="w-full md:w-auto bg-indigo-50 text-indigo-700 px-5 py-3 rounded-xl font-bold hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center justify-center">
+        <i class="fas fa-book-open mr-2 text-indigo-500"></i> Contracts
+      </button>
       <button onclick="openEngine('new')" class="mt-4 md:mt-0 bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-blue-100 btn-hover flex items-center">
         <i class="fas fa-plus mr-2 rtl:ml-2"></i> Create Price List
       </button>
@@ -219,6 +222,9 @@
   <div id="engineView" class="hidden max-w-5xl mx-auto space-y-6 no-print">
     <div class="sticky top-4 z-40 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 hover-card transition-all">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
+        <button type="button" onclick="openCommercialDirectory()" class="px-4 py-2.5 text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-xl transition-colors flex items-center shadow-sm">
+          <i class="fas fa-book-open md:mr-2"></i> <span class="hidden md:inline">Contracts</span>
+        </button>
         <button onclick="closeEngine()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition">
           <i class="fas fa-arrow-left"></i> Back
         </button>
@@ -414,6 +420,13 @@
             <input type="text" id="sendTo" required placeholder="Name" class="w-full p-3 bg-white border-y border-r border-l-4 border-l-red-500 border-slate-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-900 text-sm font-bold">
           </div>
         </div>
+
+        <div id="commercialInsightsPanel" class="hidden bg-indigo-50/80 border border-indigo-200 rounded-2xl p-5 mt-2 shadow-inner transition-all duration-300">
+                  <h4 class="font-black text-indigo-900 mb-3 flex items-center text-sm uppercase tracking-wider">
+                    <i class="fas fa-chart-pie mr-2 rtl:ml-2 text-indigo-500"></i> Net-Net Insights (Commercial Terms)
+                  </h4>
+                  <div id="commercialInsightsContent" class="text-sm text-indigo-800 space-y-3"></div>
+                </div>
       </div>
 
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-6 hover-card">
@@ -485,6 +498,27 @@
           Preview Document
         </button>
       </div>
+
+    </div>
+  </div>
+
+  <div id="commercialDirectoryModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4 transition-opacity">
+    <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <div class="bg-indigo-900 p-5 flex justify-between items-center text-white">
+        <h3 class="text-xl font-black flex items-center tracking-wide"><i class="fas fa-book-open mr-3"></i> Commercial Agreements Directory</h3>
+        <button onclick="closeCommercialDirectory()" class="text-indigo-200 hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      
+      <div class="p-4 bg-white border-b border-slate-200 flex space-x-4">
+        <div class="relative flex-1">
+          <i class="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
+          <input type="text" id="commDirSearch" onkeyup="filterCommercialDirectory()" placeholder="Search for a client..." class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block pl-11 py-3 transition-colors">
+        </div>
+      </div>
+      
+      <div id="commDirList" class="p-5 overflow-y-auto flex-1 space-y-4 bg-slate-100">
+        </div>
 
     </div>
   </div>
@@ -719,8 +753,9 @@
     let globalProducts = [];
     let selectedProducts = [];
     let globalSignatories = [];
-    let globalDocLogs = []; // Stores grouped dashboard items
+    let globalDocLogs = [];
     let nextSeqNumber = 1;
+    let globalCommercial = { invoiceDiscounts: [], clientContracts: [], clientVolumes: {} };
     
     // Engine State
     let currentMode = 'new';
@@ -865,6 +900,171 @@
        ws['!cols'] = [{wch: 45}, {wch: 15}, {wch: 35}, {wch: 10}, {wch: 15}, {wch: 15}, {wch: 15}];
        XLSX.utils.book_append_sheet(wb, ws, "PriceList");
        XLSX.writeFile(wb, `${refNum}.xlsx`);
+    }
+
+    // --- COMMERCIAL DIRECTORY ENGINE (MODAL) ---
+    function openCommercialDirectory() {
+      renderCommercialDirectory();
+      document.getElementById('commercialDirectoryModal').classList.remove('hidden');
+    }
+
+    function closeCommercialDirectory() {
+      document.getElementById('commercialDirectoryModal').classList.add('hidden');
+    }
+
+    function filterCommercialDirectory() {
+      const query = document.getElementById('commDirSearch').value.toLowerCase();
+      const cards = document.querySelectorAll('.comm-dir-card');
+      cards.forEach(card => {
+        const clientName = card.getAttribute('data-client').toLowerCase();
+        if (clientName.includes(query)) card.classList.remove('hidden');
+        else card.classList.add('hidden');
+      });
+    }
+
+    function renderCommercialDirectory() {
+      const container = document.getElementById('commDirList');
+      let html = '';
+
+      // Collect all unique clients who have either a discount or a contract
+      let activeClients = new Set();
+      globalCommercial.invoiceDiscounts.forEach(d => activeClients.add(d.client));
+      globalCommercial.clientContracts.forEach(c => activeClients.add(c.client));
+
+      if (activeClients.size === 0) {
+        container.innerHTML = `<div class="text-center p-10 text-slate-500"><i class="fas fa-folder-open text-4xl mb-3 text-slate-300 block"></i> No commercial agreements found.</div>`;
+        return;
+      }
+
+      // Build a card for each active client
+      Array.from(activeClients).sort().forEach(clientName => {
+        let activeDiscounts = globalCommercial.invoiceDiscounts.find(d => d.client === clientName);
+        let contract = globalCommercial.clientContracts.find(c => c.client === clientName);
+        let volData = globalCommercial.clientVolumes[clientName];
+        let totalVol = volData ? volData.totalQty : 0;
+
+        let cardHtml = `<div class="comm-dir-card bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow" data-client="${clientName}">
+          <h4 class="text-lg font-black text-slate-800 mb-4 border-b border-slate-100 pb-2 flex items-center"><i class="fas fa-building text-indigo-500 mr-2"></i> ${clientName}</h4>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">`;
+
+        // Left Column: Invoice Discounts
+        if (activeDiscounts && Object.keys(activeDiscounts.products).length > 0) {
+          cardHtml += `<div><strong class="block text-indigo-900 mb-2 text-xs uppercase tracking-wider"><i class="fas fa-tags text-green-500 mr-1"></i> Invoice Discounts</strong><div class="bg-slate-50 rounded-lg p-3 space-y-1 text-xs border border-slate-100">`;
+          for (let p in activeDiscounts.products) {
+            cardHtml += `<div class="flex justify-between border-b border-slate-200 last:border-0 pb-1 last:pb-0 pt-1 first:pt-0"><span class="truncate pr-2 text-slate-700">${p}</span> <span class="font-bold text-green-600 whitespace-nowrap">${activeDiscounts.products[p]}</span></div>`;
+          }
+          cardHtml += `</div></div>`;
+        } else {
+          cardHtml += `<div><strong class="block text-slate-400 mb-2 text-xs uppercase tracking-wider"><i class="fas fa-tags mr-1"></i> Invoice Discounts</strong><p class="text-xs text-slate-500 italic bg-slate-50 p-3 rounded-lg border border-slate-100">No direct invoice discounts mapped.</p></div>`;
+        }
+
+        // Right Column: Contracts & Back-Margins
+        if (contract) {
+          let scope = contract.isPrivateLabel ? 'Private Label (علامة خاصة)' : 'Own-Brand (علامة الطاووس)';
+          let validPct = (val) => val && val !== "0" && val !== "0%" && val !== "0.00%";
+
+          cardHtml += `<div><strong class="block text-indigo-900 mb-2 text-xs uppercase tracking-wider"><i class="fas fa-file-contract text-amber-500 mr-1"></i> Contract & Margins</strong>
+            <div class="bg-indigo-50/50 rounded-lg p-3 text-xs border border-indigo-100">
+            <p class="font-bold text-indigo-900 mb-2 pb-1 border-b border-indigo-100">${scope}</p>
+            <ul class="space-y-1.5 text-indigo-800">
+              ${contract.payTerms && contract.payTerms !== '0 Days - ' ? `<li><i class="fas fa-handshake text-indigo-400 mr-1 w-4 text-center"></i> <span class="text-indigo-900">Terms:</span> <span class="font-bold">${contract.payTerms}</span></li>` : ''}
+              ${validPct(contract.fees.monthlyPct) ? `<li><i class="fas fa-percentage text-indigo-400 mr-1 w-4 text-center"></i> <span class="text-indigo-900">Monthly:</span> <span class="font-bold text-red-600">${contract.fees.monthlyPct}</span></li>` : ''}
+              ${validPct(contract.fees.quarterlyPct) ? `<li><i class="fas fa-percentage text-indigo-400 mr-1 w-4 text-center"></i> <span class="text-indigo-900">Quarterly:</span> <span class="font-bold text-red-600">${contract.fees.quarterlyPct}</span></li>` : ''}
+              ${validPct(contract.fees.annualPct) ? `<li><i class="fas fa-percentage text-indigo-400 mr-1 w-4 text-center"></i> <span class="text-indigo-900">Annual:</span> <span class="font-bold text-red-600">${contract.fees.annualPct}</span></li>` : ''}
+            </ul>`;
+
+          let totalFixedAnnual = (contract.fees.monthlyFixed * 12) + (contract.fees.q1Fixed + contract.fees.q2Fixed + contract.fees.q3Fixed + contract.fees.q4Fixed) + contract.fees.annualFixed;
+          if (totalFixedAnnual > 0) {
+             if (totalVol > 0) {
+                let costPerUnit = (totalFixedAnnual / totalVol).toFixed(2);
+                cardHtml += `<div class="mt-2 pt-2 border-t border-indigo-100 text-[11px] text-red-700 leading-relaxed"><i class="fas fa-calculator text-red-500 mr-1"></i> Fixed Fees: <strong>${totalFixedAnnual.toLocaleString()}</strong> EGP/Yr.<br><span class="opacity-80 ml-4">Vol Impact: <strong>${costPerUnit}</strong> EGP / unit.</span></div>`;
+             } else {
+                cardHtml += `<div class="mt-2 pt-2 border-t border-indigo-100 text-[11px] text-amber-700 leading-relaxed"><i class="fas fa-info-circle text-amber-500 mr-1"></i> Fixed Fees: <strong>${totalFixedAnnual.toLocaleString()}</strong> EGP/Yr.<br><span class="opacity-80 ml-4">Volume history missing for impact.</span></div>`;
+             }
+          }
+          cardHtml += `</div></div>`;
+        } else {
+          cardHtml += `<div><strong class="block text-slate-400 mb-2 text-xs uppercase tracking-wider"><i class="fas fa-file-contract mr-1"></i> Contract & Margins</strong><p class="text-xs text-slate-500 italic bg-slate-50 p-3 rounded-lg border border-slate-100">No active back-margin contracts.</p></div>`;
+        }
+
+        cardHtml += `</div></div>`; // Close grid & card
+        html += cardHtml;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // --- COMMERCIAL INSIGHTS ENGINE ---
+    function checkCommercialInsights() {
+      let clientNameAr = document.getElementById('clientSelect').value;
+      let panel = document.getElementById('commercialInsightsPanel');
+      let content = document.getElementById('commercialInsightsContent');
+      
+      if (!clientNameAr) {
+        panel.classList.add('hidden');
+        return;
+      }
+
+      let html = '';
+      let hasData = false;
+
+      // 1. Check On-Invoice Discounts
+      let activeDiscounts = globalCommercial.invoiceDiscounts.find(d => d.client === clientNameAr);
+      if (activeDiscounts && Object.keys(activeDiscounts.products).length > 0) {
+        hasData = true;
+        html += `
+          <div class="bg-white rounded-xl p-3 border border-indigo-100 shadow-sm">
+            <strong class="block text-indigo-900 mb-2 text-xs uppercase tracking-wider"><i class="fas fa-tags text-green-500 mr-1"></i> Active Invoice Discounts</strong>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-1 text-xs">`;
+        for (let p in activeDiscounts.products) {
+          html += `<div class="flex justify-between border-b border-slate-100 py-1"><span class="truncate pr-2">${p}</span> <span class="font-bold text-green-600 whitespace-nowrap">${activeDiscounts.products[p]}</span></div>`;
+        }
+        html += `</div></div>`;
+      }
+
+      // 2. Check Contracts & Back-Margins
+      let contract = globalCommercial.clientContracts.find(c => c.client === clientNameAr);
+      if (contract) {
+        hasData = true;
+        let volData = globalCommercial.clientVolumes[clientNameAr];
+        let totalVol = volData ? volData.totalQty : 0;
+        let scope = contract.isPrivateLabel ? 'Private Label (علامة خاصة)' : 'Own-Brand (علامة الطاووس)';
+        
+        let validPct = (val) => val && val !== "0" && val !== "0%" && val !== "0.00%";
+
+        html += `
+          <div class="bg-white rounded-xl p-3 border border-indigo-100 shadow-sm mt-3">
+            <strong class="block text-indigo-900 mb-2 text-xs uppercase tracking-wider"><i class="fas fa-file-contract text-amber-500 mr-1"></i> Back-Margins & Terms (${scope})</strong>
+            <ul class="list-none space-y-1 text-xs">
+              ${contract.payTerms && contract.payTerms !== '0 Days - ' ? `<li><i class="fas fa-handshake text-slate-400 mr-1 w-4 text-center"></i> <span class="text-slate-600">Payment Terms:</span> <span class="font-bold">${contract.payTerms}</span></li>` : ''}
+              ${validPct(contract.fees.monthlyPct) ? `<li><i class="fas fa-percentage text-slate-400 mr-1 w-4 text-center"></i> <span class="text-slate-600">Monthly Margin:</span> <span class="font-bold text-red-600">${contract.fees.monthlyPct}</span></li>` : ''}
+              ${validPct(contract.fees.quarterlyPct) ? `<li><i class="fas fa-percentage text-slate-400 mr-1 w-4 text-center"></i> <span class="text-slate-600">Quarterly Margin:</span> <span class="font-bold text-red-600">${contract.fees.quarterlyPct}</span></li>` : ''}
+              ${validPct(contract.fees.annualPct) ? `<li><i class="fas fa-percentage text-slate-400 mr-1 w-4 text-center"></i> <span class="text-slate-600">Annual Margin:</span> <span class="font-bold text-red-600">${contract.fees.annualPct}</span></li>` : ''}
+            </ul>`;
+
+        let totalFixedAnnual = (contract.fees.monthlyFixed * 12) + (contract.fees.q1Fixed + contract.fees.q2Fixed + contract.fees.q3Fixed + contract.fees.q4Fixed) + contract.fees.annualFixed;
+        if (totalFixedAnnual > 0) {
+          if (totalVol > 0) {
+            let costPerUnit = (totalFixedAnnual / totalVol).toFixed(2);
+            html += `<div class="mt-3 bg-red-50 p-2 rounded-lg border border-red-100 text-xs">
+                      <p class="font-bold text-red-800 mb-1"><i class="fas fa-calculator mr-1"></i> Fixed Fees Impact Estimate:</p>
+                      <p class="text-red-700">Total Fixed Fees: <strong>${totalFixedAnnual.toLocaleString()} EGP/Year</strong>. Based on historical volume (${totalVol.toLocaleString()} units), this creates an estimated deduction margin of <strong>${costPerUnit} EGP per unit</strong> sold.</p>
+                     </div>`;
+          } else {
+            html += `<div class="mt-3 bg-amber-50 p-2 rounded-lg border border-amber-100 text-xs text-amber-800">
+                      <i class="fas fa-info-circle mr-1"></i> Total Fixed Fees: <strong>${totalFixedAnnual.toLocaleString()} EGP/Year</strong>. (Not enough volume history to calculate per-unit margin impact).
+                     </div>`;
+          }
+        }
+        html += `</div>`;
+      }
+
+      if (hasData) {
+        content.innerHTML = html;
+        panel.classList.remove('hidden');
+      } else {
+        panel.classList.add('hidden');
+      }
     }
 
     // Initialize App Environment
@@ -1029,6 +1229,7 @@
       globalProducts = data.products;
       globalSignatories = data.signatories;
       nextSeqNumber = data.nextSeq;
+      globalCommercial = data.commercialData || { invoiceDiscounts: [], clientContracts: [], clientVolumes: {} };
       
       // Group Raw Logs by RefNum
       const grouped = {};
@@ -1068,7 +1269,7 @@
       // 2. POPULATE CLIENTS
       data.clients.forEach(client => {
          let safeClient = client.replace(/'/g, "\\'"); // Escape quotes for safety
-         if(clientList) clientList.insertAdjacentHTML('beforeend', `<li class="combo-item p-3 hover:bg-blue-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0" onmousedown="selectCombo('clientSelect', 'clientSearch', 'clientList', '${safeClient}', '${safeClient}')">${client}</li>`);
+         if(clientList) clientList.insertAdjacentHTML('beforeend', `<li class="combo-item p-3 hover:bg-blue-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0" onmousedown="selectCombo('clientSelect', 'clientSearch', 'clientList', '${safeClient}', '${safeClient}'); setTimeout(checkCommercialInsights, 100);">${client}</li>`);
          if(filterClientList) filterClientList.insertAdjacentHTML('beforeend', `<li class="combo-item p-3 hover:bg-blue-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0" onmousedown="selectCombo('filterClient', 'filterClientSearch', 'filterClientList', '${safeClient.toLowerCase()}', '${safeClient}', 'renderDashboardTable')">${client}</li>`);
       });
 
@@ -1291,6 +1492,12 @@
       document.getElementById('promoSettings').classList.add('hidden');
       document.getElementById('sigDisplay').classList.add('hidden');
       
+      // Ensure Commercial Insights are hidden on new docs
+      if(document.getElementById('commercialInsightsPanel')) {
+        document.getElementById('commercialInsightsPanel').classList.add('hidden');
+        document.getElementById('commercialInsightsContent').innerHTML = '';
+      }
+      
       const title = document.getElementById('engineTitle');
       
       // Reset Default UI Buttons
@@ -1335,6 +1542,8 @@
       document.getElementById('clientSelect').value = doc.client;
       if(document.getElementById('clientSearch')) document.getElementById('clientSearch').value = doc.client;
       document.getElementById('sendTo').value = doc.sendTo;
+      
+      checkCommercialInsights(); // Trigger panel for existing key accounts
 
       // Sync Currency Segmented Control
       let currVal = doc.currency || 'EGP';

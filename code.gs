@@ -330,13 +330,37 @@ function getInitialData(pin) {
       }
     }
 
+    // 5. Extract Costing Data from Cache
+    var costingData = {}; // FIX: Changed 'let' to 'var' so it survives outside the try/catch block!
+    let costFiles = DriveApp.getFilesByName("Tawoos_Cache_Costing.json");
+    if (costFiles.hasNext()) {
+        let costFile = costFiles.next();
+        let costJson = JSON.parse(costFile.getBlob().getDataAsString());
+        if (costJson && costJson.data) {
+            costJson.data.forEach(record => {
+                let pName = String(record.product).trim();
+                // Pick worst-case scenario (highest) between Actual and Market cost
+                let cost = Math.max(parseFloat(record.unitActual) || 0, parseFloat(record.unitMarket) || 0);
+                let dateStr = record.date;
+                
+                if (!costingData[pName]) costingData[pName] = [];
+                costingData[pName].push({ date: dateStr, cost: cost });
+            });
+            // Sort history by date descending (newest first)
+            for (let p in costingData) {
+                costingData[p].sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+        }
+    }
+
   } catch (e) {
     console.error("Error fetching commercial terms: " + e.message);
   }
 
   return { 
     products, clients, signatories, nextSeq, docLogs, userName: currentUser, 
-    commercialData: { invoiceDiscounts, clientContracts, clientVolumes } 
+    commercialData: { invoiceDiscounts, clientContracts, clientVolumes },
+    costingData: costingData
   };
 }
 
@@ -602,9 +626,9 @@ function analyzeContractWithAI(payload) {
   try {
     // 1. YOUR NEW FREE API KEYS (Get these from aistudio.google.com, console.groq.com, openrouter.ai)
     const API_KEYS = {
-      GEMINI: "******",
+      GEMINI: "*****",
       GROQ: "*******",
-      OPENROUTER: "********"
+      OPENROUTER: "******"
     };
 
     let documentString = "";

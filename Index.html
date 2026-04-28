@@ -148,8 +148,13 @@
 
   <div id="dashboardView" class="hidden max-w-7xl mx-auto space-y-6 no-print">
   <div class="bg-gradient-to-r from-blue-900 to-slate-800 rounded-3xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden mt-2">
-          <div class="relative z-10">
-            <h1 id="userGreeting" class="text-3xl md:text-4xl font-black mb-2 tracking-tight text-white">Welcome!</h1>
+          <div class="relative z-10 flex justify-between items-start md:items-center">
+            <h1 id="userGreeting" class="text-3xl md:text-4xl font-black tracking-tight text-white">Welcome!</h1>
+            
+            <button id="syncDataBtn" onclick="syncMasterData()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg font-bold border border-white/20 transition-all shadow-sm flex items-center text-xs backdrop-blur-sm shrink-0" title="Refresh Data from Sheets">
+              <i class="fas fa-sync-alt text-blue-300 mr-1.5"></i> Sync
+            </button>
+            
           </div>
           <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
           <div class="absolute -left-10 -bottom-20 w-48 h-48 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
@@ -165,9 +170,6 @@
         </div>
       </div>
       <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3 rtl:space-x-reverse w-full md:w-auto">
-        <button id="syncDataBtn" onclick="syncMasterData()" class="w-full md:w-auto bg-white text-slate-600 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 border border-slate-200 transition-all flex items-center justify-center shadow-sm" title="Refresh Data from Sheets">
-          <i class="fas fa-sync-alt text-blue-500 md:mr-2"></i> <span class="hidden md:inline">Sync</span>
-        </button>
         <button onclick="openContractAnalyzer()" class="w-full md:w-auto bg-purple-50 text-purple-700 px-5 py-3 rounded-xl font-bold hover:bg-purple-100 border border-purple-200 transition-all flex items-center justify-center shadow-sm" title="AI Contract Analyzer">
           <i class="fas fa-file-contract text-purple-500 md:mr-2"></i> <span class="hidden md:inline">Contract Analyzer</span>
         </button>
@@ -956,6 +958,7 @@
     let globalDocLogs = [];
     let nextSeqNumber = 1;
     let globalCommercial = { invoiceDiscounts: [], clientContracts: [], clientVolumes: {} };
+    let globalCostingData = {};
     
     // Engine State
     let currentMode = 'new';
@@ -1394,7 +1397,6 @@
     function updateDashboardGreeting(userName) {
       const now = new Date();
       const hour = now.getHours();
-      const day = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 4 = Thursday
 
       // 1. Set Greeting based on local time
       let timeGreeting = "Good Evening";
@@ -1403,44 +1405,6 @@
       
       let firstName = userName ? userName.split(' ')[0] : 'Champion';
       document.getElementById('userGreeting').innerText = `${timeGreeting}, ${firstName}!`;
-
-      // 2. The 10-Quote Bank (Categorized by Egyptian Work Week)
-      let quoteBank = [];
-      
-      if (day === 0 || day === 1) {
-        // Sunday & Monday (Start of Week - Pipeline & Pacing)
-        quoteBank = [
-          "A new week means new targets. Set the pace today and the rest of the week will follow.",
-          "The deals you close on Thursday are born from the calls you make today. Build that pipeline!",
-          "Start strong. The energy you bring on day one sets the standard for the entire week."
-        ];
-      } else if (day === 4) {
-        // Thursday (End of Week - Closing & Urgency)
-        quoteBank = [
-          "Finish strong! Push through the final objections and close out the week on top.",
-          "Thursday is for closers. Review your pipeline and make those final asks count.",
-          "Don't leave deals on the table for next week. Create urgency and ask for the business today!"
-        ];
-      } else {
-        // Tuesday & Wednesday (Mid-Week)
-        if (hour < 12) {
-           // Mid-Week Morning (Energy & Conviction)
-           quoteBank = [
-             "Momentum is everything. Keep the energy high and attack the morning!",
-             "Your attitude determines your altitude. Bring absolute conviction to every client meeting today."
-           ];
-        } else {
-           // Mid-Week Afternoon (Consistency & Push)
-           quoteBank = [
-             "The afternoon slump is a myth for top performers. Push through and make those extra follow-ups.",
-             "Consistency is the ultimate differentiator. Finish today just as strong as you started."
-           ];
-        }
-      }
-
-      // 3. Pick a random quote from the active bank
-      const randomQuote = quoteBank[Math.floor(Math.random() * quoteBank.length)];
-      document.getElementById('motivationQuote').innerText = `"${randomQuote}"`;
     }
 
     function submitPasscode() {
@@ -1543,6 +1507,7 @@
       globalSignatories = data.signatories;
       nextSeqNumber = data.nextSeq;
       globalCommercial = data.commercialData || { invoiceDiscounts: [], clientContracts: [], clientVolumes: {} };
+      globalCostingData = data.costingData || {};
       
       // Group Raw Logs by RefNum
       const grouped = {};
@@ -1793,8 +1758,21 @@
       document.querySelectorAll('#engineView input:not([type="checkbox"]):not([type="radio"]), #engineView select').forEach(el => el.value = '');
       document.querySelectorAll('#engineView [contenteditable]').forEach(el => el.innerHTML = ''); // Reset Rich Text
       
-      // Force Reset Custom UI Elements
+      // Force Reset Custom UI Elements & Restore Aggressively Wiped Defaults
       document.querySelectorAll('#engineView input[type="checkbox"]').forEach(el => el.checked = false); // Clears VAT, RSP, DocType
+      
+      // FIX: Restore structural defaults wiped by the global form reset
+      document.getElementById('docType').value = 'standard';
+      document.getElementById('currency').value = 'EGP';
+      let defaultCurrencyRadio = document.querySelector('input[name="currencyRadio"][value="EGP"]');
+      if (defaultCurrencyRadio) defaultCurrencyRadio.checked = true;
+      
+      let promoLimitSelect = document.getElementById('promoLimitType');
+      if (promoLimitSelect) {
+         promoLimitSelect.value = 'date';
+         toggleLimitInputs(); // Reset UI to show date fields by default
+      }
+
       if(document.getElementById('docTypeLabel')) {
         document.getElementById('docTypeLabel').innerText = 'Standard Price List';
         document.getElementById('docTypeLabel').classList.replace('text-blue-700', 'text-slate-500');
@@ -1881,6 +1859,13 @@
           document.getElementById('promoQty').value = doc.promoQty || '';
           if(doc.promoStart) document.getElementById('promoStart').value = new Date(doc.promoStart).toISOString().split('T')[0];
           if(doc.promoEnd) document.getElementById('promoEnd').value = new Date(doc.promoEnd).toISOString().split('T')[0];
+          
+          // Infer and restore Promo Limit Type
+          let promoLimitSelect = document.getElementById('promoLimitType');
+          if (promoLimitSelect) {
+             promoLimitSelect.value = doc.promoQty ? 'qty' : 'date';
+             toggleLimitInputs(); // Sync the UI layout automatically
+          }
         } else {
           dtLabel.innerText = 'Standard Price List';
           dtLabel.classList.replace('text-blue-700', 'text-slate-500');
@@ -2264,24 +2249,75 @@
 
         let fixedFeeHtml = '';
         if (costPerUnit > 0) {
-            fixedFeeHtml = `<span class="text-red-700 font-bold ml-auto bg-red-50 px-2.5 py-1 rounded border border-red-200 text-[11px] shadow-sm"><i class="fas fa-calculator mr-1"></i>Est. Fixed Fees: -${costPerUnit.toFixed(2)} ${currency}/unit <span class="text-red-500 font-medium ml-1">(${activeVolQty.toLocaleString()} units in ${activeVolYear})</span></span>`;
+            fixedFeeHtml = `<span class="text-red-700 font-bold bg-red-50 px-2 py-0.5 rounded border border-red-200 text-[10px] shadow-sm"><i class="fas fa-calculator mr-1"></i>Est. Fixed: -${costPerUnit.toFixed(2)} ${currency}/u <span class="text-red-500 font-medium ml-1">(${activeVolQty.toLocaleString()}u)</span></span>`;
         } else if (totalFixedAnnual > 0) {
-            fixedFeeHtml = `<span class="text-amber-700 font-bold ml-auto bg-amber-50 px-2.5 py-1 rounded border border-amber-200 text-[11px] shadow-sm"><i class="fas fa-info-circle mr-1"></i>Fixed Fees: ${totalFixedAnnual.toLocaleString()} EGP/Yr <span class="text-amber-500 font-medium ml-1">(No Vol History)</span></span>`;
+            fixedFeeHtml = `<span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px] shadow-sm"><i class="fas fa-info-circle mr-1"></i>Fixed: ${totalFixedAnnual.toLocaleString()} EGP/Yr</span>`;
         }
 
-        // Inject Commercial Insights Sub-Row if there are active terms
-        if (invDiscPct > 0 || backMarginPct > 0 || fixedFeeHtml !== '') {
+        let costHtml = '';
+        let prodCostHistory = globalCostingData[prod.arabicName];
+        if (prodCostHistory && prodCostHistory.length > 0) {
+            let latestEntry = prodCostHistory[0];
+            let docDateStr = document.getElementById('docDate').value;
+            let docDateObj = docDateStr ? new Date(docDateStr) : new Date();
+            
+            // Find historical cost on or before document date
+            let histEntry = prodCostHistory.find(e => new Date(e.date) <= docDateObj) || prodCostHistory[prodCostHistory.length - 1];
+            
+            let cLatest = latestEntry.cost;
+            let cHist = histEntry.cost;
+            
+            if (cLatest === cHist) {
+               // SCENARIO A: Same cost or completely new price list
+               let profitText = "";
+               if (normalizedPrice > 0) {
+                   let profitAmount = normalizedPrice - cLatest;
+                   let profitPct = (profitAmount / normalizedPrice) * 100;
+                   let profitColor = profitAmount >= 0 ? 'text-emerald-600' : 'text-red-600';
+                   profitText = `<span class="border-l border-slate-300 pl-1.5 ml-1.5 ${profitColor}">Profit: ${profitAmount.toFixed(2)} ${currency} (${profitPct.toFixed(1)}%)</span>`;
+               }
+               costHtml = `<span class="bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded shadow-sm text-[10px] font-bold"><i class="fas fa-coins text-amber-500 mr-1"></i>Cost: ${cLatest.toFixed(2)} <span class="text-slate-400 font-normal text-[9px] ml-1">(${latestEntry.date})</span>${profitText}</span>`;
+            } else {
+               // SCENARIO B: Difference between creation date and today
+               let profitLatestText = "";
+               let profitHistText = "";
+               if (normalizedPrice > 0) {
+                   // Calculate Today's Profit
+                   let pLatest = normalizedPrice - cLatest;
+                   let mLatest = (pLatest / normalizedPrice) * 100;
+                   let colorLatest = pLatest >= 0 ? 'text-emerald-600' : 'text-red-600';
+                   profitLatestText = ` <span class="${colorLatest} font-normal">(Profit: ${pLatest.toFixed(2)} / ${mLatest.toFixed(1)}%)</span>`;
+
+                   // Calculate Historical Profit
+                   let pHist = normalizedPrice - cHist;
+                   let mHist = (pHist / normalizedPrice) * 100;
+                   let colorHist = pHist >= 0 ? 'text-emerald-600' : 'text-red-600';
+                   profitHistText = ` <span class="${colorHist} font-normal">(Profit: ${pHist.toFixed(2)} / ${mHist.toFixed(1)}%)</span>`;
+               }
+               let diffIcon = cLatest > cHist ? `<i class="fas fa-arrow-up text-red-500 ml-1"></i>` : `<i class="fas fa-arrow-down text-emerald-500 ml-1"></i>`;
+               
+               costHtml = `<span class="bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded shadow-sm text-[10px] font-bold"><i class="fas fa-history text-slate-400 mr-1"></i>Hist cost: ${cHist.toFixed(2)}${profitHistText} <i class="fas fa-arrow-right text-slate-400 mx-1"></i> <i class="fas fa-bolt text-amber-500 mr-1"></i>Now cost: ${cLatest.toFixed(2)}${profitLatestText}${diffIcon}</span>`;
+            }
+        }
+
+        // Inject Commercial Insights Sub-Row if there are active terms OR costing data
+        if (invDiscPct > 0 || backMarginPct > 0 || fixedFeeHtml !== '' || costHtml !== '') {
            let colSpan = isPromo ? (includeVAT ? 8 : 7) : (includeVAT ? 7 : 6);
            if (includeRSP) colSpan++;
            
            let subRow = `<tr class="bg-indigo-50/40 border-b border-indigo-100">
-             <td colspan="${colSpan}" class="px-4 py-2.5 text-xs text-indigo-900">
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <strong class="uppercase tracking-wider text-[10px] text-indigo-600"><i class="fas fa-chart-line mr-1"></i> Net-Net Price:</strong>
-                  ${invDiscPct > 0 ? `<span class="bg-white border border-indigo-200 px-2 py-1 rounded shadow-sm text-[11px]">Invoice Disc: <span class="font-bold text-green-600">-${invDiscStr}</span></span>` : ''}
-                  ${backMarginPct > 0 ? `<span class="bg-white border border-indigo-200 px-2 py-1 rounded shadow-sm text-[11px]">Contract Margin: <span class="font-bold text-red-500">-${backMarginPct.toFixed(2)}%</span></span>` : ''}
-                  <span class="bg-indigo-600 text-white px-3 py-1 rounded shadow-sm font-black text-xs">Normalized: ${normalizedPrice.toFixed(2)} ${currency}</span>
-                  ${fixedFeeHtml}
+             <td colspan="${colSpan}" class="px-4 py-1.5 text-xs text-indigo-900">
+                <div class="flex flex-wrap items-center justify-between gap-y-1">
+                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    ${(invDiscPct > 0 || backMarginPct > 0 || fixedFeeHtml !== '') ? `<strong class="uppercase tracking-wider text-[10px] text-indigo-600 mr-1"><i class="fas fa-chart-line mr-1"></i> Insights:</strong>` : ''}
+                    ${invDiscPct > 0 ? `<span class="bg-white border border-indigo-200 px-2 py-0.5 rounded shadow-sm text-[10px]">Inv Disc: <span class="font-bold text-green-600">-${invDiscStr}</span></span>` : ''}
+                    ${backMarginPct > 0 ? `<span class="bg-white border border-indigo-200 px-2 py-0.5 rounded shadow-sm text-[10px]">Margin: <span class="font-bold text-red-500">-${backMarginPct.toFixed(2)}%</span></span>` : ''}
+                    ${(invDiscPct > 0 || backMarginPct > 0) ? `<span class="bg-indigo-600 text-white px-2 py-0.5 rounded shadow-sm font-black text-[10px]">Net: ${normalizedPrice.toFixed(2)} ${currency}</span>` : ''}
+                    ${fixedFeeHtml}
+                  </div>
+                  <div class="ml-auto">
+                    ${costHtml}
+                  </div>
                 </div>
              </td>
            </tr>`;

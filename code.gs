@@ -108,7 +108,8 @@ function getInitialData(pin) {
         arabicName: impName,      
         englishName: String(productsData[i][1] || ''),     
         unit: String(productsData[i][2] || ''),            
-        barcode: String(productsData[i][9] || ''),         
+        barcode: String(productsData[i][9] || ''),
+        isPrivateLabel: productsData[i][10] === true || String(productsData[i][10]).toLowerCase() === 'true', // Column K
         unitCapacity: parseFloat(productsData[i][4]) || 1, 
         taxRate: parseFloat(productsData[i][7]) || 0,      
         packDescAr: String(productsData[i][12] || ''),             
@@ -127,8 +128,9 @@ function getInitialData(pin) {
           arabicName: manName,      
           englishName: String(productsData[i][22] || ''),     
           unit: String(productsData[i][23] || ''),            
-          barcode: String(productsData[i][30] || ''),         
-          unitCapacity: parseFloat(productsData[i][25]) || 1, 
+          barcode: String(productsData[i][9] || ''),
+          isPrivateLabel: productsData[i][10] === true || String(productsData[i][10]).toLowerCase() === 'true', // Column K
+          unitCapacity: parseFloat(productsData[i][4]) || 1, 
           taxRate: parseFloat(productsData[i][28]) || 0,      
           packDescAr: String(productsData[i][33] || ''),             
           packDescEn: String(productsData[i][34] || ''),     
@@ -268,6 +270,7 @@ function getInitialData(pin) {
         if (!row[7]) continue; 
         
         clientContracts.push({
+          fileLink: String(row[2] || '').trim(), // Column C
           start: row[3] instanceof Date ? Utilities.formatDate(row[3], Session.getScriptTimeZone(), "yyyy-MM-dd") : row[3],
           end: row[4] instanceof Date ? Utilities.formatDate(row[4], Session.getScriptTimeZone(), "yyyy-MM-dd") : row[4],
           client: String(row[7]).trim(),
@@ -275,7 +278,8 @@ function getInitialData(pin) {
           payTerms: `${row[10] || 0} Days - ${row[11] || ''}`,
           fees: {
             monthlyFixed: parseFloat(row[14]) || 0,
-            monthlyPct: String(displayRow[16] || displayRow[18] || "0"), // Captures string exact value
+            monthlyPct: String(displayRow[16] || "0"), // Q
+            centralPct: String(displayRow[18] || "0"), // S
             q1Fixed: parseFloat(row[20]) || 0,
             q2Fixed: parseFloat(row[22]) || 0,
             q3Fixed: parseFloat(row[24]) || 0,
@@ -288,17 +292,40 @@ function getInitialData(pin) {
       }
     }
 
-    // 4. Extract JSON Sales Volumes from Google Drive
-    let files = DriveApp.getFilesByName("Tawoos_Cache_Cadence.json");
+    // 4. Extract JSON Sales Volumes from Google Drive (Using NetSales for precision)
+    let productScopeMap = {};
+    products.forEach(p => { productScopeMap[p.arabicName.trim()] = p.isPrivateLabel; });
+
+    let files = DriveApp.getFilesByName("Tawoos_Cache_NetSales.json");
     if (files.hasNext()) {
       let file = files.next();
       let jsonData = JSON.parse(file.getBlob().getDataAsString());
       if (jsonData && jsonData.data) {
         jsonData.data.forEach(record => {
           let cName = String(record.client).trim();
-          if (!clientVolumes[cName]) clientVolumes[cName] = { totalQty: 0, items: {} };
+          let pName = String(record.product).trim();
+          let qty = parseFloat(record.qty) || 0; 
           
-          clientVolumes[cName].totalQty += (parseFloat(record.qty) || 0);
+          let isPL = productScopeMap[pName] === true;
+          let scopeKey = isPL ? "privateLabel" : "ownBrand";
+          
+          let year = "Unknown";
+          if (record.dateMs) {
+             let d = new Date(record.dateMs);
+             if (!isNaN(d.getFullYear())) year = d.getFullYear().toString();
+          } else if (record.date) {
+             let d = new Date(record.date);
+             if (!isNaN(d.getFullYear())) year = d.getFullYear().toString();
+          }
+
+          // Safety Net: Keep track of specific scope AND total mixed volume to prevent missing data
+          if (!clientVolumes[cName]) clientVolumes[cName] = { privateLabel: { years: {} }, ownBrand: { years: {} }, total: { years: {} } };
+          
+          if (!clientVolumes[cName][scopeKey].years[year]) clientVolumes[cName][scopeKey].years[year] = 0;
+          clientVolumes[cName][scopeKey].years[year] += qty;
+
+          if (!clientVolumes[cName].total.years[year]) clientVolumes[cName].total.years[year] = 0;
+          clientVolumes[cName].total.years[year] += qty;
         });
       }
     }
@@ -510,3 +537,328 @@ function getEditHistory(refNum) {
 }
 
 function authorizeEmailScope() { MailApp.sendEmail(Session.getActiveUser().getEmail(), "Auth", "Auth"); }
+
+// ==========================================
+// COMMERCIAL CONTRACT MANAGER
+// ==========================================
+function saveCommercialContract(payload) {
+  try {
+    const folderId = '11vM83H5B-Z6oFVoC76gyCSCAU78JjVnM';
+    let fileUrl = payload.existingLink || "";
+
+    // 1. Handle File Upload to Google Drive
+    if (payload.fileBase64) {
+      let folder = DriveApp.getFolderById(folderId);
+      let blob = Utilities.newBlob(Utilities.base64Decode(payload.fileBase64), payload.mimeType, payload.fileName);
+      let newFile = folder.createFile(blob);
+      fileUrl = newFile.getUrl();
+    }
+
+    // 2. Locate Existing Row or Create New
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("عقود عملاء");
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+
+    for (let i = 3; i < data.length; i++) {
+      let rowClient = String(data[i][7]).trim();
+      let rowPL = data[i][8] === true || String(data[i][8]).toLowerCase() === 'true';
+      if (rowClient === payload.client && rowPL === payload.isPrivateLabel) {
+        rowIndex = i + 1; // +1 for 1-based getRange
+        break;
+      }
+    }
+
+    if (rowIndex === -1) {
+      rowIndex = sheet.getLastRow() + 1; // Append new
+    }
+
+    // 3. Update Specific Columns (1-based index)
+    // C(3): Link, D(4): Start, E(5): End, H(8): Client, I(9): PL
+    // K(11): PayDays, L(12): PayCond, O(15): M.Fixed, Q(17): M.Pct, S(19): C.Pct
+    // U(21): Q1, W(23): Q2, Y(25): Q3, AA(27): Q4, AC(29): Q.Pct
+    // AE(31): A.Fixed, AG(33): A.Pct
+    const updates = [
+      {col: 3, val: fileUrl}, {col: 4, val: payload.start}, {col: 5, val: payload.end},
+      {col: 8, val: payload.client}, {col: 9, val: payload.isPrivateLabel},
+      {col: 11, val: payload.payDays}, {col: 12, val: payload.payCond},
+      {col: 15, val: payload.mFixed || ""}, {col: 17, val: payload.mPct || ""}, {col: 19, val: payload.cPct || ""},
+      {col: 21, val: payload.q1 || ""}, {col: 23, val: payload.q2 || ""}, {col: 25, val: payload.q3 || ""}, 
+      {col: 27, val: payload.q4 || ""}, {col: 29, val: payload.qPct || ""},
+      {col: 31, val: payload.aFixed || ""}, {col: 33, val: payload.aPct || ""}
+    ];
+
+    updates.forEach(u => sheet.getRange(rowIndex, u.col).setValue(u.val));
+
+    return { success: true, message: "Contract Saved Successfully!", fileUrl: fileUrl };
+  } catch (e) {
+    return { success: false, message: "Server Error: " + e.message };
+  }
+}
+
+// ==========================================
+// AI CONTRACT ANALYZER ENGINE (100% FREE TIER ROUTER)
+// ==========================================
+function analyzeContractWithAI(payload) {
+  try {
+    // 1. YOUR NEW FREE API KEYS (Get these from aistudio.google.com, console.groq.com, openrouter.ai)
+    const API_KEYS = {
+      GEMINI: "******",
+      GROQ: "*******",
+      OPENROUTER: "********"
+    };
+
+    let documentString = "";
+    payload.pages.forEach(p => { documentString += `\n\n--- PAGE ${p.page} ---\n${p.text}`; });
+
+    // AGGRESSIVE COMPRESSOR FOR OPENROUTER: Free tier limits bandwidth drastically. 
+    // We restrict fallback text to the first 8,000 characters (where 90% of financial terms live).
+    let compressedDocumentString = documentString.length > 8000 
+        ? documentString.substring(0, 8000) + "\n\n[TEXT TRUNCATED FOR BANDWIDTH LIMITS]" 
+        : documentString;
+
+    let langInstruction = payload.language === 'ar' ? 
+        "Output all keys, categories, and values strictly in professional Arabic." : 
+        "Output all keys, categories, and values in English.";
+
+    // THE MASTERCLASS PROMPT: FIGURES ONLY
+    let systemPrompt = `You are an elite AI trained specifically for FMCG legal contract analysis in Egypt.
+    ${langInstruction}
+
+    ### EXTRACTION TARGETS:
+    1. **Identity (CRITICAL)**:
+       - Client Name: The specific retailer/distributor name.
+       - Contract Scope: You MUST classify this as exactly one of these: "Standard" (Supplier Brand), "Private Label" (Client Brand/Tashnee' le-hisab al-ghayr), or "Both".
+       - Validity Dates: The duration of the agreement.
+
+    2. **Financials (ONLY WITH FIGURES)**:
+       - Invoice Discount (%), Rebates (%), Fixed Fees (EGP), Listing Fees (EGP).
+       
+    3. **Risks (ONLY WITH FIGURES)**:
+       - Short Supply Penalty (%), Payment Terms (Days), quality penalties.
+
+    ### RULES:
+    - For Contract Scope, search for keywords like "العلامة الخاصة" or "Private Label" to distinguish from standard trading.
+    - Provide the EXACT page number.
+    - Respond ONLY with a raw JSON array. 
+    Schema:
+    [
+      { "category": "Identity", "key": "Client Name", "value": "Hyperone", "pageFound": 1 },
+      { "category": "Financial", "key": "Quarterly Rebate", "value": "13%", "pageFound": 2 },
+      { "category": "Risk", "key": "Short Supply Penalty", "value": "50% of PO", "pageFound": 3 }
+    ]`;
+
+    const extractJson = (text) => {
+       let clean = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+       let start = clean.indexOf('[');
+       let end = clean.lastIndexOf(']');
+       if(start !== -1 && end !== -1) clean = clean.substring(start, end + 1);
+       return JSON.parse(clean);
+    };
+
+    // --- AGENT 1: GEMINI 2.5 FLASH ---
+    // Note: If you receive a quota "limit: 0" error, your Google Cloud Project requires billing to be enabled.
+    const runGemini = () => {
+       if (!API_KEYS.GEMINI || API_KEYS.GEMINI.includes("PUT_")) throw new Error("Gemini Key Missing");
+       let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEYS.GEMINI}`;
+       let reqPayload = {
+          "contents": [{"parts": [{"text": systemPrompt}, {"text": "DOCUMENT TEXT:\n" + documentString}]}],
+          "generationConfig": { "temperature": 0.0 } 
+       };
+       let res = UrlFetchApp.fetch(url, { method: "post", contentType: "application/json", payload: JSON.stringify(reqPayload), muteHttpExceptions: true });
+       let json = JSON.parse(res.getContentText());
+       if (json.error) throw new Error("Gemini Error: " + json.error.message);
+       return extractJson(json.candidates[0].content.parts[0].text);
+    };
+
+    // --- UNIVERSAL AGENT: Handles Groq and OpenRouter ---
+    const runOpenAICompatible = (baseUrl, apiKey, modelId) => {
+       if (!apiKey || apiKey.includes("PUT_")) throw new Error("API Key Missing for " + modelId);
+       let reqPayload = {
+          model: modelId,
+          messages: [
+             { role: "system", content: systemPrompt },
+             { role: "user", content: "DOCUMENT TEXT:\n" + compressedDocumentString }
+          ],
+          temperature: 0.0
+       };
+       let res = UrlFetchApp.fetch(baseUrl, {
+          method: "post",
+          contentType: "application/json",
+          headers: { 
+             "Authorization": "Bearer " + apiKey,
+             "HTTP-Referer": "https://tawoos-erp.com", 
+             "X-Title": "Tawoos ERP" 
+          },
+          payload: JSON.stringify(reqPayload),
+          muteHttpExceptions: true
+       });
+       let json = JSON.parse(res.getContentText());
+       if (json.error) throw new Error(modelId + " Error: " + json.error.message);
+       
+       let rawContent = json.choices[0].message.content;
+       try { return extractJson(rawContent); } catch(e) { throw new Error("Could not parse JSON output from " + modelId); }
+    };
+
+    // 3. THE ROUTER
+    let finalData = null;
+    let agentUsed = "";
+
+    if (payload.agent === 'auto') {
+        try {
+            finalData = runGemini();
+            agentUsed = "Gemini 2.5 Flash";
+        } catch (geminiError) {
+            // SILENT FALLBACK TO NVIDIA NEMOTRON
+            finalData = runOpenAICompatible("https://openrouter.ai/api/v1/chat/completions", API_KEYS.OPENROUTER, "nvidia/nemotron-3-super:free");
+            agentUsed = "OpenRouter Nemotron 3 (Fallback)";
+        }
+    } else if (payload.agent === 'groq_llama3') {
+        finalData = runOpenAICompatible("https://api.groq.com/openai/v1/chat/completions", API_KEYS.GROQ, "llama-3.3-70b-versatile");
+        agentUsed = "Groq Llama 3.3 70B";
+    } else if (payload.agent === 'openrouter_free') {
+        // NVIDIA Nemotron 3 Super: Stable, highly intelligent, April 2026 endpoint
+        finalData = runOpenAICompatible("https://openrouter.ai/api/v1/chat/completions", API_KEYS.OPENROUTER, "nvidia/nemotron-3-super:free");
+        agentUsed = "OpenRouter (NVIDIA Nemotron 3)";
+    } else {
+        finalData = runGemini();
+        agentUsed = "Gemini 2.5 Flash";
+    }
+
+    return { success: true, data: finalData, usedAgent: agentUsed };
+
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+// ==========================================
+// PHASE 3: UPLOAD TO DRIVE & SAVE TO ARCHIVE
+// ==========================================
+function saveContractToSheet(payload) {
+  try {
+    // 1. Upload PDF to Google Drive
+    let folderName = "Contract Archives";
+    let folders = DriveApp.getFoldersByName(folderName);
+    let targetFolder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+    
+    let blob = Utilities.newBlob(Utilities.base64Decode(payload.fileData), 'application/pdf', payload.docName);
+    let file = targetFolder.createFile(blob);
+    let fileUrl = file.getUrl();
+
+    // 2. Intelligent Data Mapping (Mining the JSON for core Identity Terms)
+    let clientName = "غير محدد";
+    let scope = "غير محدد";
+    let validity = "غير محدد";
+    let risksList = [];
+
+    payload.approvedJson.forEach(item => {
+        if (!item.approved) return; // Skip unapproved items in summaries
+        
+        let k = (item.key || "").toLowerCase();
+        let c = (item.category || "").toLowerCase();
+        
+        // Match Identity Terms (English or Arabic)
+        if (k.includes('client') || k.includes('عميل') || k.includes('name') || k.includes('اسم')) clientName = item.value;
+        if (k.includes('scope') || k.includes('نطاق') || k.includes('label')) scope = item.value;
+        if (k.includes('valid') || k.includes('date') || k.includes('تاريخ') || k.includes('فترة')) validity = item.value;
+        
+        // Compile Risks
+        if (c.includes('risk') || c.includes('مخاطر')) risksList.push(`• ${item.key}: ${item.value}`);
+    });
+
+    let financialSummary = `الخصومات: ${payload.totalRebates}\nالرسوم الثابتة: ${payload.totalFees}`;
+    let riskSummary = risksList.length > 0 ? risksList.join("\n") : "لا توجد مخاطر واضحة";
+
+    // 3. Save to Google Sheets
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheetName = 'أرشيف تحليل العقود';
+    let sheet = ss.getSheetByName(sheetName);
+    
+    // Create sheet with 11 exact columns if it doesn't exist
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow([
+        "تاريخ التحليل", "اسم المستند", "رابط العقد (Drive)", "اسم العميل", "نطاق التعاقد", 
+        "فترة التعاقد", "حالة المراجعة", "الملخص المالي", "المخاطر التشغيلية", 
+        "بيانات الذكاء الاصطناعي الأصلية (Raw AI JSON)", "البيانات المعتمدة (Approved JSON)"
+      ]);
+      sheet.getRange(1, 1, 1, 11).setFontWeight("bold").setBackground("#f3f4f6");
+    }
+
+    let dateStamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
+    
+    let rowData = [
+       dateStamp,                            // 1: Date
+       payload.docName,                      // 2: Doc Name
+       fileUrl,                              // 3: Live Drive Link
+       clientName,                           // 4: Client
+       scope,                                // 5: Scope
+       validity,                             // 6: Validity Dates
+       "معتمد (Approved)",                   // 7: Status
+       financialSummary,                     // 8: Finances
+       riskSummary,                          // 9: Risks
+       JSON.stringify(payload.rawAiJson),    // 10: Raw
+       JSON.stringify(payload.approvedJson)  // 11: Final
+    ];
+
+    sheet.appendRow(rowData);
+    
+    // Auto-resize columns for better readability
+    sheet.autoResizeColumns(1, 9);
+
+    return { success: true };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+function getContractArchive() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName('أرشيف تحليل العقود');
+    if (!sheet) return [];
+
+    // CRITICAL FIX: getDisplayValues() converts everything (including Dates) to safe strings
+    let values = sheet.getDataRange().getDisplayValues();
+    if (values.length <= 1) return [];
+
+    // Remove header and map to objects
+    return values.slice(1).reverse().map(row => ({
+      date: row[0] || "",
+      docName: row[1] || "",
+      link: row[2] || "",
+      client: row[3] || "غير محدد",
+      scope: row[4] || "غير محدد",
+      financials: row[7] || "0.00%",
+      // Safety fallback to empty array in case of older 8-column test rows
+      approvedJson: row[10] || "[]" 
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+// ==========================================
+// PHASE 3: FETCH PDF FROM DRIVE FOR ARCHIVE VIEWER
+// ==========================================
+function getDriveFileBase64(url) {
+  try {
+    // Extract the File ID from the Drive URL
+    let match = url.match(/\/d\/(.*?)\//);
+    if (!match || match.length < 2) {
+        throw new Error("Invalid Google Drive URL. Ensure the contract was saved properly.");
+    }
+    
+    let id = match[1];
+    let file = DriveApp.getFileById(id);
+    let blob = file.getBlob();
+    
+    // Encode as Base64 to safely transmit to the frontend
+    return { 
+        success: true, 
+        base64: Utilities.base64Encode(blob.getBytes()) 
+    };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}

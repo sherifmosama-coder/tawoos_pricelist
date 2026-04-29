@@ -668,47 +668,54 @@
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card space-y-6">
 
       <div class="flex flex-col md:flex-row gap-6 items-start relative z-20">
-        <div class="w-full md:w-7/12 flex flex-col sm:flex-row gap-3">
-          <div class="w-full sm:w-2/4">
-            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
-              <i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client
-            </h3>
-            <div class="relative w-full">
-              <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-sm text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
-              <input type="hidden" id="sbClientSelect" value="">
-              <ul id="sbClientList"
-                class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl">
-              </ul>
-            </div>
-          </div>
-          <div class="w-full sm:w-1/4">
-            <h3
-              class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
-              Type</h3>
-            <select id="sbContractType" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-900/20 focus:border-indigo-600 font-bold text-sm text-indigo-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
-                       <option value="Both">Both</option>
-                       <option value="Standard">Standard</option>
-                       <option value="Private Label">P. Label</option>
-                   </select>
-          </div>
-          <div class="w-full sm:w-1/4">
-            <h3
-              class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
-              Scope</h3>
-            <select id="sbTimeScope" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-900/20 focus:border-emerald-600 font-bold text-sm text-emerald-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
-                       <option value="L12M">Past 12M</option>
-                       <option value="2026" selected>2026 YTD</option>
-                       <option value="2025">2025</option>
-                       <option value="2024">2024</option>
-                       <option value="2023">2023</option>
-                       <option value="2022">2022</option>
-                       <option value="2021">2021</option>
-                   </select>
-          </div>
-        </div>
+           
+           <div class="w-full md:w-1/2 grid grid-cols-1 sm:grid-cols-4 gap-3">
+              
+              <div class="sm:col-span-2">
+                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2"><i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client</h3>
+                 <div class="relative w-full">
+                    <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-sm text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
+                    <input type="hidden" id="sbClientSelect" value="">
+                    <ul id="sbClientList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
+                 </div>
+              </div>
 
-        <div id="sbClientRefBox"
-          class="w-full md:w-5/12 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 hidden opacity-0 transition-opacity duration-300">
+              <div class="sm:col-span-1">
+                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">Type</h3>
+                 <select id="sbContractType" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-900/20 focus:border-indigo-600 font-bold text-sm text-indigo-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
+                     <option value="Both">Both</option>
+                     <option value="Standard">Standard</option>
+                     <option value="Private Label">P. Label</option>
+                 </select>
+              </div>
+
+              <div class="sm:col-span-1">
+                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">Scope</h3>
+                 <select id="sbTimeScope" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-900/20 focus:border-emerald-600 font-bold text-sm text-emerald-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
+                     <option value="L12M">Past 12M</option>
+                     <option value="2026" selected>2026 YTD</option>
+                     <option value="2025">2025</option>
+                     <option value="2024">2024</option>
+                     <option value="2023">2023</option>
+                     <option value="2022">2022</option>
+                     <option value="2021">2021</option>
+                     <option value="CUSTOM">Custom Range</option>
+                 </select>
+              </div>
+
+              <div id="sbCustomDateBox" class="hidden sm:col-span-4 grid grid-cols-2 gap-3 mt-1 animate-in fade-in duration-300 border-t border-slate-100 pt-3">
+                  <div>
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 block">Start Date</label>
+                      <input type="date" id="sbCustomStart" class="w-full p-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-bold text-sm text-slate-700" onchange="handleSbClientSelection()">
+                  </div>
+                  <div>
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 block">End Date</label>
+                      <input type="date" id="sbCustomEnd" class="w-full p-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-bold text-sm text-slate-700" onchange="handleSbClientSelection()">
+                  </div>
+              </div>
+           </div>
+           
+           <div id="sbClientRefBox" class="w-full md:w-1/2 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 hidden opacity-0 transition-opacity duration-300">
           <div class="flex justify-between items-center mb-2">
             <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               <i class="fas fa-history mr-1"></i>
@@ -720,24 +727,16 @@
           </div>
 
           <div id="sbClientInsights" class="space-y-4 pt-3 border-t border-slate-100">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <span class="block text-[8px] text-slate-400 uppercase font-black">Sales Qty</span><span id="sbHistQty" class="font-mono text-sm font-bold text-slate-700">0</span>
-              </div>
-              <div>
-                <span class="block text-[8px] text-slate-400 uppercase font-black">Net Sales</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span>
-              </div>
-              <div>
-                <span class="block text-[8px] text-slate-400 uppercase font-black">Gross Profit</span><span id="sbHistProfit" class="font-mono text-sm font-bold text-emerald-600">0</span>
-              </div>
-              <div>
-                <span class="block text-[8px] text-slate-400 uppercase font-black">Gross Margin</span><span id="sbHistMargin" class="font-black text-sm text-emerald-500">0.0%</span>
-              </div>
-            </div>
-            <div id="sbHistNetRow"
-              class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-inner relative">
-              <div class="flex items-center gap-2">
-                <span class="text-[8px] font-black text-emerald-700 uppercase leading-tight"><i class="fas fa-check-double mr-1"></i> Net-Net<br>Benchmark</span>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Sales Qty</span><span id="sbHistQty" class="font-mono text-sm font-bold text-slate-700">0</span></div>
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Net Sales</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span></div>
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">COGS</span><span id="sbHistCogs" class="font-mono text-sm font-bold text-red-500">0</span></div>
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Profit</span><span id="sbHistProfit" class="font-mono text-sm font-bold text-emerald-600">0</span></div>
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Margin</span><span id="sbHistMargin" class="font-black text-sm text-emerald-500">0.0%</span></div>
+                 </div>
+                 <div id="sbHistNetRow" class="grid grid-cols-2 sm:grid-cols-5 gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-inner relative">
+                    <div class="flex items-center gap-2 col-span-2 sm:col-span-1">
+                       <span class="text-[8px] font-black text-emerald-700 uppercase leading-tight"><i class="fas fa-check-double mr-1"></i> Net-Net<br>Benchmark</span>
                 <button onclick="toggleSbLogicTooltip(event)" class="text-emerald-400 hover:text-emerald-600 transition-colors">
                             <i class="fas fa-info-circle text-[10px]"></i>
                          </button>
@@ -798,31 +797,27 @@
       <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
     </div>
 
-    <div id="sbProductMetricsCard" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card hidden">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
-          <i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance
-        </h3>
-        <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Filtered by Type & Scope</span>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[800px]">
-          <thead>
-            <tr class="border-b border-slate-100">
-              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase">Product Name</th>
-              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Qty</th>
-              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Base Price</th>
-              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Inv. Disc %</th>
-              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net Sales</th>
-              <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600"
-                title="Distributed Rebate">Rebates</th>
-              <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600"
-                title="Distributed Fixed Fees">Fees</th>
-              <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Profit
-              </th>
-              <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Margin
-              </th>
-            </tr>
+    <div id="sbProductMetricsCard" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
+       <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance</h3>
+          <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Filtered by Type & Scope</span>
+       </div>
+       <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr class="border-b border-slate-100">
+                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase">Product Name</th>
+                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Qty</th>
+                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Base Price</th>
+                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Unit Cost</th>
+                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Inv. Disc %</th>
+                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net Sales</th>
+                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">COGS</th>
+                    <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Rebate">Rebates</th>
+                    <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Fixed Fees">Fees</th>
+                    <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Profit</th>
+                    <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Margin</th>
+                </tr>
           </thead>
           <tbody id="sbProductMetricsBody" class="text-xs font-bold text-slate-600">
           </tbody>
@@ -3588,6 +3583,21 @@
         let histQty = 0, histRev = 0, histCost = 0;
         let timeScope = document.getElementById('sbTimeScope').value;
         let appliedYearBadge = document.getElementById('sbTimeScope').options[document.getElementById('sbTimeScope').selectedIndex].text.toUpperCase();
+        
+        // Handle Custom Dates UI
+        let customBox = document.getElementById('sbCustomDateBox');
+        let customStart = document.getElementById('sbCustomStart').value;
+        let customEnd = document.getElementById('sbCustomEnd').value;
+        
+        if (timeScope === 'CUSTOM') {
+            customBox.classList.remove('hidden');
+            customBox.classList.add('grid');
+            if (customStart && customEnd) appliedYearBadge = `${customStart} TO ${customEnd}`;
+        } else {
+            customBox.classList.add('hidden');
+            customBox.classList.remove('grid');
+        }
+
         let productMetrics = {};
 
         const normalizeStr = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, ' ');
@@ -3605,6 +3615,12 @@
                 if (timeScope === 'L12M') {
                     let twelveMonthsAgo = new Date(); twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
                     return d >= twelveMonthsAgo;
+                } else if (timeScope === 'CUSTOM') {
+                    if (!customStart || !customEnd) return true;
+                    let sd = new Date(customStart);
+                    let ed = new Date(customEnd);
+                    ed.setHours(23, 59, 59);
+                    return d >= sd && d <= ed;
                 }
                 return d.getFullYear() === (timeScope === '2026' ? 2026 : parseInt(timeScope));
             });
@@ -3623,11 +3639,23 @@
                     histQty += qty;
                     let saleRev = parseFloat(sale.netRev || (qty * (prodDef?.price || 0)) || 0);
                     histRev += saleRev;
-                    let saleCost = (qty * getSbProductCost(pName));
+                    
+                    // --- Date-Aware Costing Logic ---
+                    let saleDate = new Date(typeof sale.date === 'number' ? sale.date : sale.date);
+                    let unitCost = 0;
+                    
+                    if (typeof globalCostingData !== 'undefined' && globalCostingData[pName]) {
+                        let costHistory = globalCostingData[pName];
+                        let activeCostObj = costHistory.find(c => new Date(c.date) <= saleDate);
+                        if (!activeCostObj && costHistory.length > 0) activeCostObj = costHistory[costHistory.length - 1];
+                        if (activeCostObj) unitCost = parseFloat(activeCostObj.cost || activeCostObj.totalCost || activeCostObj.unitCost || 0);
+                    }
+                    if (unitCost === 0) unitCost = getSbProductCost(pName);
+                    
+                    let saleCost = qty * unitCost;
                     histCost += saleCost;
 
                     if (!productMetrics[normPName]) {
-                        // Clean discount string to fix the double %% UI glitch
                         let rawDisc = (activeInvDiscounts?.products) ? (activeInvDiscounts.products[pName] || 0) : 0;
                         let cleanDisc = parseFloat(String(rawDisc).replace('%', '')) || 0;
                         productMetrics[normPName] = { name: pName, qty: 0, rev: 0, cost: 0, invDisc: cleanDisc };
@@ -3643,10 +3671,19 @@
         let histProfit = histRev - histCost;
         let rebateDeduction = histRev * (masterTotalMargin / 100);
         let histNetRev = histRev - rebateDeduction;
-        let daysElapsed = Math.ceil((today - new Date(today.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24)) || 1;
+        
+        // Calculate dynamic days elapsed for BOTH Custom and YTD 2026
+        let daysElapsed = 1;
+        if (timeScope === 'CUSTOM' && customStart && customEnd) {
+             daysElapsed = Math.ceil((new Date(customEnd) - new Date(customStart)) / (1000 * 60 * 60 * 24)) + 1;
+        } else {
+             let today = new Date();
+             daysElapsed = Math.ceil((today - new Date(today.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24)) || 1;
+        }
+        
         let proportionalFixed = (masterTotalFixed / 365) * daysElapsed;
-        let is2026 = (timeScope === '2026');
-        let activeFixedFees = is2026 ? proportionalFixed : 0;
+        let isNetEligible = (timeScope === '2026' || timeScope === 'CUSTOM');
+        let activeFixedFees = isNetEligible ? proportionalFixed : 0;
         
         let histNetProfit = histNetRev - histCost - activeFixedFees;
         let histNetMargin = histNetRev > 0 ? (histNetProfit / histNetRev) * 100 : 0;
@@ -3657,6 +3694,7 @@
         document.getElementById('sbInsightBadge').innerText = appliedYearBadge;
         document.getElementById('sbHistQty').innerText = histQty.toLocaleString();
         document.getElementById('sbHistRev').innerText = Math.round(histRev).toLocaleString();
+        document.getElementById('sbHistCogs').innerText = Math.round(histCost).toLocaleString();
         document.getElementById('sbHistNetRev').innerText = Math.round(histNetRev).toLocaleString();
         
         let profEl = document.getElementById('sbHistProfit');
@@ -3665,19 +3703,18 @@
         let netProfEl = document.getElementById('sbHistNetProfit');
         let netMargEl = document.getElementById('sbHistNetMargin');
 
-        profEl.closest('div').style.display = is2026 ? 'block' : 'none';
-        margEl.closest('div').style.display = is2026 ? 'block' : 'none';
-        netRowEl.style.display = is2026 ? 'grid' : 'none';
+        profEl.closest('div').style.display = 'block'; 
+        margEl.closest('div').style.display = 'block'; 
+        netRowEl.style.display = isNetEligible ? 'grid' : 'none';
 
-        if (is2026) {
-            profEl.innerText = Math.round(histProfit).toLocaleString();
-            profEl.className = histProfit >= 0 ? "font-mono text-sm font-bold text-emerald-600" : "font-mono text-sm font-bold text-red-600";
-            margEl.innerText = (histRev > 0 ? (histProfit / histRev * 100) : 0).toFixed(1) + '%';
+        profEl.innerText = Math.round(histProfit).toLocaleString();
+        profEl.className = histProfit >= 0 ? "font-mono text-sm font-bold text-emerald-600" : "font-mono text-sm font-bold text-red-600";
+        margEl.innerText = (histRev > 0 ? (histProfit / histRev * 100) : 0).toFixed(1) + '%';
             
+        if (isNetEligible) {
             netProfEl.innerText = Math.round(histNetProfit).toLocaleString();
             netMargEl.innerText = histNetMargin.toFixed(1) + '%';
             
-            // Dynamic UI Warning: Shift colors to red on loss
             if (histNetProfit < 0) {
                 netProfEl.className = "font-mono text-sm font-bold text-red-600";
                 netMargEl.className = "font-black text-sm text-red-600";
@@ -3710,22 +3747,19 @@
         // =========================================================
         const body = document.getElementById('sbProductMetricsBody');
         const footer = document.getElementById('sbProductMetricsFooter');
-        const card = document.getElementById('sbProductMetricsCard');
         
         if (Object.keys(productMetrics).length > 0) {
             let html = '', tQty = 0, tNetRev = 0, tGrossRev = 0, tCost = 0;
             Object.values(productMetrics).sort((a,b) => b.rev - a.rev).forEach(pm => {
                 
-                // Base Price back-calculation (Fixes the 137.7 vs 133.6 gap)
                 let discFactor = 1 - (pm.invDisc / 100);
                 let rowGrossRev = discFactor > 0 ? (pm.rev / discFactor) : pm.rev;
                 let calcBasePrice = pm.qty > 0 ? (rowGrossRev / pm.qty) : 0;
+                let calcUnitCost = pm.qty > 0 ? (pm.cost / pm.qty) : 0;
                 
-                // Distribute Fixed Fees proportionally (Fixes mismatch between Row vs Total Profit)
                 let revShare = histRev > 0 ? (pm.rev / histRev) : 0;
                 let rowFixedFee = activeFixedFees * revShare;
                 
-                // Calculate Net-Net Margin using Post-Rebate Revenue to match the Benchmark logic
                 let rowRebate = pm.rev * (masterTotalMargin / 100);
                 let rowNetRev = pm.rev - rowRebate;
                 let rowNetProfit = pm.rev - pm.cost - rowRebate - rowFixedFee;
@@ -3737,8 +3771,10 @@
                     <td class="py-3 text-slate-800 font-bold">${pm.name}</td>
                     <td class="py-3 text-center font-mono">${pm.qty.toLocaleString()}</td>
                     <td class="py-3 text-center font-mono text-slate-500">${calcBasePrice.toFixed(1)}</td>
+                    <td class="py-3 text-center font-mono text-slate-500">${calcUnitCost.toFixed(2)}</td>
                     <td class="py-3 text-center"><span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px]">${pm.invDisc.toFixed(1)}%</span></td>
                     <td class="py-3 text-center font-mono text-blue-600">${Math.round(pm.rev).toLocaleString()}</td>
+                    <td class="py-3 text-center font-mono text-red-500">${Math.round(pm.cost).toLocaleString()}</td>
                     <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${Math.round(rowRebate).toLocaleString()}</td>
                     <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${Math.round(rowFixedFee).toLocaleString()}</td>
                     <td class="sb-metric-2026 py-3 text-center font-mono ${rowNetProfit >= 0 ? 'text-emerald-600' : 'text-red-500'}">${Math.round(rowNetProfit).toLocaleString()}</td>
@@ -3747,32 +3783,34 @@
             });
             body.innerHTML = html;
             
-            // Footer Sums & Accurate Weighted Averages
             let avgBasePrice = tQty > 0 ? (tGrossRev / tQty) : 0;
+            let avgUnitCost = tQty > 0 ? (tCost / tQty) : 0;
             let avgInvDisc = tGrossRev > 0 ? ((1 - (tNetRev / tGrossRev)) * 100) : 0;
             
-            const fProfitColor = (is2026 && histNetProfit < 0) ? 'text-red-600' : 'text-emerald-800';
-            const fMarginColor = (is2026 && histNetMargin < 0) ? 'text-red-600' : 'text-emerald-700';
+            const fProfitColor = (isNetEligible && histNetProfit < 0) ? 'text-red-600' : 'text-emerald-800';
+            const fMarginColor = (isNetEligible && histNetMargin < 0) ? 'text-red-600' : 'text-emerald-700';
 
             footer.innerHTML = `<tr class="bg-slate-100 font-black">
-                <td class="py-3 px-3 uppercase text-[9px] tracking-widest text-slate-500">Totals / Weighted Avg</td>
+                <td class="py-3 px-3 uppercase text-[9px] tracking-widest text-slate-500">Totals / Avg</td>
                 <td class="py-3 text-center font-mono">${tQty.toLocaleString()}</td>
                 <td class="py-3 text-center font-mono">${avgBasePrice.toFixed(1)}</td>
+                <td class="py-3 text-center font-mono">${avgUnitCost.toFixed(2)}</td>
                 <td class="py-3 text-center text-blue-700">${avgInvDisc.toFixed(1)}%</td>
                 <td class="py-3 text-center font-mono text-blue-900">${Math.round(tNetRev).toLocaleString()}</td>
-                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${is2026 ? Math.round(rebateDeduction).toLocaleString() : '-'}</td>
-                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${is2026 ? Math.round(activeFixedFees).toLocaleString() : '-'}</td>
-                <td class="sb-metric-2026 py-3 text-center font-mono ${fProfitColor}">${is2026 ? Math.round(histNetProfit).toLocaleString() : '-'}</td>
-                <td class="sb-metric-2026 py-3 text-center font-black ${fMarginColor}">${is2026 ? histNetMargin.toFixed(1)+'%' : '-'}</td>
+                <td class="py-3 text-center font-mono text-red-600">${Math.round(tCost).toLocaleString()}</td>
+                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${isNetEligible ? Math.round(rebateDeduction).toLocaleString() : '-'}</td>
+                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${isNetEligible ? Math.round(activeFixedFees).toLocaleString() : '-'}</td>
+                <td class="sb-metric-2026 py-3 text-center font-mono ${fProfitColor}">${isNetEligible ? Math.round(histNetProfit).toLocaleString() : '-'}</td>
+                <td class="sb-metric-2026 py-3 text-center font-black ${fMarginColor}">${isNetEligible ? histNetMargin.toFixed(1)+'%' : '-'}</td>
             </tr>`;
 
-            card.classList.remove('hidden');
-            document.querySelectorAll('.sb-metric-2026').forEach(el => el.style.display = is2026 ? '' : 'none');
+            document.querySelectorAll('.sb-metric-2026').forEach(el => el.style.display = isNetEligible ? '' : 'none');
         } else {
-            card.classList.add('hidden');
+            // Graceful Empty State instead of hiding
+            body.innerHTML = `<tr><td colspan="11" class="text-center py-6 text-slate-400 font-bold tracking-widest"><i class="fas fa-inbox text-slate-300 mr-2"></i> No historical data found for this selection.</td></tr>`;
+            footer.innerHTML = '';
         }
 
-        // Toggle overall visibility of step 1 card if no data
         refBox.classList.toggle('hidden', !(histQty > 0 || hasData));
         if (histQty > 0 || hasData) setTimeout(() => refBox.classList.add('opacity-100'), 10);
 

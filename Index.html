@@ -729,7 +729,7 @@
           <div id="sbClientInsights" class="space-y-4 pt-3 border-t border-slate-100">
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     <div><span class="block text-[8px] text-slate-400 uppercase font-black">Sales Qty</span><span id="sbHistQty" class="font-mono text-sm font-bold text-slate-700">0</span></div>
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Net Sales</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span></div>
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Revenue (before rebates)</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span></div>
                     <div><span class="block text-[8px] text-slate-400 uppercase font-black">COGS</span><span id="sbHistCogs" class="font-mono text-sm font-bold text-red-500">0</span></div>
                     <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Profit</span><span id="sbHistProfit" class="font-mono text-sm font-bold text-emerald-600">0</span></div>
                     <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Margin</span><span id="sbHistMargin" class="font-black text-sm text-emerald-500">0.0%</span></div>
@@ -811,7 +811,7 @@
                     <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Base Price</th>
                     <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Unit Cost</th>
                     <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Inv. Disc %</th>
-                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net Sales</th>
+                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Gross Rev.</th>
                     <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">COGS</th>
                     <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Rebate">Rebates</th>
                     <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Fixed Fees">Fees</th>
@@ -3580,11 +3580,10 @@
         // =========================================================
         // 1. DATA AGGREGATION (CALCULATIONS)
         // =========================================================
-        let histQty = 0, histRev = 0, histCost = 0;
+        let histQty = 0, histGrossRev = 0, histCost = 0;
         let timeScope = document.getElementById('sbTimeScope').value;
         let appliedYearBadge = document.getElementById('sbTimeScope').options[document.getElementById('sbTimeScope').selectedIndex].text.toUpperCase();
         
-        // Handle Custom Dates UI
         let customBox = document.getElementById('sbCustomDateBox');
         let customStart = document.getElementById('sbCustomStart').value;
         let customEnd = document.getElementById('sbCustomEnd').value;
@@ -3599,7 +3598,6 @@
         }
 
         let productMetrics = {};
-
         const normalizeStr = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, ' ');
         const normClient = normalizeStr(clientName);
 
@@ -3610,16 +3608,15 @@
 
             let targetSales = cadenceArray.filter(sale => {
                 if (!sale.client || normalizeStr(sale.client) !== normClient) return false;
-                if (!sale.date) return false;
-                let d = new Date(typeof sale.date === 'number' ? sale.date : sale.date);
+                if (!sale.date && !sale.dateMs) return false;
+                let d = new Date(typeof sale.dateMs === 'number' ? sale.dateMs : (typeof sale.date === 'number' ? sale.date : sale.date));
                 if (timeScope === 'L12M') {
                     let twelveMonthsAgo = new Date(); twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
                     return d >= twelveMonthsAgo;
                 } else if (timeScope === 'CUSTOM') {
                     if (!customStart || !customEnd) return true;
                     let sd = new Date(customStart);
-                    let ed = new Date(customEnd);
-                    ed.setHours(23, 59, 59);
+                    let ed = new Date(customEnd); ed.setHours(23, 59, 59);
                     return d >= sd && d <= ed;
                 }
                 return d.getFullYear() === (timeScope === '2026' ? 2026 : parseInt(timeScope));
@@ -3637,11 +3634,14 @@
 
                 if (qty > 0) {
                     histQty += qty;
-                    let saleRev = parseFloat(sale.netRev || (qty * (prodDef?.price || 0)) || 0);
-                    histRev += saleRev;
+                    
+                    // Natively capture the Gross Invoiced Value (Front discounts applied, Backend Rebates NOT applied)
+                    // We completely ignore sale.netRev from JSON to prevent double false deductions!
+                    let saleGrossRev = parseFloat(sale.grossRev || (qty * (prodDef?.price || 0)) || 0);
+                    histGrossRev += saleGrossRev;
                     
                     // --- Date-Aware Costing Logic ---
-                    let saleDate = new Date(typeof sale.date === 'number' ? sale.date : sale.date);
+                    let saleDate = new Date(typeof sale.dateMs === 'number' ? sale.dateMs : (typeof sale.date === 'number' ? sale.date : sale.date));
                     let unitCost = 0;
                     
                     if (typeof globalCostingData !== 'undefined' && globalCostingData[pName]) {
@@ -3658,21 +3658,25 @@
                     if (!productMetrics[normPName]) {
                         let rawDisc = (activeInvDiscounts?.products) ? (activeInvDiscounts.products[pName] || 0) : 0;
                         let cleanDisc = parseFloat(String(rawDisc).replace('%', '')) || 0;
-                        productMetrics[normPName] = { name: pName, qty: 0, rev: 0, cost: 0, invDisc: cleanDisc };
+                        productMetrics[normPName] = { name: pName, qty: 0, grossRev: 0, cost: 0, invDisc: cleanDisc };
                     }
                     productMetrics[normPName].qty += qty;
-                    productMetrics[normPName].rev += saleRev;
+                    productMetrics[normPName].grossRev += saleGrossRev;
                     productMetrics[normPName].cost += saleCost;
                 }
             });
         }
 
         // --- Core Totals & Net-Net Logic ---
-        let histProfit = histRev - histCost;
-        let rebateDeduction = histRev * (masterTotalMargin / 100);
-        let histNetRev = histRev - rebateDeduction;
+        let histGrossProfit = histGrossRev - histCost; 
+        let histGrossMargin = histGrossRev > 0 ? (histGrossProfit / histGrossRev) * 100 : 0;
+
+        // 1. Calculate Rebates against Invoiced Gross Revenue
+        let rebateDeduction = histGrossRev * (masterTotalMargin / 100);
         
-        // Calculate dynamic days elapsed for BOTH Custom and YTD 2026
+        // 2. DYNAMIC NET REVENUE (Gross Invoiced - Simulated Rebate)
+        let histNetRev = histGrossRev - rebateDeduction;
+        
         let daysElapsed = 1;
         if (timeScope === 'CUSTOM' && customStart && customEnd) {
              daysElapsed = Math.ceil((new Date(customEnd) - new Date(customStart)) / (1000 * 60 * 60 * 24)) + 1;
@@ -3685,6 +3689,7 @@
         let isNetEligible = (timeScope === '2026' || timeScope === 'CUSTOM');
         let activeFixedFees = isNetEligible ? proportionalFixed : 0;
         
+        // 3. Final Net Profit subtracts dynamically calculated rebates and fixed fees
         let histNetProfit = histNetRev - histCost - activeFixedFees;
         let histNetMargin = histNetRev > 0 ? (histNetProfit / histNetRev) * 100 : 0;
 
@@ -3693,9 +3698,9 @@
         // =========================================================
         document.getElementById('sbInsightBadge').innerText = appliedYearBadge;
         document.getElementById('sbHistQty').innerText = histQty.toLocaleString();
-        document.getElementById('sbHistRev').innerText = Math.round(histRev).toLocaleString();
+        document.getElementById('sbHistRev').innerText = Math.round(histGrossRev).toLocaleString();
         document.getElementById('sbHistCogs').innerText = Math.round(histCost).toLocaleString();
-        document.getElementById('sbHistNetRev').innerText = Math.round(histNetRev).toLocaleString();
+        document.getElementById('sbHistNetRev').innerText = Math.round(histNetRev).toLocaleString(); // Now fully dynamic
         
         let profEl = document.getElementById('sbHistProfit');
         let margEl = document.getElementById('sbHistMargin');
@@ -3707,9 +3712,9 @@
         margEl.closest('div').style.display = 'block'; 
         netRowEl.style.display = isNetEligible ? 'grid' : 'none';
 
-        profEl.innerText = Math.round(histProfit).toLocaleString();
-        profEl.className = histProfit >= 0 ? "font-mono text-sm font-bold text-emerald-600" : "font-mono text-sm font-bold text-red-600";
-        margEl.innerText = (histRev > 0 ? (histProfit / histRev * 100) : 0).toFixed(1) + '%';
+        profEl.innerText = Math.round(histGrossProfit).toLocaleString();
+        profEl.className = histGrossProfit >= 0 ? "font-mono text-sm font-bold text-emerald-600" : "font-mono text-sm font-bold text-red-600";
+        margEl.innerText = histGrossMargin.toFixed(1) + '%';
             
         if (isNetEligible) {
             netProfEl.innerText = Math.round(histNetProfit).toLocaleString();
@@ -3729,7 +3734,7 @@
             
             // Sync Tooltip
             const fmt = (v) => Math.round(v || 0).toLocaleString();
-            document.getElementById('tipGrossRev').innerText = fmt(histRev);
+            document.getElementById('tipGrossRev').innerText = fmt(histGrossRev);
             document.getElementById('tipRebateAmt').innerText = fmt(rebateDeduction);
             document.getElementById('tipRebatePct').innerText = masterTotalMargin.toFixed(1);
             document.getElementById('tipNetRev').innerText = fmt(histNetRev);
@@ -3749,23 +3754,25 @@
         const footer = document.getElementById('sbProductMetricsFooter');
         
         if (Object.keys(productMetrics).length > 0) {
-            let html = '', tQty = 0, tNetRev = 0, tGrossRev = 0, tCost = 0;
-            Object.values(productMetrics).sort((a,b) => b.rev - a.rev).forEach(pm => {
+            let html = '', tQty = 0, tGrossRev = 0, tNetRev = 0, tCost = 0;
+            Object.values(productMetrics).sort((a,b) => b.grossRev - a.grossRev).forEach(pm => {
                 
+                // Back-calculate pure List Price before invoice discounts
                 let discFactor = 1 - (pm.invDisc / 100);
-                let rowGrossRev = discFactor > 0 ? (pm.rev / discFactor) : pm.rev;
-                let calcBasePrice = pm.qty > 0 ? (rowGrossRev / pm.qty) : 0;
+                let rowListRev = discFactor > 0 ? (pm.grossRev / discFactor) : pm.grossRev;
+                let calcBasePrice = pm.qty > 0 ? (rowListRev / pm.qty) : 0;
                 let calcUnitCost = pm.qty > 0 ? (pm.cost / pm.qty) : 0;
                 
-                let revShare = histRev > 0 ? (pm.rev / histRev) : 0;
+                let revShare = histGrossRev > 0 ? (pm.grossRev / histGrossRev) : 0;
                 let rowFixedFee = activeFixedFees * revShare;
                 
-                let rowRebate = pm.rev * (masterTotalMargin / 100);
-                let rowNetRev = pm.rev - rowRebate;
-                let rowNetProfit = pm.rev - pm.cost - rowRebate - rowFixedFee;
+                // Dynamic Row Net-Net Math
+                let rowRebate = pm.grossRev * (masterTotalMargin / 100);
+                let rowNetRev = pm.grossRev - rowRebate;
+                let rowNetProfit = rowNetRev - pm.cost - rowFixedFee;
                 let rowNetMargin = rowNetRev > 0 ? (rowNetProfit / rowNetRev) * 100 : 0;
                 
-                tQty += pm.qty; tNetRev += pm.rev; tGrossRev += rowGrossRev; tCost += pm.cost;
+                tQty += pm.qty; tGrossRev += pm.grossRev; tNetRev += rowNetRev; tCost += pm.cost;
 
                 html += `<tr class="border-b border-slate-50 hover:bg-slate-50/50">
                     <td class="py-3 text-slate-800 font-bold">${pm.name}</td>
@@ -3773,7 +3780,7 @@
                     <td class="py-3 text-center font-mono text-slate-500">${calcBasePrice.toFixed(1)}</td>
                     <td class="py-3 text-center font-mono text-slate-500">${calcUnitCost.toFixed(2)}</td>
                     <td class="py-3 text-center"><span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px]">${pm.invDisc.toFixed(1)}%</span></td>
-                    <td class="py-3 text-center font-mono text-blue-600">${Math.round(pm.rev).toLocaleString()}</td>
+                    <td class="py-3 text-center font-mono text-blue-600">${Math.round(pm.grossRev).toLocaleString()}</td>
                     <td class="py-3 text-center font-mono text-red-500">${Math.round(pm.cost).toLocaleString()}</td>
                     <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${Math.round(rowRebate).toLocaleString()}</td>
                     <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${Math.round(rowFixedFee).toLocaleString()}</td>
@@ -3783,9 +3790,14 @@
             });
             body.innerHTML = html;
             
-            let avgBasePrice = tQty > 0 ? (tGrossRev / tQty) : 0;
+            let avgBasePrice = tQty > 0 ? ((tGrossRev / (1 - (tGrossRev > 0 ? (1-(tNetRev/tGrossRev)) : 0))) / tQty) : 0; 
+            // Simplified Invoice Discount weighted average
+            let avgInvDisc = tQty > 0 ? (Object.values(productMetrics).reduce((sum, p) => sum + (p.invDisc * p.grossRev), 0) / tGrossRev) : 0;
+            // Back-calc proper average base price
+            let pureListRev = tGrossRev / (1 - (avgInvDisc/100));
+            avgBasePrice = tQty > 0 ? (pureListRev / tQty) : 0;
+            
             let avgUnitCost = tQty > 0 ? (tCost / tQty) : 0;
-            let avgInvDisc = tGrossRev > 0 ? ((1 - (tNetRev / tGrossRev)) * 100) : 0;
             
             const fProfitColor = (isNetEligible && histNetProfit < 0) ? 'text-red-600' : 'text-emerald-800';
             const fMarginColor = (isNetEligible && histNetMargin < 0) ? 'text-red-600' : 'text-emerald-700';
@@ -3796,7 +3808,7 @@
                 <td class="py-3 text-center font-mono">${avgBasePrice.toFixed(1)}</td>
                 <td class="py-3 text-center font-mono">${avgUnitCost.toFixed(2)}</td>
                 <td class="py-3 text-center text-blue-700">${avgInvDisc.toFixed(1)}%</td>
-                <td class="py-3 text-center font-mono text-blue-900">${Math.round(tNetRev).toLocaleString()}</td>
+                <td class="py-3 text-center font-mono text-blue-900">${Math.round(tGrossRev).toLocaleString()}</td>
                 <td class="py-3 text-center font-mono text-red-600">${Math.round(tCost).toLocaleString()}</td>
                 <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${isNetEligible ? Math.round(rebateDeduction).toLocaleString() : '-'}</td>
                 <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${isNetEligible ? Math.round(activeFixedFees).toLocaleString() : '-'}</td>
@@ -3806,7 +3818,6 @@
 
             document.querySelectorAll('.sb-metric-2026').forEach(el => el.style.display = isNetEligible ? '' : 'none');
         } else {
-            // Graceful Empty State instead of hiding
             body.innerHTML = `<tr><td colspan="11" class="text-center py-6 text-slate-400 font-bold tracking-widest"><i class="fas fa-inbox text-slate-300 mr-2"></i> No historical data found for this selection.</td></tr>`;
             footer.innerHTML = '';
         }

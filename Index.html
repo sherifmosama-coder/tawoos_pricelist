@@ -510,233 +510,285 @@
           Preview Document
         </button>
       </div>
-
     </div>
   </div>
 
   <div id="scenarioBuilderView" class="hidden max-w-7xl mx-auto space-y-6 pb-20">
-    
-    <div class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
+  
+    <div
+      class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
         <button onclick="closeScenarioBuilder()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition shadow-sm">
-          <i class="fas fa-arrow-left"></i> Back
-        </button>
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
         <div>
-          <h1 class="text-2xl font-black tracking-tight text-slate-900"><i class="fas fa-flask text-emerald-500 mr-2"></i> Deal Scenario Simulator</h1>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Test target tiers, rebates, and margins</p>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900"><i class="fas fa-flask text-emerald-500 mr-2"></i>
+            Deal Scenario Simulator</h1>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Test target tiers, rebates, and margins
+          </p>
         </div>
       </div>
     </div>
-
-    <div id="sbTotalDashboard" class="sticky top-[110px] z-40 bg-slate-800 text-white rounded-3xl p-5 shadow-xl relative overflow-hidden transition-all border border-slate-700">
-        <div class="absolute right-0 bottom-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="flex flex-col md:flex-row md:items-center justify-between relative z-10 gap-4">
-            <div class="flex items-center gap-2">
-                <h4 class="text-sm font-black text-emerald-400 uppercase tracking-widest"><i class="fas fa-chart-line mr-2"></i> Master Results</h4>
-                <div id="sbTierAlert" class="text-[10px] font-bold bg-emerald-500/20 text-emerald-200 px-2 py-1 rounded hidden animate-pulse">
-                   <i class="fas fa-unlock-alt mr-1"></i> Tier Unlocked!
-                </div>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 w-full md:w-auto">
-               <div><span class="block text-[10px] text-slate-400 uppercase">Total Revenue</span><span id="sbTotalRev" class="font-mono text-xl font-bold text-white">0.00</span></div>
-               <div><span class="block text-[10px] text-slate-400 uppercase">Total Auto-Cost</span><span id="sbTotalCost" class="font-mono text-xl font-bold text-amber-300">0.00</span></div>
-               <div><span class="block text-[10px] text-slate-400 uppercase">Total Deductions</span><span id="sbTotalDeductions" class="font-mono text-xl font-bold text-red-300">0.00</span></div>
-               <div class="pl-4 border-l border-slate-700"><span class="block text-[10px] text-slate-400 uppercase">Net Margin</span><span id="sbMasterMargin" class="font-black text-2xl text-emerald-400 drop-shadow-md">0.0%</span></div>
-            </div>
+  
+    <div id="sbTotalDashboard"
+      class="sticky top-[110px] z-40 bg-slate-800 text-white rounded-3xl p-5 shadow-xl relative overflow-hidden transition-all border border-slate-700">
+      <div class="absolute right-0 bottom-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col md:flex-row md:items-center justify-between relative z-10 gap-4">
+        <div class="flex items-center gap-2">
+          <h4 class="text-sm font-black text-emerald-400 uppercase tracking-widest"><i class="fas fa-chart-line mr-2"></i>
+            Master Results</h4>
+          <div id="sbTierAlert"
+            class="text-[10px] font-bold bg-emerald-500/20 text-emerald-200 px-2 py-1 rounded hidden animate-pulse">
+            <i class="fas fa-unlock-alt mr-1"></i> Tier Unlocked!
+          </div>
         </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 w-full md:w-auto">
+          <div>
+            <span class="block text-[10px] text-slate-400 uppercase">Total Revenue</span><span id="sbTotalRev" class="font-mono text-xl font-bold text-white">0.00</span>
+          </div>
+          <div>
+            <span class="block text-[10px] text-slate-400 uppercase">Total Auto-Cost</span><span id="sbTotalCost" class="font-mono text-xl font-bold text-amber-300">0.00</span>
+          </div>
+          <div>
+            <span class="block text-[10px] text-slate-400 uppercase">Total Deductions</span><span id="sbTotalDeductions" class="font-mono text-xl font-bold text-red-300">0.00</span>
+          </div>
+          <div class="pl-4 border-l border-slate-700">
+            <span class="block text-[10px] text-slate-400 uppercase">Net Margin</span><span id="sbMasterMargin" class="font-black text-2xl text-emerald-400 drop-shadow-md">0.0%</span>
+          </div>
+        </div>
+      </div>
     </div>
-
+  
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card space-y-6">
-        
-        <div class="flex flex-col md:flex-row gap-6 items-start relative z-20">
-           <div class="w-full md:w-7/12 flex flex-col sm:flex-row gap-3">
-              <div class="w-full sm:w-2/4">
-                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2"><i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client</h3>
-                 <div class="relative w-full">
-                    <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-sm text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
-                    <input type="hidden" id="sbClientSelect" value="">
-                    <ul id="sbClientList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
-                 </div>
-              </div>
-              <div class="w-full sm:w-1/4">
-                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">Type</h3>
-                 <select id="sbContractType" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-900/20 focus:border-indigo-600 font-bold text-sm text-indigo-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
-                     <option value="Both">Both</option>
-                     <option value="Standard">Standard</option>
-                     <option value="Private Label">P. Label</option>
-                 </select>
-              </div>
-              <div class="w-full sm:w-1/4">
-                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">Scope</h3>
-                 <select id="sbTimeScope" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-900/20 focus:border-emerald-600 font-bold text-sm text-emerald-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
-                     <option value="L12M">Past 12M</option>
-                     <option value="2026" selected>2026 YTD</option>
-                     <option value="2025">2025</option>
-                     <option value="2024">2024</option>
-                     <option value="2023">2023</option>
-                     <option value="2022">2022</option>
-                     <option value="2021">2021</option>
-                 </select>
-              </div>
-           </div>
-           
-           <div id="sbClientRefBox" class="w-full md:w-5/12 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 hidden opacity-0 transition-opacity duration-300">
-              <div class="flex justify-between items-center mb-2">
-                 <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"><i class="fas fa-history mr-1"></i> Historical Data & Terms</h4>
-                 <span id="sbInsightBadge" class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase shadow-sm border border-indigo-200">FY 2025</span>
-              </div>
-              
-              <div id="sbClientChips" class="flex flex-wrap gap-2 mb-4">
-                  </div>
-              
-              <div id="sbClientInsights" class="space-y-4 pt-3 border-t border-slate-100">
-                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Sales Qty</span><span id="sbHistQty" class="font-mono text-sm font-bold text-slate-700">0</span></div>
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Net Sales</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span></div>
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Profit</span><span id="sbHistProfit" class="font-mono text-sm font-bold text-emerald-600">0</span></div>
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Margin</span><span id="sbHistMargin" class="font-black text-sm text-emerald-500">0.0%</span></div>
-                 </div>
-                 <div id="sbHistNetRow" class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-inner relative">
-                    <div class="flex items-center gap-2">
-                       <span class="text-[8px] font-black text-emerald-700 uppercase leading-tight"><i class="fas fa-check-double mr-1"></i> Net-Net<br>Benchmark</span>
-                       <button onclick="toggleSbLogicTooltip(event)" class="text-emerald-400 hover:text-emerald-600 transition-colors">
-                          <i class="fas fa-info-circle text-[10px]"></i>
-                       </button>
-                    </div>
-
-                    <div id="sbLogicTooltip" class="hidden absolute left-0 top-full mt-2 z-[100] w-72 bg-slate-800 text-white p-5 rounded-2xl shadow-2xl border border-slate-700 text-[10px] leading-relaxed animate-in fade-in zoom-in duration-200">
-                       <div class="space-y-4">
-                          <p class="font-black text-emerald-400 border-b border-slate-700 pb-2 uppercase tracking-widest">Step-by-Step Logic</p>
-                          
-                          <div class="space-y-1">
-                             <span class="font-bold text-white block">1. Net Revenue</span>
-                             <div class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
-                                <span id="tipGrossRev">0</span> (Gross) <br>
-                                - <span id="tipRebateAmt">0</span> (<span id="tipRebatePct">0</span>% Rebate) <br>
-                                = <span class="text-blue-400 font-bold" id="tipNetRev">0</span>
-                             </div>
-                          </div>
-
-                          <div class="space-y-1">
-                             <span class="font-bold text-white block">2. Proportional Fixed Fees</span>
-                             <div class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
-                                (<span id="tipAnnualFixed">0</span> / 365) × <span id="tipDays">0</span> Days <br>
-                                = <span class="text-amber-400 font-bold" id="tipPropFixed">0</span>
-                             </div>
-                          </div>
-
-                          <div class="space-y-1">
-                             <span class="font-bold text-white block">3. Net-Net Profit</span>
-                             <div class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
-                                <span id="tipNetRevFinal">0</span> (Net Rev) <br>
-                                - <span id="tipProdCost">0</span> (Prod. Cost) <br>
-                                - <span id="tipPropFixedFinal">0</span> (Fees) <br>
-                                = <span class="text-emerald-400 font-bold" id="tipNetProfit">0</span>
-                             </div>
-                          </div>
-                       </div>
-                       <div class="mt-4 pt-2 border-t border-slate-700 text-[8px] text-slate-500 italic text-center">Historical data comparison baseline.</div>
-                    </div>
-                    <div><span class="block text-[8px] text-emerald-600 uppercase font-black">Net Revenue</span><span id="sbHistNetRev" class="font-mono text-sm font-bold text-blue-800">0</span></div>
-                    <div><span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Profit</span><span id="sbHistNetProfit" class="font-mono text-sm font-bold text-emerald-800">0</span></div>
-                    <div><span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Margin</span><span id="sbHistNetMargin" class="font-black text-sm text-emerald-700">0.0%</span></div>
-                 </div>
-              </div>
-           </div>
+  
+      <div class="flex flex-col md:flex-row gap-6 items-start relative z-20">
+        <div class="w-full md:w-7/12 flex flex-col sm:flex-row gap-3">
+          <div class="w-full sm:w-2/4">
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
+              <i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client</h3>
+            <div class="relative w-full">
+              <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-sm text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
+              <input type="hidden" id="sbClientSelect" value="">
+              <ul id="sbClientList"
+                class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl">
+              </ul>
+            </div>
+          </div>
+          <div class="w-full sm:w-1/4">
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
+              Type</h3>
+            <select id="sbContractType" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-900/20 focus:border-indigo-600 font-bold text-sm text-indigo-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
+                       <option value="Both">Both</option>
+                       <option value="Standard">Standard</option>
+                       <option value="Private Label">P. Label</option>
+                   </select>
+          </div>
+          <div class="w-full sm:w-1/4">
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
+              Scope</h3>
+            <select id="sbTimeScope" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-900/20 focus:border-emerald-600 font-bold text-sm text-emerald-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
+                       <option value="L12M">Past 12M</option>
+                       <option value="2026" selected>2026 YTD</option>
+                       <option value="2025">2025</option>
+                       <option value="2024">2024</option>
+                       <option value="2023">2023</option>
+                       <option value="2022">2022</option>
+                       <option value="2021">2021</option>
+                   </select>
+          </div>
         </div>
-           <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
-           </div>
+  
+        <div id="sbClientRefBox"
+          class="w-full md:w-5/12 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 hidden opacity-0 transition-opacity duration-300">
+          <div class="flex justify-between items-center mb-2">
+            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"><i class="fas fa-history mr-1"></i>
+              Historical Data & Terms</h4>
+            <span id="sbInsightBadge" class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase shadow-sm border border-indigo-200">FY 2025</span>
+          </div>
+  
+          <div id="sbClientChips" class="flex flex-wrap gap-2 mb-4">
+          </div>
+  
+          <div id="sbClientInsights" class="space-y-4 pt-3 border-t border-slate-100">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <span class="block text-[8px] text-slate-400 uppercase font-black">Sales Qty</span><span id="sbHistQty" class="font-mono text-sm font-bold text-slate-700">0</span>
+              </div>
+              <div>
+                <span class="block text-[8px] text-slate-400 uppercase font-black">Net Sales</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span>
+              </div>
+              <div>
+                <span class="block text-[8px] text-slate-400 uppercase font-black">Gross Profit</span><span id="sbHistProfit" class="font-mono text-sm font-bold text-emerald-600">0</span>
+              </div>
+              <div>
+                <span class="block text-[8px] text-slate-400 uppercase font-black">Gross Margin</span><span id="sbHistMargin" class="font-black text-sm text-emerald-500">0.0%</span>
+              </div>
+            </div>
+            <div id="sbHistNetRow"
+              class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-inner relative">
+              <div class="flex items-center gap-2">
+                <span class="text-[8px] font-black text-emerald-700 uppercase leading-tight"><i class="fas fa-check-double mr-1"></i> Net-Net<br>Benchmark</span>
+                <button onclick="toggleSbLogicTooltip(event)" class="text-emerald-400 hover:text-emerald-600 transition-colors">
+                            <i class="fas fa-info-circle text-[10px]"></i>
+                         </button>
+              </div>
+  
+              <div id="sbLogicTooltip"
+                class="hidden absolute left-0 top-full mt-2 z-[100] w-72 bg-slate-800 text-white p-5 rounded-2xl shadow-2xl border border-slate-700 text-[10px] leading-relaxed animate-in fade-in zoom-in duration-200">
+                <div class="space-y-4">
+                  <p class="font-black text-emerald-400 border-b border-slate-700 pb-2 uppercase tracking-widest">
+                    Step-by-Step Logic</p>
+  
+                  <div class="space-y-1">
+                    <span class="font-bold text-white block">1. Net Revenue</span>
+                    <div
+                      class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                      <span id="tipGrossRev">0</span> (Gross) <br>
+                                  - <span id="tipRebateAmt">0</span> (<span id="tipRebatePct">0</span>% Rebate) <br>
+                                  = <span class="text-blue-400 font-bold" id="tipNetRev">0</span>
+                    </div>
+                  </div>
+  
+                  <div class="space-y-1">
+                    <span class="font-bold text-white block">2. Proportional Fixed Fees</span>
+                    <div
+                      class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                      (<span id="tipAnnualFixed">0</span> / 365) × <span id="tipDays">0</span> Days <br>
+                                  = <span class="text-amber-400 font-bold" id="tipPropFixed">0</span>
+                    </div>
+                  </div>
+  
+                  <div class="space-y-1">
+                    <span class="font-bold text-white block">3. Net-Net Profit</span>
+                    <div
+                      class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                      <span id="tipNetRevFinal">0</span> (Net Rev) <br>
+                                  - <span id="tipProdCost">0</span> (Prod. Cost) <br>
+                                  - <span id="tipPropFixedFinal">0</span> (Fees) <br>
+                                  = <span class="text-emerald-400 font-bold" id="tipNetProfit">0</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4 pt-2 border-t border-slate-700 text-[8px] text-slate-500 italic text-center">Historical
+                  data comparison baseline.</div>
+              </div>
+              <div>
+                <span class="block text-[8px] text-emerald-600 uppercase font-black">Net Revenue</span><span id="sbHistNetRev" class="font-mono text-sm font-bold text-blue-800">0</span>
+              </div>
+              <div>
+                <span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Profit</span><span id="sbHistNetProfit" class="font-mono text-sm font-bold text-emerald-800">0</span>
+              </div>
+              <div>
+                <span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Margin</span><span id="sbHistNetMargin" class="font-black text-sm text-emerald-700">0.0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+    </div>
 
     <div id="sbProductMetricsCard" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card hidden">
-       <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance</h3>
-          <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Filtered by Type & Scope</span>
-       </div>
-       <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse min-w-[800px]">
-             <thead>
-                <tr class="border-b border-slate-100">
-                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase">Product Name</th>
-                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Qty</th>
-                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Base Price</th>
-                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Inv. Disc %</th>
-                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net Sales</th>
-                   <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Rebate">Rebates</th>
-                   <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Fixed Fees">Fees</th>
-                   <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Profit</th>
-                   <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Margin</th>
-                </tr>
-             </thead>
-             <tbody id="sbProductMetricsBody" class="text-xs font-bold text-slate-600">
-                </tbody>
-             <tfoot id="sbProductMetricsFooter" class="bg-slate-50 border-t-2 border-slate-200 text-xs font-black text-slate-700">
-                </tfoot>
-          </table>
-       </div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
+          <i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance</h3>
+        <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Filtered by Type & Scope</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[800px]">
+          <thead>
+            <tr class="border-b border-slate-100">
+              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase">Product Name</th>
+              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Qty</th>
+              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Base Price</th>
+              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Inv. Disc %</th>
+              <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net Sales</th>
+              <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600"
+                title="Distributed Rebate">Rebates</th>
+              <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600"
+                title="Distributed Fixed Fees">Fees</th>
+              <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Profit
+              </th>
+              <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Margin
+              </th>
+            </tr>
+          </thead>
+          <tbody id="sbProductMetricsBody" class="text-xs font-bold text-slate-600">
+          </tbody>
+          <tfoot id="sbProductMetricsFooter"
+            class="bg-slate-50 border-t-2 border-slate-200 text-xs font-black text-slate-700">
+          </tfoot>
+        </table>
+      </div>
     </div>
-
+    
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
-        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4"><i class="fas fa-file-contract text-indigo-500 mr-2"></i> 3. Proposed Terms</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fixed Fees (Total EGP/Yr)</label>
-                 <input type="number" id="sbFixedFees" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
-              </div>
-              <div>
-                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Marketing Budget (Total EGP)</label>
-                 <input type="number" id="sbMarketing" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
-              </div>
-              <div>
-                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Standard Rebate / Back Margin (%)</label>
-                 <input type="number" id="sbStandardRebate" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0%">
-              </div>
-           </div>
+      <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4">
+        <i class="fas fa-file-contract text-indigo-500 mr-2"></i> 3. Proposed Terms
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fixed Fees (Total EGP/Yr)</label>
+          <input type="number" id="sbFixedFees" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
         </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Marketing Budget (Total EGP)</label>
+          <input type="number" id="sbMarketing" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Standard Rebate / Back Margin (%)</label>
+          <input type="number" id="sbStandardRebate" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0%">
+        </div>
+      </div>
     </div>
-
+    
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
-       <div class="flex items-center justify-between mb-4">
-           <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-bullseye text-amber-500 mr-2"></i> 4. Conditional Target Tiers</h3>
-           <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">Triggers Extra Discounts</span>
-       </div>
-       
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-             <div class="col-span-12 md:col-span-2"><span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 1</span></div>
-             <div class="col-span-12 md:col-span-4">
-                <select id="sbTier1Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
-             </div>
-             <div class="col-span-12 md:col-span-3 flex items-center gap-2">
-                <span class="text-[10px] font-bold text-slate-400">></span>
-                <input type="number" id="sbTier1Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
-             </div>
-             <div class="col-span-12 md:col-span-3">
-                <input type="number" id="sbTier1Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
-             </div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
+          <i class="fas fa-bullseye text-amber-500 mr-2"></i> 4. Conditional Target Tiers</h3>
+        <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">Triggers Extra Discounts</span>
+      </div>
+    
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <div class="col-span-12 md:col-span-2">
+            <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 1</span></div>
+          <div class="col-span-12 md:col-span-4">
+            <select id="sbTier1Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
           </div>
-
-          <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-             <div class="col-span-12 md:col-span-2"><span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 2</span></div>
-             <div class="col-span-12 md:col-span-4">
-                <select id="sbTier2Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
-             </div>
-             <div class="col-span-12 md:col-span-3 flex items-center gap-2">
-                <span class="text-[10px] font-bold text-slate-400">></span>
-                <input type="number" id="sbTier2Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
-             </div>
-             <div class="col-span-12 md:col-span-3">
-                <input type="number" id="sbTier2Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
-             </div>
+          <div class="col-span-12 md:col-span-3 flex items-center gap-2">
+            <span class="text-[10px] font-bold text-slate-400"></span>
+            <input type="number" id="sbTier1Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
           </div>
-       </div>
+          <div class="col-span-12 md:col-span-3">
+            <input type="number" id="sbTier1Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
+          </div>
+        </div>
+    
+        <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <div class="col-span-12 md:col-span-2">
+            <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 2</span></div>
+          <div class="col-span-12 md:col-span-4">
+            <select id="sbTier2Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
+          </div>
+          <div class="col-span-12 md:col-span-3 flex items-center gap-2">
+            <span class="text-[10px] font-bold text-slate-400"></span>
+            <input type="number" id="sbTier2Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
+          </div>
+          <div class="col-span-12 md:col-span-3">
+            <input type="number" id="sbTier2Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
+          </div>
+        </div>
+      </div>
     </div>
-
+    
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
       <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-         <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-boxes text-slate-500 mr-2"></i> 3. Product Volume Simulation</h3>
-         <button onclick="sbAddProductRow()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-1.5 rounded shadow-sm transition-colors">
-            <i class="fas fa-plus mr-1"></i> Add Product
-         </button>
+        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
+          <i class="fas fa-boxes text-slate-500 mr-2"></i> 5. Product Volume Simulation</h3>
+        <button onclick="sbAddProductRow()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-1.5 rounded shadow-sm transition-colors">
+                <i class="fas fa-plus mr-1"></i> Add Product
+             </button>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left rtl:text-right">
@@ -750,11 +802,10 @@
             </tr>
           </thead>
           <tbody id="sbProductTableBody" class="divide-y divide-slate-100">
-             </tbody>
+          </tbody>
         </table>
       </div>
     </div>
-
   </div>
 
   <div id="commercialDirectoryModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4 transition-opacity">

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Price List Generator</title>
@@ -14,31 +15,63 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Inter:wght@400;500;700&display=swap"
+    rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; transition: all 0.3s ease; }
-    .arabic-text { font-family: 'Cairo', sans-serif; direction: rtl; }
-    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      transition: all 0.3s ease;
+    }
+
+    .arabic-text {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+    }
+
     /* Interactive Hover Effects */
-    .hover-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .hover-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.1); }
-    
-    .btn-hover { transition: all 0.2s ease; }
-    .btn-hover:hover { filter: brightness(1.1); transform: scale(1.02); }
+    .hover-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .hover-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.1);
+    }
+
+    .btn-hover {
+      transition: all 0.2s ease;
+    }
+
+    .btn-hover:hover {
+      filter: brightness(1.1);
+      transform: scale(1.02);
+    }
 
     /* Fix for Select visibility */
-    select option { padding: 10px; }
-    
+    select option {
+      padding: 10px;
+    }
+
     /* Ultimate Native Print Reset */
     @media print {
+
       /* 1. Hide the main web app background UI completely */
-      body > div.max-w-5xl { display: none !important; }
-      
+      body>div.max-w-5xl {
+        display: none !important;
+      }
+
       /* 2. Hide the modal toolbar */
-      .no-print { display: none !important; }
+      .no-print {
+        display: none !important;
+      }
 
       /* 3. Destructive Layout Strip: Excludes the toolbar (.no-print) from the block reset */
-      html, body, #previewModal, #previewModal > div:not(.no-print) {
+      html,
+      body,
+      #previewModal,
+      #previewModal>div:not(.no-print) {
         display: block !important;
         position: static !important;
         height: auto !important;
@@ -52,12 +85,12 @@
         border: none !important;
         visibility: visible !important;
       }
-      
+
       /* Forcefully kill the toolbar in print mode */
-      #previewModal .no-print { 
-        display: none !important; 
-        height: 0 !important; 
-        overflow: hidden !important; 
+      #previewModal .no-print {
+        display: none !important;
+        height: 0 !important;
+        overflow: hidden !important;
       }
 
       /* 4. Ensure the print area is treated as a standard static document block and strip shadows */
@@ -68,32 +101,54 @@
         max-width: none !important;
         margin: 0 !important;
         padding: 0 !important;
-        box-shadow: none !important; /* Forces the removal of the grey shadow in print */
-        zoom: 0.90; /* Scales down slightly to accommodate footers on page 1 */
+        box-shadow: none !important;
+        /* Forces the removal of the grey shadow in print */
+        zoom: 0.90;
+        /* Scales down slightly to accommodate footers on page 1 */
       }
-      
+
       /* Strip internal padding for printing */
-      #pdfPrintArea > div {
+      #pdfPrintArea>div {
         padding: 0 !important;
         margin: 0 !important;
       }
-      .border-dotted { border-style: dotted !important; border-bottom-width: 1.5px !important; }
+
+      .border-dotted {
+        border-style: dotted !important;
+        border-bottom-width: 1.5px !important;
+      }
     }
 
     /* Fix for Web Preview: Ensure the internal container doesn't overflow its parent */
-    #pdfPrintArea > div {
+    #pdfPrintArea>div {
       overflow: hidden;
       height: auto !important;
     }
 
     /* Security Gateway Animations */
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      50% { transform: translateX(10px); }
-      75% { transform: translateX(-10px); }
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-10px);
+      }
+
+      50% {
+        transform: translateX(10px);
+      }
+
+      75% {
+        transform: translateX(-10px);
+      }
     }
-    .animate-shake { animation: shake 0.4s ease-in-out; }
+
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
 
     /* Rich Text Editor Overrides for Tailwind */
     .rte-editor ul {
@@ -102,20 +157,34 @@
       margin-top: 0.25rem !important;
       margin-bottom: 0.25rem !important;
     }
+
     .rte-editor ol {
       list-style-type: decimal !important;
       padding-left: 1.5rem !important;
       margin-top: 0.25rem !important;
       margin-bottom: 0.25rem !important;
     }
-    .rte-editor u { text-decoration: underline !important; }
-    .rte-editor strike, .rte-editor s { text-decoration: line-through !important; }
-    .rte-editor span { border-radius: 0.25rem; padding: 0 0.125rem; }
-    .rte-editor hr { 
-      border: 0; 
-      border-top: 2px solid #e2e8f0 !important; 
-      margin: 1rem 0 !important; 
+
+    .rte-editor u {
+      text-decoration: underline !important;
     }
+
+    .rte-editor strike,
+    .rte-editor s {
+      text-decoration: line-through !important;
+    }
+
+    .rte-editor span {
+      border-radius: 0.25rem;
+      padding: 0 0.125rem;
+    }
+
+    .rte-editor hr {
+      border: 0;
+      border-top: 2px solid #e2e8f0 !important;
+      margin: 1rem 0 !important;
+    }
+
     .rte-editor blockquote {
       margin-left: 1.5rem !important;
       margin-right: 1.5rem !important;
@@ -125,20 +194,24 @@
     }
   </style>
 </head>
+
 <body class="p-4 md:p-8 text-slate-800 bg-slate-200 min-h-screen">
 
-  <div id="authGateway" class="fixed inset-0 bg-slate-900 z-[9999] flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+  <div id="authGateway"
+    class="fixed inset-0 bg-slate-900 z-[9999] flex flex-col items-center justify-center p-4 transition-opacity duration-500">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center transform transition-all" id="authBox">
-      <div class="bg-blue-100 text-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+      <div
+        class="bg-blue-100 text-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
         <i class="fas fa-lock text-2xl"></i>
       </div>
       <h2 class="text-2xl font-black text-slate-800 mb-2">Secure Access</h2>
       <p class="text-sm text-slate-500 font-medium mb-8">Enter your authorization passcode to access the system.</p>
-      
+
       <input type="password" id="passcodeInput" maxlength="4" placeholder="••••" class="w-full text-center text-4xl tracking-[0.5em] font-black text-blue-900 bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all mb-4" onkeypress="if(event.key === 'Enter') submitPasscode()">
-      
-      <p id="authErrorMsg" class="text-red-500 text-sm font-bold mb-4 min-h-[20px] opacity-0 transition-opacity">Incorrect Passcode</p>
-      
+
+      <p id="authErrorMsg" class="text-red-500 text-sm font-bold mb-4 min-h-[20px] opacity-0 transition-opacity">
+        Incorrect Passcode</p>
+
       <button id="authBtn" onclick="submitPasscode()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-800 transition-all flex items-center justify-center">
         <span id="authBtnText">Unlock System</span>
         <i id="authSpinner" class="fas fa-circle-notch fa-spin ml-2 hidden"></i>
@@ -147,29 +220,37 @@
   </div>
 
   <div id="dashboardView" class="hidden max-w-7xl mx-auto space-y-6 no-print">
-  <div class="bg-gradient-to-r from-blue-900 to-slate-800 rounded-3xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden mt-2">
-          <div class="relative z-10 flex justify-between items-start md:items-center">
-            <h1 id="userGreeting" class="text-3xl md:text-4xl font-black tracking-tight text-white">Welcome!</h1>
-            
-            <button id="syncDataBtn" onclick="syncMasterData()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg font-bold border border-white/20 transition-all shadow-sm flex items-center text-xs backdrop-blur-sm shrink-0" title="Refresh Data from Sheets">
+    <div
+      class="bg-gradient-to-r from-blue-900 to-slate-800 rounded-3xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden mt-2">
+      <div class="relative z-10 flex justify-between items-start md:items-center">
+        <h1 id="userGreeting" class="text-3xl md:text-4xl font-black tracking-tight text-white">Welcome!</h1>
+
+        <button id="syncDataBtn" onclick="syncMasterData()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg font-bold border border-white/20 transition-all shadow-sm flex items-center text-xs backdrop-blur-sm shrink-0" title="Refresh Data from Sheets">
               <i class="fas fa-sync-alt text-blue-300 mr-1.5"></i> Sync
             </button>
-            
-          </div>
-          <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
-          <div class="absolute -left-10 -bottom-20 w-48 h-48 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
-        </div>
-    <div class="sticky top-4 z-40 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 transition-all">
+
+      </div>
+      <div
+        class="absolute -right-20 -top-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none">
+      </div>
+      <div
+        class="absolute -left-10 -bottom-20 w-48 h-48 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none">
+      </div>
+    </div>
+    <div
+      class="sticky top-4 z-40 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 transition-all">
       <div class="flex items-center space-x-4 rtl:space-x-reverse mb-4 md:mb-0">
         <div class="bg-blue-900 text-white p-3 rounded-2xl shadow-lg shadow-blue-200">
           <i class="fas fa-folder-open text-2xl"></i>
         </div>
         <div>
           <h1 class="text-2xl font-black tracking-tight text-slate-900">Document Archives</h1>
-          <p id="loading-indicator-dash" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Records...</p>
+          <p id="loading-indicator-dash" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading
+            Records...</p>
         </div>
       </div>
-      <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3 rtl:space-x-reverse w-full md:w-auto">
+      <div
+        class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3 rtl:space-x-reverse w-full md:w-auto">
         <button onclick="openContractAnalyzer()" class="w-full md:w-auto bg-purple-50 text-purple-700 px-5 py-3 rounded-xl font-bold hover:bg-purple-100 border border-purple-200 transition-all flex items-center justify-center shadow-sm" title="AI Contract Analyzer">
           <i class="fas fa-file-contract text-purple-500 md:mr-2"></i> <span class="hidden md:inline">Contract Analyzer</span>
         </button>
@@ -185,31 +266,36 @@
       </div>
     </div>
 
-    <div class="sticky top-28 z-30 bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 transition-all">
-       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="relative w-full md:w-72">
-            <input type="text" id="filterClientSearch" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-base text-blue-900 shadow-sm placeholder:font-medium placeholder:text-sm placeholder:text-slate-400" placeholder="🔍 Filter by Client..." autocomplete="off" oninput="filterCombo('filterClientList', this.value); if(!this.value) { document.getElementById('filterClient').value=''; renderDashboardTable(); }" onfocus="showCombo('filterClientList')" onblur="hideCombo('filterClientList')">
-            <input type="hidden" id="filterClient" value="">
-            <ul id="filterClientList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
-          </div>
-          <div>
-             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Document Type</label>
-             <select id="filterType" onchange="renderDashboardTable()" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900">
+    <div
+      class="sticky top-28 z-30 bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 transition-all">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="relative w-full md:w-72">
+          <input type="text" id="filterClientSearch" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-base text-blue-900 shadow-sm placeholder:font-medium placeholder:text-sm placeholder:text-slate-400" placeholder="🔍 Filter by Client..." autocomplete="off" oninput="filterCombo('filterClientList', this.value); if(!this.value) { document.getElementById('filterClient').value=''; renderDashboardTable(); }" onfocus="showCombo('filterClientList')" onblur="hideCombo('filterClientList')">
+          <input type="hidden" id="filterClient" value="">
+          <ul id="filterClientList"
+            class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl">
+          </ul>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Document Type</label>
+          <select id="filterType" onchange="renderDashboardTable()" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900">
                 <option value="">-- All Types --</option>
                 <option value="Yes">Promotional</option>
                 <option value="No">Standard</option>
              </select>
-          </div>
-          <div>
-             <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Date (Exact)</label>
-             <input type="date" id="filterDate" onchange="renderDashboardTable()" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900">
-          </div>
-          <div class="relative w-full md:w-72">
-            <input type="text" id="filterProductSearch" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-base text-blue-900 shadow-sm placeholder:font-medium placeholder:text-sm placeholder:text-slate-400" placeholder="🔍 Filter by Product..." autocomplete="off" oninput="filterCombo('filterProductList', this.value); if(!this.value) { document.getElementById('filterProduct').value=''; renderDashboardTable(); }" onfocus="showCombo('filterProductList')" onblur="hideCombo('filterProductList')">
-            <input type="hidden" id="filterProduct" value="">
-            <ul id="filterProductList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
-          </div>
-       </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Date (Exact)</label>
+          <input type="date" id="filterDate" onchange="renderDashboardTable()" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm font-bold text-blue-900 focus:ring-2 focus:ring-blue-900">
+        </div>
+        <div class="relative w-full md:w-72">
+          <input type="text" id="filterProductSearch" class="w-full p-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-base text-blue-900 shadow-sm placeholder:font-medium placeholder:text-sm placeholder:text-slate-400" placeholder="🔍 Filter by Product..." autocomplete="off" oninput="filterCombo('filterProductList', this.value); if(!this.value) { document.getElementById('filterProduct').value=''; renderDashboardTable(); }" onfocus="showCombo('filterProductList')" onblur="hideCombo('filterProductList')">
+          <input type="hidden" id="filterProduct" value="">
+          <ul id="filterProductList"
+            class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl">
+          </ul>
+        </div>
+      </div>
     </div>
 
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
@@ -225,14 +311,15 @@
             </tr>
           </thead>
           <tbody id="dashboardTableBody" class="divide-y divide-slate-100">
-            </tbody>
+          </tbody>
         </table>
       </div>
     </div>
   </div>
 
   <div id="engineView" class="hidden max-w-5xl mx-auto space-y-6 no-print">
-    <div class="sticky top-4 z-40 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 hover-card transition-all">
+    <div
+      class="sticky top-4 z-40 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 hover-card transition-all">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
         <button type="button" onclick="openCommercialDirectory()" class="px-4 py-2.5 text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-xl transition-colors flex items-center shadow-sm">
           <i class="fas fa-file-signature md:mr-2"></i> <span class="hidden md:inline">Contracts</span>
@@ -251,19 +338,19 @@
     </div>
 
     <div class="space-y-6">
-      
+
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-5 hover-card">
         <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
           <i class="fas fa-cog mr-2 rtl:ml-2 text-blue-900"></i> Global Settings
         </h2>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
+
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-2 ml-1 uppercase tracking-wider">Doc Date <span class="text-red-600 font-black text-sm">*</span></label>
             <input type="date" id="docDate" required class="w-full p-3 bg-slate-50 border-y border-r border-l-4 border-l-red-500 rounded-xl focus:ring-2 focus:ring-blue-900 font-medium text-sm">
           </div>
-          
+
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-2 ml-1 uppercase tracking-wider">Document Type</label>
             <div class="flex items-center space-x-4 rtl:space-x-reverse h-[46px]"> <label class="flex items-center cursor-pointer group">
@@ -310,8 +397,9 @@
 
         </div>
 
-        <div class="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-8 rtl:space-x-reverse bg-slate-50 p-4 rounded-xl border border-slate-100 mt-2">
-          
+        <div
+          class="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-8 rtl:space-x-reverse bg-slate-50 p-4 rounded-xl border border-slate-100 mt-2">
+
           <label class="flex items-center cursor-pointer group">
             <div class="relative flex items-center justify-center w-6 h-6 bg-white border-2 border-slate-300 rounded-md group-hover:border-blue-500 transition-colors mr-3 rtl:ml-3 rtl:mr-0 flex-shrink-0">
               <input type="checkbox" id="toggleVAT" onchange="renderProductTable()" class="peer sr-only">
@@ -329,28 +417,32 @@
             </div>
             <span class="font-bold text-slate-700 select-none text-sm">Recommended Selling Price</span>
           </label>
-          
+
         </div>
 
         <div class="border-t border-slate-100 pt-4">
-          <h3 class="text-xs font-black text-slate-400 uppercase mb-3"><i class="fas fa-signature mr-2"></i> Document Authorization</h3>
+          <h3 class="text-xs font-black text-slate-400 uppercase mb-3"><i class="fas fa-signature mr-2"></i> Document
+            Authorization</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-               <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Signatory <span class="text-red-600 font-black text-sm">*</span></label>
-               <select id="signatorySelect" onchange="checkNewSignatory()" required class="w-full p-3 bg-white border-y border-r border-l-4 border-l-red-500 border-slate-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-900 text-sm font-bold text-slate-800">
+              <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Signatory <span class="text-red-600 font-black text-sm">*</span></label>
+              <select id="signatorySelect" onchange="checkNewSignatory()" required class="w-full p-3 bg-white border-y border-r border-l-4 border-l-red-500 border-slate-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-900 text-sm font-bold text-slate-800">
                   <option value="">-- Assign Signatory --</option>
                   <option value="new" class="font-bold text-blue-600">+ Add New Signatory</option>
                </select>
             </div>
-            <div id="sigDisplay" class="hidden bg-blue-50 p-3 rounded-xl border border-blue-100 flex flex-col justify-center">
-               <p id="sigDisplayName" class="text-sm font-bold text-blue-900"></p>
-               <p id="sigDisplayTitle" class="text-xs text-blue-700"></p>
-               <p id="sigDisplayPhone" class="text-xs text-blue-500"></p>
+            <div id="sigDisplay"
+              class="hidden bg-blue-50 p-3 rounded-xl border border-blue-100 flex flex-col justify-center">
+              <p id="sigDisplayName" class="text-sm font-bold text-blue-900"></p>
+              <p id="sigDisplayTitle" class="text-xs text-blue-700"></p>
+              <p id="sigDisplayPhone" class="text-xs text-blue-500"></p>
             </div>
           </div>
-          <div id="newSignatoryFields" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-white border border-slate-200 shadow-sm rounded-xl mt-3">
+          <div id="newSignatoryFields"
+            class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-white border border-slate-200 shadow-sm rounded-xl mt-3">
             <div class="col-span-1 md:col-span-2 border-b border-slate-100 pb-2 mb-2">
-              <h4 class="text-xs font-black text-blue-900 uppercase tracking-widest"><i class="fas fa-id-card mr-2"></i> New Bilingual Contact</h4>
+              <h4 class="text-xs font-black text-blue-900 uppercase tracking-widest"><i class="fas fa-id-card mr-2"></i>
+                New Bilingual Contact</h4>
             </div>
             <div>
               <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">English Name <span class="text-red-500">*</span></label>
@@ -380,29 +472,30 @@
         </div>
 
         <div id="promoSettings" class="hidden bg-indigo-50 border border-indigo-100 p-5 rounded-2xl">
-          <h3 class="text-xs font-black text-indigo-900 uppercase mb-3"><i class="fas fa-tags mr-2"></i> Promotion Constraints <span class="text-red-600">*</span></h3>
+          <h3 class="text-xs font-black text-indigo-900 uppercase mb-3"><i class="fas fa-tags mr-2"></i> Promotion
+            Constraints <span class="text-red-600">*</span></h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-             <div>
-                <label class="block text-xs font-bold text-indigo-700 mb-1">Limit Type</label>
-                <select id="promoLimitType" onchange="toggleLimitInputs()" class="w-full p-2.5 rounded-xl border-none bg-white text-sm font-bold shadow-sm focus:ring-2 focus:ring-indigo-500">
+            <div>
+              <label class="block text-xs font-bold text-indigo-700 mb-1">Limit Type</label>
+              <select id="promoLimitType" onchange="toggleLimitInputs()" class="w-full p-2.5 rounded-xl border-none bg-white text-sm font-bold shadow-sm focus:ring-2 focus:ring-indigo-500">
                   <option value="date">Validity Dates</option>
                   <option value="qty">Max Quantity</option>
                 </select>
-             </div>
-             <div id="limitDateInputs" class="md:col-span-2 flex space-x-3 rtl:space-x-reverse">
-                <div class="w-1/2">
-                   <label class="block text-xs font-bold text-indigo-700 mb-1">Start Date <span class="text-red-600">*</span></label>
-                   <input type="date" id="promoStart" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div class="w-1/2">
-                   <label class="block text-xs font-bold text-indigo-700 mb-1">End Date <span class="text-red-600">*</span></label>
-                   <input type="date" id="promoEnd" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
-                </div>
-             </div>
-             <div id="limitQtyInput" class="hidden md:col-span-2">
-                <label class="block text-xs font-bold text-indigo-700 mb-1">Max Qty Limit <span class="text-red-600">*</span></label>
-                <input type="text" id="promoQty" placeholder="e.g. 500 Cartons" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
-             </div>
+            </div>
+            <div id="limitDateInputs" class="md:col-span-2 flex space-x-3 rtl:space-x-reverse">
+              <div class="w-1/2">
+                <label class="block text-xs font-bold text-indigo-700 mb-1">Start Date <span class="text-red-600">*</span></label>
+                <input type="date" id="promoStart" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div class="w-1/2">
+                <label class="block text-xs font-bold text-indigo-700 mb-1">End Date <span class="text-red-600">*</span></label>
+                <input type="date" id="promoEnd" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div id="limitQtyInput" class="hidden md:col-span-2">
+              <label class="block text-xs font-bold text-indigo-700 mb-1">Max Qty Limit <span class="text-red-600">*</span></label>
+              <input type="text" id="promoQty" placeholder="e.g. 500 Cartons" class="w-full p-2.5 rounded-xl bg-white border-y border-r border-l-4 border-l-red-500 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
           </div>
         </div>
       </div>
@@ -420,7 +513,9 @@
             <div class="relative w-full">
               <input type="text" id="clientSearch" class="w-full p-4 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-black text-lg text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-sm placeholder:text-slate-400" placeholder="🔍 Type to search clients..." autocomplete="off" oninput="filterCombo('clientList', this.value); if(!this.value) document.getElementById('clientSelect').value='';" onfocus="showCombo('clientList')" onblur="hideCombo('clientList')">
               <input type="hidden" id="clientSelect" value="">
-              <ul id="clientList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
+              <ul id="clientList"
+                class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl">
+              </ul>
             </div>
           </div>
           <div>
@@ -433,28 +528,31 @@
           </div>
         </div>
 
-        <div id="commercialInsightsPanel" class="hidden bg-indigo-50/80 border border-indigo-200 rounded-2xl p-5 mt-2 shadow-inner transition-all duration-300">
-                  <h4 class="font-black text-indigo-900 mb-3 flex items-center text-sm uppercase tracking-wider">
-                    <i class="fas fa-chart-pie mr-2 rtl:ml-2 text-indigo-500"></i> Net-Net Insights (Commercial Terms)
-                  </h4>
-                  <div id="commercialInsightsContent" class="text-sm text-indigo-800 space-y-3"></div>
-                </div>
+        <div id="commercialInsightsPanel"
+          class="hidden bg-indigo-50/80 border border-indigo-200 rounded-2xl p-5 mt-2 shadow-inner transition-all duration-300">
+          <h4 class="font-black text-indigo-900 mb-3 flex items-center text-sm uppercase tracking-wider">
+            <i class="fas fa-chart-pie mr-2 rtl:ml-2 text-indigo-500"></i> Net-Net Insights (Commercial Terms)
+          </h4>
+          <div id="commercialInsightsContent" class="text-sm text-indigo-800 space-y-3"></div>
+        </div>
       </div>
 
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-6 hover-card">
         <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
           <i class="fas fa-boxes mr-2 rtl:ml-2 text-blue-900"></i> Product Selection
         </h2>
-        
+
         <div class="flex justify-between items-center mb-2">
-           <label class="block text-xs font-bold text-slate-500 ml-1">Select Product <span class="text-red-600 font-black text-sm">*</span></label>
-           <button onclick="toggleModal('productModal')" class="text-blue-900 hover:text-blue-700 text-xs font-black uppercase"><i class="fas fa-plus-circle mr-1"></i> New Product</button>
+          <label class="block text-xs font-bold text-slate-500 ml-1">Select Product <span class="text-red-600 font-black text-sm">*</span></label>
+          <button onclick="toggleModal('productModal')" class="text-blue-900 hover:text-blue-700 text-xs font-black uppercase"><i class="fas fa-plus-circle mr-1"></i> New Product</button>
         </div>
         <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 rtl:space-x-reverse">
           <div class="relative w-full">
             <input type="text" id="productSearch" class="w-full p-4 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-black text-lg text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-sm placeholder:text-slate-400" placeholder="🔍 Type to search products..." autocomplete="off" oninput="filterCombo('productList', this.value); if(!this.value) document.getElementById('productSelect').value='';" onfocus="showCombo('productList')" onblur="hideCombo('productList')">
             <input type="hidden" id="productSelect" value="">
-            <ul id="productList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
+            <ul id="productList"
+              class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl">
+            </ul>
           </div>
           <button onclick="addProduct()" class="bg-blue-900 text-white px-10 py-3 rounded-xl font-bold btn-hover flex items-center justify-center">
             <i class="fas fa-plus mr-2 rtl:ml-2"></i> Add Product
@@ -472,35 +570,40 @@
       </div>
 
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4 hover-card">
-         <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
+        <h2 class="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center">
           <i class="fas fa-sticky-note mr-2 rtl:ml-2 text-blue-900"></i> Document Notes
         </h2>
         <div class="mt-8">
           <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-             <div class="rte-toolbar bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap gap-y-2 text-slate-500 no-print items-center">
-                
-                <div class="flex space-x-1 rtl:space-x-reverse border-r border-slate-300 pr-3 rtl:pr-0 rtl:pl-3 mr-3 rtl:mr-0 rtl:ml-3">
-                  <button type="button" onclick="document.execCommand('bold',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Bold"><i class="fas fa-bold"></i></button>
-                  <button type="button" onclick="document.execCommand('italic',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Italic"><i class="fas fa-italic"></i></button>
-                  <button type="button" onclick="document.execCommand('underline',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Underline"><i class="fas fa-underline"></i></button>
-                  <button type="button" onclick="document.execCommand('strikeThrough',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Strikethrough"><i class="fas fa-strikethrough"></i></button>
-                  <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="w-8 h-8 flex items-center justify-center rounded hover:bg-amber-100 hover:text-amber-700 transition-colors" title="Highlight"><i class="fas fa-highlighter"></i></button>
-                </div>
-                
-                <div class="flex space-x-1 rtl:space-x-reverse border-r border-slate-300 pr-3 rtl:pr-0 rtl:pl-3 mr-3 rtl:mr-0 rtl:ml-3">
-                  <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Bullet List"><i class="fas fa-list-ul"></i></button>
-                  <button type="button" onclick="document.execCommand('insertOrderedList',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Numbered List"><i class="fas fa-list-ol"></i></button>
-                  <button type="button" onclick="document.execCommand('outdent',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Decrease Indent"><i class="fas fa-outdent"></i></button>
-                  <button type="button" onclick="document.execCommand('indent',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Increase Indent"><i class="fas fa-indent"></i></button>
-                </div>
+            <div
+              class="rte-toolbar bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap gap-y-2 text-slate-500 no-print items-center">
 
-                <div class="flex space-x-1 rtl:space-x-reverse">
-                  <button type="button" onclick="document.execCommand('insertHorizontalRule',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-slate-200 hover:text-slate-800 transition-colors" title="Insert Divider Line"><i class="fas fa-minus"></i></button>
-                  <button type="button" onclick="document.execCommand('removeFormat',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-red-100 hover:text-red-600 transition-colors" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
-                </div>
-                
-             </div>
-             <div id="documentNotes" contenteditable="true" class="rte-editor p-6 min-h-[200px] focus:outline-none text-sm text-slate-700 placeholder:text-slate-400" placeholder="Type document notes, terms, or conditions here..."></div>
+              <div
+                class="flex space-x-1 rtl:space-x-reverse border-r border-slate-300 pr-3 rtl:pr-0 rtl:pl-3 mr-3 rtl:mr-0 rtl:ml-3">
+                <button type="button" onclick="document.execCommand('bold',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Bold"><i class="fas fa-bold"></i></button>
+                <button type="button" onclick="document.execCommand('italic',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Italic"><i class="fas fa-italic"></i></button>
+                <button type="button" onclick="document.execCommand('underline',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Underline"><i class="fas fa-underline"></i></button>
+                <button type="button" onclick="document.execCommand('strikeThrough',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Strikethrough"><i class="fas fa-strikethrough"></i></button>
+                <button type="button" onclick="document.execCommand('backColor',false,'#fef08a')" class="w-8 h-8 flex items-center justify-center rounded hover:bg-amber-100 hover:text-amber-700 transition-colors" title="Highlight"><i class="fas fa-highlighter"></i></button>
+              </div>
+
+              <div
+                class="flex space-x-1 rtl:space-x-reverse border-r border-slate-300 pr-3 rtl:pr-0 rtl:pl-3 mr-3 rtl:mr-0 rtl:ml-3">
+                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                <button type="button" onclick="document.execCommand('insertOrderedList',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                <button type="button" onclick="document.execCommand('outdent',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Decrease Indent"><i class="fas fa-outdent"></i></button>
+                <button type="button" onclick="document.execCommand('indent',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 hover:text-blue-700 transition-colors" title="Increase Indent"><i class="fas fa-indent"></i></button>
+              </div>
+
+              <div class="flex space-x-1 rtl:space-x-reverse">
+                <button type="button" onclick="document.execCommand('insertHorizontalRule',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-slate-200 hover:text-slate-800 transition-colors" title="Insert Divider Line"><i class="fas fa-minus"></i></button>
+                <button type="button" onclick="document.execCommand('removeFormat',false,null)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-red-100 hover:text-red-600 transition-colors" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
+              </div>
+
+            </div>
+            <div id="documentNotes" contenteditable="true"
+              class="rte-editor p-6 min-h-[200px] focus:outline-none text-sm text-slate-700 placeholder:text-slate-400"
+              placeholder="Type document notes, terms, or conditions here..."></div>
           </div>
         </div>
       </div>
@@ -514,7 +617,7 @@
   </div>
 
   <div id="scenarioBuilderView" class="hidden max-w-7xl mx-auto space-y-6 pb-20">
-  
+
     <div
       class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
@@ -522,20 +625,23 @@
             <i class="fas fa-arrow-left"></i> Back
           </button>
         <div>
-          <h1 class="text-2xl font-black tracking-tight text-slate-900"><i class="fas fa-flask text-emerald-500 mr-2"></i>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900">
+            <i class="fas fa-flask text-emerald-500 mr-2"></i>
             Deal Scenario Simulator</h1>
           <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Test target tiers, rebates, and margins
           </p>
         </div>
       </div>
     </div>
-  
+
     <div id="sbTotalDashboard"
       class="sticky top-[110px] z-40 bg-slate-800 text-white rounded-3xl p-5 shadow-xl relative overflow-hidden transition-all border border-slate-700">
-      <div class="absolute right-0 bottom-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute right-0 bottom-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none">
+      </div>
       <div class="flex flex-col md:flex-row md:items-center justify-between relative z-10 gap-4">
         <div class="flex items-center gap-2">
-          <h4 class="text-sm font-black text-emerald-400 uppercase tracking-widest"><i class="fas fa-chart-line mr-2"></i>
+          <h4 class="text-sm font-black text-emerald-400 uppercase tracking-widest">
+            <i class="fas fa-chart-line mr-2"></i>
             Master Results</h4>
           <div id="sbTierAlert"
             class="text-[10px] font-bold bg-emerald-500/20 text-emerald-200 px-2 py-1 rounded hidden animate-pulse">
@@ -558,14 +664,15 @@
         </div>
       </div>
     </div>
-  
+
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card space-y-6">
-  
+
       <div class="flex flex-col md:flex-row gap-6 items-start relative z-20">
         <div class="w-full md:w-7/12 flex flex-col sm:flex-row gap-3">
           <div class="w-full sm:w-2/4">
             <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
-              <i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client</h3>
+              <i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client
+            </h3>
             <div class="relative w-full">
               <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-sm text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
               <input type="hidden" id="sbClientSelect" value="">
@@ -575,7 +682,8 @@
             </div>
           </div>
           <div class="w-full sm:w-1/4">
-            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
+            <h3
+              class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
               Type</h3>
             <select id="sbContractType" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-900/20 focus:border-indigo-600 font-bold text-sm text-indigo-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
                        <option value="Both">Both</option>
@@ -584,7 +692,8 @@
                    </select>
           </div>
           <div class="w-full sm:w-1/4">
-            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
+            <h3
+              class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
               Scope</h3>
             <select id="sbTimeScope" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-900/20 focus:border-emerald-600 font-bold text-sm text-emerald-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
                        <option value="L12M">Past 12M</option>
@@ -597,18 +706,19 @@
                    </select>
           </div>
         </div>
-  
+
         <div id="sbClientRefBox"
           class="w-full md:w-5/12 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 hidden opacity-0 transition-opacity duration-300">
           <div class="flex justify-between items-center mb-2">
-            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"><i class="fas fa-history mr-1"></i>
+            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <i class="fas fa-history mr-1"></i>
               Historical Data & Terms</h4>
             <span id="sbInsightBadge" class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase shadow-sm border border-indigo-200">FY 2025</span>
           </div>
-  
+
           <div id="sbClientChips" class="flex flex-wrap gap-2 mb-4">
           </div>
-  
+
           <div id="sbClientInsights" class="space-y-4 pt-3 border-t border-slate-100">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
@@ -632,13 +742,13 @@
                             <i class="fas fa-info-circle text-[10px]"></i>
                          </button>
               </div>
-  
+
               <div id="sbLogicTooltip"
                 class="hidden absolute left-0 top-full mt-2 z-[100] w-72 bg-slate-800 text-white p-5 rounded-2xl shadow-2xl border border-slate-700 text-[10px] leading-relaxed animate-in fade-in zoom-in duration-200">
                 <div class="space-y-4">
                   <p class="font-black text-emerald-400 border-b border-slate-700 pb-2 uppercase tracking-widest">
                     Step-by-Step Logic</p>
-  
+
                   <div class="space-y-1">
                     <span class="font-bold text-white block">1. Net Revenue</span>
                     <div
@@ -648,7 +758,7 @@
                                   = <span class="text-blue-400 font-bold" id="tipNetRev">0</span>
                     </div>
                   </div>
-  
+
                   <div class="space-y-1">
                     <span class="font-bold text-white block">2. Proportional Fixed Fees</span>
                     <div
@@ -657,7 +767,7 @@
                                   = <span class="text-amber-400 font-bold" id="tipPropFixed">0</span>
                     </div>
                   </div>
-  
+
                   <div class="space-y-1">
                     <span class="font-bold text-white block">3. Net-Net Profit</span>
                     <div
@@ -691,7 +801,8 @@
     <div id="sbProductMetricsCard" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card hidden">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
-          <i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance</h3>
+          <i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance
+        </h3>
         <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Filtered by Type & Scope</span>
       </div>
       <div class="overflow-x-auto">
@@ -721,7 +832,7 @@
         </table>
       </div>
     </div>
-    
+
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
       <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4">
         <i class="fas fa-file-contract text-indigo-500 mr-2"></i> 3. Proposed Terms
@@ -741,18 +852,20 @@
         </div>
       </div>
     </div>
-    
+
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
-          <i class="fas fa-bullseye text-amber-500 mr-2"></i> 4. Conditional Target Tiers</h3>
+          <i class="fas fa-bullseye text-amber-500 mr-2"></i> 4. Conditional Target Tiers
+        </h3>
         <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">Triggers Extra Discounts</span>
       </div>
-    
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
           <div class="col-span-12 md:col-span-2">
-            <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 1</span></div>
+            <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 1</span>
+          </div>
           <div class="col-span-12 md:col-span-4">
             <select id="sbTier1Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
           </div>
@@ -764,10 +877,11 @@
             <input type="number" id="sbTier1Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
           </div>
         </div>
-    
+
         <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
           <div class="col-span-12 md:col-span-2">
-            <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 2</span></div>
+            <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 2</span>
+          </div>
           <div class="col-span-12 md:col-span-4">
             <select id="sbTier2Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
           </div>
@@ -781,11 +895,12 @@
         </div>
       </div>
     </div>
-    
+
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
       <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
         <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
-          <i class="fas fa-boxes text-slate-500 mr-2"></i> 5. Product Volume Simulation</h3>
+          <i class="fas fa-boxes text-slate-500 mr-2"></i> 5. Product Volume Simulation
+        </h3>
         <button onclick="sbAddProductRow()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-1.5 rounded shadow-sm transition-colors">
                 <i class="fas fa-plus mr-1"></i> Add Product
              </button>
@@ -808,219 +923,255 @@
     </div>
   </div>
 
-  <div id="commercialDirectoryModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4 transition-opacity">
+  <div id="commercialDirectoryModal"
+    class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4 transition-opacity">
     <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
-      
+
       <div class="bg-indigo-900 p-5 flex justify-between items-center text-white">
-              <h3 class="text-xl font-black flex items-center tracking-wide"><i class="fas fa-file-signature mr-3"></i> Commercial Agreements Directory</h3>
-              <div class="flex items-center space-x-4">
-                <button onclick="openContractManager()" class="bg-indigo-500 hover:bg-indigo-400 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow transition-colors"><i class="fas fa-plus mr-1"></i> Add Contract</button>
-                <button onclick="closeCommercialDirectory()" class="text-indigo-200 hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
-              </div>
-            </div>
-      
+        <h3 class="text-xl font-black flex items-center tracking-wide"><i class="fas fa-file-signature mr-3"></i>
+          Commercial Agreements Directory</h3>
+        <div class="flex items-center space-x-4">
+          <button onclick="openContractManager()" class="bg-indigo-500 hover:bg-indigo-400 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow transition-colors"><i class="fas fa-plus mr-1"></i> Add Contract</button>
+          <button onclick="closeCommercialDirectory()" class="text-indigo-200 hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
+        </div>
+      </div>
+
       <div class="p-4 bg-white border-b border-slate-200 flex space-x-4">
         <div class="relative flex-1">
           <i class="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
           <input type="text" id="commDirSearch" onkeyup="filterCommercialDirectory()" placeholder="Search for a client..." class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block pl-11 py-3 transition-colors">
         </div>
       </div>
-      
+
       <div id="commDirList" class="p-5 overflow-y-auto flex-1 space-y-4 bg-slate-100">
-        </div>
+      </div>
 
     </div>
   </div>
 
   <div id="aiAnalyzerModal" class="hidden fixed inset-0 bg-slate-900 z-50 flex flex-col transition-opacity">
-          
-          <div class="bg-slate-900 border-b border-slate-700 p-4 flex justify-between items-center text-white shrink-0 shadow-md relative z-20">
-            <h3 class="text-xl font-black flex items-center tracking-wide"><i class="fas fa-robot text-purple-400 mr-3"></i> Contract Analyzer</h3>
-            
-            <div class="flex items-center space-x-4">
-              <div class="flex items-center bg-slate-800 rounded-full p-1 border border-slate-700 relative cursor-pointer w-32 shadow-inner" onclick="toggleAILanguage()">
-                <input type="hidden" id="aiLanguageTarget" value="ar">
-                <div id="langPuck" class="absolute left-1 top-1 bottom-1 w-[calc(50%-4px)] bg-indigo-500 rounded-full transition-transform duration-300 z-10 shadow"></div>
-                <div class="relative z-20 flex w-full text-[10px] font-bold text-white text-center pointer-events-none">
-                  <div class="w-1/2 py-1">العربية</div>
-                  <div class="w-1/2 py-1">English</div>
-                </div>
-              </div>
-              <button onclick="closeContractAnalyzer()" class="text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
-            </div>
+
+    <div
+      class="bg-slate-900 border-b border-slate-700 p-4 flex justify-between items-center text-white shrink-0 shadow-md relative z-20">
+      <h3 class="text-xl font-black flex items-center tracking-wide"><i class="fas fa-robot text-purple-400 mr-3"></i>
+        Contract Analyzer</h3>
+
+      <div class="flex items-center space-x-4">
+        <div
+          class="flex items-center bg-slate-800 rounded-full p-1 border border-slate-700 relative cursor-pointer w-32 shadow-inner"
+          onclick="toggleAILanguage()">
+          <input type="hidden" id="aiLanguageTarget" value="ar">
+          <div id="langPuck"
+            class="absolute left-1 top-1 bottom-1 w-[calc(50%-4px)] bg-indigo-500 rounded-full transition-transform duration-300 z-10 shadow">
+          </div>
+          <div class="relative z-20 flex w-full text-[10px] font-bold text-white text-center pointer-events-none">
+            <div class="w-1/2 py-1">العربية</div>
+            <div class="w-1/2 py-1">English</div>
+          </div>
+        </div>
+        <button onclick="closeContractAnalyzer()" class="text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    <div class="flex-1 flex overflow-hidden">
+
+      <div
+        class="w-full md:w-1/3 lg:w-2/5 bg-slate-50 flex flex-col border-r border-slate-300 shadow-[4px_0_15px_rgba(0,0,0,0.05)] z-10">
+
+        <div class="p-3 border-b border-slate-200 bg-white shrink-0 relative z-20" id="aiSetupSection">
+          <div
+            class="mb-2.5 p-2 bg-indigo-50/50 border border-indigo-100 rounded text-[10px] text-slate-600 leading-relaxed shadow-sm">
+            <i class="fas fa-info-circle text-indigo-500 mr-1"></i> <strong>What does this do?</strong> This tool
+            automatically reads FMCG contracts and extracts key commercial terms, financial margins, fixed fees, and
+            operational penalties for quick auditing and archiving.
+          </div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="block text-xs font-black text-slate-700"><i class="fas fa-file-upload text-indigo-500 mr-1"></i> Source Document</label>
+            <button onclick="openArchiveSelector()" class="text-[9px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded font-bold hover:bg-blue-100 transition-colors"><i class="fas fa-history mr-1"></i> Archive</button>
           </div>
 
-          <div class="flex-1 flex overflow-hidden">
-            
-            <div class="w-full md:w-1/3 lg:w-2/5 bg-slate-50 flex flex-col border-r border-slate-300 shadow-[4px_0_15px_rgba(0,0,0,0.05)] z-10">
-              
-              <div class="p-3 border-b border-slate-200 bg-white shrink-0 relative z-20" id="aiSetupSection">
-                <div class="mb-2.5 p-2 bg-indigo-50/50 border border-indigo-100 rounded text-[10px] text-slate-600 leading-relaxed shadow-sm">
-                    <i class="fas fa-info-circle text-indigo-500 mr-1"></i> <strong>What does this do?</strong> This tool automatically reads FMCG contracts and extracts key commercial terms, financial margins, fixed fees, and operational penalties for quick auditing and archiving.
-                </div>
-                <div class="flex justify-between items-center mb-1.5">
-                   <label class="block text-xs font-black text-slate-700"><i class="fas fa-file-upload text-indigo-500 mr-1"></i> Source Document</label>
-                   <button onclick="openArchiveSelector()" class="text-[9px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded font-bold hover:bg-blue-100 transition-colors"><i class="fas fa-history mr-1"></i> Archive</button>
-                </div>
-                
-                <input type="file" id="analyzerPdfInput" accept="application/pdf" class="block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-2 cursor-pointer">
-                
-                <div class="flex items-center space-x-2 rtl:space-x-reverse mb-2 bg-slate-50 border border-slate-200 rounded px-2 py-1">
-                   <i class="fas fa-microchip text-indigo-500 text-[10px]"></i>
-                   <select id="aiAgentSelect" class="flex-1 bg-transparent border-none text-[10px] focus:ring-0 font-medium cursor-pointer outline-none">
+          <input type="file" id="analyzerPdfInput" accept="application/pdf" class="block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-2 cursor-pointer">
+
+          <div
+            class="flex items-center space-x-2 rtl:space-x-reverse mb-2 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+            <i class="fas fa-microchip text-indigo-500 text-[10px]"></i>
+            <select id="aiAgentSelect" class="flex-1 bg-transparent border-none text-[10px] focus:ring-0 font-medium cursor-pointer outline-none">
                      <option value="auto">Auto-Select (Gemini Default ➔ OpenRouter)</option>
                      <option value="gemini">Gemini 2.5 Flash (Google - Requires Billing)</option>
                      <option value="groq_llama3">Groq Llama 3.3 70B (Fast & Compressed)</option>
                      <option value="openrouter_free">OpenRouter Nemotron 3 (Enterprise Free)</option>
                    </select>
-                </div>
+          </div>
 
-                <button id="btnRunAnalysis" onclick="triggerAiAnalysis()" class="w-full hidden px-3 py-1.5 text-xs bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded shadow-sm transition-all flex items-center justify-center">
+          <button id="btnRunAnalysis" onclick="triggerAiAnalysis()" class="w-full hidden px-3 py-1.5 text-xs bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded shadow-sm transition-all flex items-center justify-center">
                   <i class="fas fa-bolt mr-2"></i> Extract Terms
                 </button>
-              </div>
-
-              <div class="flex-1 overflow-y-auto relative bg-slate-50" id="aiCardsContainer">
-                
-                <div id="aiStickyHeader" class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md px-5 pt-5 pb-3 border-b border-slate-200 shadow-sm hidden">
-                    
-                    <div id="aiTotalsBanner" class="bg-white border border-slate-200 rounded-lg py-1.5 px-2 mb-2 shadow-sm flex justify-between items-center transition-all">
-                        <div class="flex-1 flex justify-center items-baseline space-x-2 rtl:space-x-reverse border-r border-slate-200">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest hidden sm:inline">Total Rebates</span>
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest sm:hidden">Rebates</span>
-                            <span class="text-sm font-black text-indigo-600" id="totalRebatesUI">0.00%</span>
-                        </div>
-                        <div class="flex-1 flex justify-center items-baseline space-x-2 rtl:space-x-reverse">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest hidden sm:inline">Fixed Fees</span>
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest sm:hidden">Fees</span>
-                            <span class="text-sm font-black text-emerald-600" id="totalFeesUI">0 EGP</span>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-1.5" id="aiCardFilters">
-                        <button data-type="all" onclick="toggleCardFilter('all')" class="filter-btn filter-all bg-slate-800 text-white border-slate-800 border text-[10px] px-3 py-1 rounded-full font-bold transition-all shadow-sm">All</button>
-                        <button data-type="rebate" onclick="toggleCardFilter('rebate')" class="filter-btn filter-rebate bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">Rebates</button>
-                        <button data-type="fixed" onclick="toggleCardFilter('fixed')" class="filter-btn filter-fixed bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">Fixed Fees</button>
-                        <button data-type="promo" onclick="toggleCardFilter('promo')" class="filter-btn filter-promo bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">Promo</button>
-                        <button data-type="risk" onclick="toggleCardFilter('risk')" class="filter-btn filter-risk bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">Risk</button>
-                        <button data-type="general" onclick="toggleCardFilter('general')" class="filter-btn filter-general bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">General</button>
-                    </div>
-                </div>
-
-                <div id="aiEmptyState" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-8 text-center z-0">
-                  <i class="fas fa-file-contract text-5xl mb-4 opacity-20"></i>
-                  <p class="font-bold text-slate-500 mb-1">No Document Loaded</p>
-                  <p class="text-xs">Upload a PDF to view it and extract key commercial terms.</p>
-                </div>
-
-                <div id="extractedTermsList" class="space-y-3 hidden relative z-10 px-5 py-4"></div>
-
-              </div>
-              
-              <div class="p-4 border-t border-slate-200 bg-white shrink-0 hidden space-y-2 relative z-20" id="aiFooterActions">
-                 <button onclick="approveAllCards()" class="w-full px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold rounded-lg shadow-sm transition-all flex items-center justify-center text-sm">
-                    <i class="fas fa-check-circle mr-2 text-indigo-500"></i> Approve All Clauses
-                 </button>
-                 <button onclick="saveAnalysisToArchive()" id="btnSaveArchive" class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center">
-                    <i class="fas fa-save mr-2"></i> Save Archive
-                 </button>
-              </div>
-            </div>
-
-            <div class="hidden md:flex flex-col flex-1 bg-slate-800 relative overflow-hidden" id="pdfViewerArea">
-              
-              <div class="bg-slate-900/80 backdrop-blur-sm p-2 flex justify-center items-center space-x-4 border-b border-slate-700 shrink-0 shadow-sm z-10 absolute top-0 w-full">
-                 <span id="pdfPageIndicator" class="text-slate-300 text-xs font-bold bg-slate-800 px-3 py-1 rounded-full border border-slate-600 shadow-inner">Page 0 / 0</span>
-                 <span id="pdfZoomIndicator" class="text-slate-300 text-xs font-bold bg-slate-800 px-3 py-1 rounded-full border border-slate-600 shadow-inner">120%</span>
-                 <button onclick="zoomPdf(0.2)" class="text-slate-400 hover:text-white px-2"><i class="fas fa-search-plus"></i></button>
-                 <button onclick="zoomPdf(-0.2)" class="text-slate-400 hover:text-white px-2"><i class="fas fa-search-minus"></i></button>
-              </div>
-              <div id="pdfCanvasContainer" class="flex-1 overflow-y-auto p-4 pt-16 flex flex-col items-center space-y-6">
-                 </div>
-            </div>
-
-          </div>
         </div>
 
-  <div id="contractManagerModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4 transition-opacity">
-          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col">
-            
-            <div class="bg-indigo-600 p-5 flex justify-between items-center text-white">
-              <h3 id="cmModalTitle" class="text-xl font-black flex items-center tracking-wide"><i class="fas fa-file-signature mr-3"></i> Add / Edit Contract</h3>
-              <button onclick="closeContractManager()" class="text-indigo-200 hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
+        <div class="flex-1 overflow-y-auto relative bg-slate-50" id="aiCardsContainer">
+
+          <div id="aiStickyHeader"
+            class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md px-5 pt-5 pb-3 border-b border-slate-200 shadow-sm hidden">
+
+            <div id="aiTotalsBanner"
+              class="bg-white border border-slate-200 rounded-lg py-1.5 px-2 mb-2 shadow-sm flex justify-between items-center transition-all">
+              <div
+                class="flex-1 flex justify-center items-baseline space-x-2 rtl:space-x-reverse border-r border-slate-200">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest hidden sm:inline">Total Rebates</span>
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest sm:hidden">Rebates</span>
+                <span class="text-sm font-black text-indigo-600" id="totalRebatesUI">0.00%</span>
+              </div>
+              <div class="flex-1 flex justify-center items-baseline space-x-2 rtl:space-x-reverse">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest hidden sm:inline">Fixed Fees</span>
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest sm:hidden">Fees</span>
+                <span class="text-sm font-black text-emerald-600" id="totalFeesUI">0 EGP</span>
+              </div>
             </div>
-            
-            <div class="p-6 overflow-y-auto max-h-[75vh] space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Client Name (Exact Match)</label>
-                  <input type="text" id="cmClient" list="cmClientList" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Type or select client...">
-                  <datalist id="cmClientList"></datalist>
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Contract Scope</label>
-                  <select id="cmScope" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-indigo-500">
+
+            <div class="flex flex-wrap gap-1.5" id="aiCardFilters">
+              <button data-type="all" onclick="toggleCardFilter('all')" class="filter-btn filter-all bg-slate-800 text-white border-slate-800 border text-[10px] px-3 py-1 rounded-full font-bold transition-all shadow-sm">All</button>
+              <button data-type="rebate" onclick="toggleCardFilter('rebate')" class="filter-btn filter-rebate bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">Rebates</button>
+              <button data-type="fixed" onclick="toggleCardFilter('fixed')" class="filter-btn filter-fixed bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">Fixed Fees</button>
+              <button data-type="promo" onclick="toggleCardFilter('promo')" class="filter-btn filter-promo bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">Promo</button>
+              <button data-type="risk" onclick="toggleCardFilter('risk')" class="filter-btn filter-risk bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">Risk</button>
+              <button data-type="general" onclick="toggleCardFilter('general')" class="filter-btn filter-general bg-white text-slate-500 border-slate-200 border text-[10px] px-3 py-1 rounded-full font-bold transition-all">General</button>
+            </div>
+          </div>
+
+          <div id="aiEmptyState"
+            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-8 text-center z-0">
+            <i class="fas fa-file-contract text-5xl mb-4 opacity-20"></i>
+            <p class="font-bold text-slate-500 mb-1">No Document Loaded</p>
+            <p class="text-xs">Upload a PDF to view it and extract key commercial terms.</p>
+          </div>
+
+          <div id="extractedTermsList" class="space-y-3 hidden relative z-10 px-5 py-4"></div>
+
+        </div>
+
+        <div class="p-4 border-t border-slate-200 bg-white shrink-0 hidden space-y-2 relative z-20"
+          id="aiFooterActions">
+          <button onclick="approveAllCards()" class="w-full px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold rounded-lg shadow-sm transition-all flex items-center justify-center text-sm">
+                    <i class="fas fa-check-circle mr-2 text-indigo-500"></i> Approve All Clauses
+                 </button>
+          <button onclick="saveAnalysisToArchive()" id="btnSaveArchive" class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center">
+                    <i class="fas fa-save mr-2"></i> Save Archive
+                 </button>
+        </div>
+      </div>
+
+      <div class="hidden md:flex flex-col flex-1 bg-slate-800 relative overflow-hidden" id="pdfViewerArea">
+
+        <div
+          class="bg-slate-900/80 backdrop-blur-sm p-2 flex justify-center items-center space-x-4 border-b border-slate-700 shrink-0 shadow-sm z-10 absolute top-0 w-full">
+          <span id="pdfPageIndicator" class="text-slate-300 text-xs font-bold bg-slate-800 px-3 py-1 rounded-full border border-slate-600 shadow-inner">Page 0 / 0</span>
+          <span id="pdfZoomIndicator" class="text-slate-300 text-xs font-bold bg-slate-800 px-3 py-1 rounded-full border border-slate-600 shadow-inner">120%</span>
+          <button onclick="zoomPdf(0.2)" class="text-slate-400 hover:text-white px-2"><i class="fas fa-search-plus"></i></button>
+          <button onclick="zoomPdf(-0.2)" class="text-slate-400 hover:text-white px-2"><i class="fas fa-search-minus"></i></button>
+        </div>
+        <div id="pdfCanvasContainer" class="flex-1 overflow-y-auto p-4 pt-16 flex flex-col items-center space-y-6">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="contractManagerModal"
+    class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4 transition-opacity">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col">
+
+      <div class="bg-indigo-600 p-5 flex justify-between items-center text-white">
+        <h3 id="cmModalTitle" class="text-xl font-black flex items-center tracking-wide">
+          <i class="fas fa-file-signature mr-3"></i> Add / Edit Contract</h3>
+        <button onclick="closeContractManager()" class="text-indigo-200 hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
+      </div>
+
+      <div class="p-6 overflow-y-auto max-h-[75vh] space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Client Name (Exact Match)</label>
+            <input type="text" id="cmClient" list="cmClientList" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Type or select client...">
+            <datalist id="cmClientList"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Contract Scope</label>
+            <select id="cmScope" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-indigo-500">
                     <option value="false">Own-Brand (علامة الطاووس)</option>
                     <option value="true">Private Label (علامة خاصة)</option>
                   </select>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pb-4 border-b border-slate-100">
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
-                  <input type="date" id="cmStart" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm">
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">End Date</label>
-                  <input type="date" id="cmEnd" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm">
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Pay Days</label>
-                  <input type="number" id="cmPayDays" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm" placeholder="e.g. 30">
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Pay Condition</label>
-                  <input type="text" id="cmPayCond" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm" placeholder="e.g. نهاية شهر التوريد">
-                </div>
-              </div>
-
-              <h4 class="text-sm font-black text-indigo-900 border-l-4 border-indigo-500 pl-2">Margin Percentages <span class="text-slate-400 font-normal text-xs ml-2">(Type exact format, e.g., "5%")</span></h4>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Monthly %</label><input type="text" id="cmMPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Central %</label><input type="text" id="cmCPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Quarterly %</label><input type="text" id="cmQPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Annual %</label><input type="text" id="cmAPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-              </div>
-
-              <h4 class="text-sm font-black text-amber-700 border-l-4 border-amber-500 pl-2">Fixed Fees <span class="text-slate-400 font-normal text-xs ml-2">(EGP per specified period)</span></h4>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-4 bg-amber-50/30 p-4 rounded-xl border border-amber-100">
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Monthly Fixed</label><input type="number" id="cmMFixed" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Annual Fixed</label><input type="number" id="cmAFixed" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-                <div class="col-span-2 md:col-span-1 hidden md:block"></div> <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Q1 Fixed</label><input type="number" id="cmQ1" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Q2 Fixed</label><input type="number" id="cmQ2" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Q3 Fixed</label><input type="number" id="cmQ3" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-                <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Q4 Fixed</label><input type="number" id="cmQ4" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center"></div>
-              </div>
-
-              <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-dashed">
-                <label class="block text-sm font-bold text-slate-700 mb-2"><i class="fas fa-file-pdf text-red-500 mr-2"></i> Attach Signed Contract (Optional)</label>
-                <input type="file" id="cmFile" accept="application/pdf,image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                <p id="cmExistingFileNote" class="text-xs text-indigo-600 mt-2 hidden"><i class="fas fa-check-circle mr-1"></i> A contract file is already attached. Uploading a new one will replace it.</p>
-                <input type="hidden" id="cmExistingLink">
-              </div>
-
-            </div>
-
-            <div class="bg-slate-50 p-5 border-t border-slate-200 flex justify-end space-x-3">
-              <button onclick="closeContractManager()" class="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">Cancel</button>
-              <button id="cmSaveBtn" onclick="submitContractForm()" class="px-6 py-2.5 text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-lg transition-colors flex items-center">
-                <i class="fas fa-save mr-2"></i> Save Contract
-              </button>
-            </div>
-
           </div>
         </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
+            <input type="date" id="cmStart" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">End Date</label>
+            <input type="date" id="cmEnd" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Pay Days</label>
+            <input type="number" id="cmPayDays" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm" placeholder="e.g. 30">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Pay Condition</label>
+            <input type="text" id="cmPayCond" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm" placeholder="e.g. نهاية شهر التوريد">
+          </div>
+        </div>
+
+        <h4 class="text-sm font-black text-indigo-900 border-l-4 border-indigo-500 pl-2">Margin Percentages
+          <span class="text-slate-400 font-normal text-xs ml-2">(Type exact format, e.g., "5%")</span></h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Monthly %</label><input type="text" id="cmMPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Central %</label><input type="text" id="cmCPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Quarterly %</label><input type="text" id="cmQPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Annual %</label><input type="text" id="cmAPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+        </div>
+
+        <h4 class="text-sm font-black text-amber-700 border-l-4 border-amber-500 pl-2">Fixed Fees
+          <span class="text-slate-400 font-normal text-xs ml-2">(EGP per specified period)</span></h4>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 bg-amber-50/30 p-4 rounded-xl border border-amber-100">
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Monthly Fixed</label><input type="number" id="cmMFixed" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Annual Fixed</label><input type="number" id="cmAFixed" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+          <div class="col-span-2 md:col-span-1 hidden md:block"></div>
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Q1 Fixed</label><input type="number" id="cmQ1" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Q2 Fixed</label><input type="number" id="cmQ2" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Q3 Fixed</label><input type="number" id="cmQ3" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+          <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Q4 Fixed</label><input type="number" id="cmQ4" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
+          </div>
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 border-dashed">
+          <label class="block text-sm font-bold text-slate-700 mb-2"><i class="fas fa-file-pdf text-red-500 mr-2"></i> Attach Signed Contract (Optional)</label>
+          <input type="file" id="cmFile" accept="application/pdf,image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+          <p id="cmExistingFileNote" class="text-xs text-indigo-600 mt-2 hidden">
+            <i class="fas fa-check-circle mr-1"></i> A contract file is already attached. Uploading a new one will
+            replace it.</p>
+          <input type="hidden" id="cmExistingLink">
+        </div>
+
+      </div>
+
+      <div class="bg-slate-50 p-5 border-t border-slate-200 flex justify-end space-x-3">
+        <button onclick="closeContractManager()" class="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">Cancel</button>
+        <button id="cmSaveBtn" onclick="submitContractForm()" class="px-6 py-2.5 text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-lg transition-colors flex items-center">
+                <i class="fas fa-save mr-2"></i> Save Contract
+              </button>
+      </div>
+
+    </div>
+  </div>
 
   <div id="previewModal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-75 z-50 flex flex-col">
     <div class="bg-white p-4 shadow-md flex justify-between items-center z-10 no-print">
@@ -1062,12 +1213,16 @@
       </div>
     </div>
     <div class="flex-grow overflow-y-auto bg-gray-100 p-4 md:p-8">
-      <div id="pdfPrintArea" class="bg-white w-full max-w-[210mm] shadow-2xl text-black mx-auto relative min-h-screen mb-10">
-        </div>
+      <div id="pdfPrintArea"
+        class="bg-white w-full max-w-[210mm] shadow-2xl text-black mx-auto relative min-h-screen mb-10">
+      </div>
     </div>
-  </div> <div id="clientModal" class="hidden fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+  </div>
+  <div id="clientModal"
+    class="hidden fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 transform transition-all">
-      <h3 class="text-xl font-black text-blue-900 mb-6 flex items-center"><i class="fas fa-user-plus mr-3"></i> Add New Client</h3>
+      <h3 class="text-xl font-black text-blue-900 mb-6 flex items-center"><i class="fas fa-user-plus mr-3"></i> Add New
+        Client</h3>
       <label class="block text-xs font-bold text-slate-500 mb-2">Arabic Company Name (Unique)</label>
       <input type="text" id="newClientName" class="w-full p-4 bg-slate-100 border-none rounded-2xl mb-6 arabic-text text-lg">
       <div class="flex space-x-3 rtl:space-x-reverse">
@@ -1077,16 +1232,20 @@
     </div>
   </div>
 
-  <div id="productModal" class="hidden fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+  <div id="productModal"
+    class="hidden fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl p-8 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-6">
-        <h3 class="text-xl font-black text-blue-900 flex items-center"><i class="fas fa-box-open mr-3"></i> Add New Product</h3>
+        <h3 class="text-xl font-black text-blue-900 flex items-center"><i class="fas fa-box-open mr-3"></i> Add New
+          Product</h3>
         <span class="text-[10px] font-bold text-red-500 uppercase tracking-widest">* Mandatory Fields</span>
       </div>
 
       <div class="space-y-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="col-span-2"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Product Identity</p></div>
+          <div class="col-span-2">
+            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Product Identity</p>
+          </div>
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-1">Arabic Name *</label>
             <input type="text" id="npAr" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm arabic-text focus:ring-2 focus:ring-blue-900" placeholder="اسم الصنف بالعربي">
@@ -1109,12 +1268,17 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="col-span-2"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Packing & Units</p></div>
+          <div class="col-span-2">
+            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Packing & Units</p>
+          </div>
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-1">Unit Type - Ar</label>
             <input list="unitTypes" id="npUnitType" class="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-900">
             <datalist id="unitTypes">
-              <option value="شرنك"> <option value="كرتونة"> <option value="باستلة"> <option value="كيس">
+              <option value="شرنك">
+              <option value="كرتونة">
+              <option value="باستلة">
+              <option value="كيس">
             </datalist>
           </div>
           <div>
@@ -1131,36 +1295,42 @@
           </div>
         </div>
 
-      <div class="flex space-x-3 rtl:space-x-reverse mt-10">
-        <button id="btnSaveProduct" onclick="saveProduct()" class="flex-grow bg-blue-900 text-white font-bold py-4 rounded-2xl btn-hover shadow-lg shadow-blue-100 transition-all">Register Product</button>
-        <button onclick="toggleModal('productModal')" class="px-8 bg-slate-100 text-slate-500 font-bold rounded-2xl">Cancel</button>
+        <div class="flex space-x-3 rtl:space-x-reverse mt-10">
+          <button id="btnSaveProduct" onclick="saveProduct()" class="flex-grow bg-blue-900 text-white font-bold py-4 rounded-2xl btn-hover shadow-lg shadow-blue-100 transition-all">Register Product</button>
+          <button onclick="toggleModal('productModal')" class="px-8 bg-slate-100 text-slate-500 font-bold rounded-2xl">Cancel</button>
+        </div>
       </div>
     </div>
-  </div>
 
     <div id="historyModal" class="hidden" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8 max-h-[80vh] overflow-y-auto transform transition-transform duration-300 scale-100" id="historyBox">
-      <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-        <h3 class="text-xl font-black text-slate-800 flex items-center"><i class="fas fa-history mr-3 text-blue-900"></i> Document Audit Trail</h3>
-        <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-red-500 transition-colors bg-slate-50 hover:bg-red-50 w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
-      </div>
-      <div id="historyContent" class="space-y-4 text-sm text-slate-600">
+      <div
+        class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8 max-h-[80vh] overflow-y-auto transform transition-transform duration-300 scale-100"
+        id="historyBox">
+        <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+          <h3 class="text-xl font-black text-slate-800 flex items-center">
+            <i class="fas fa-history mr-3 text-blue-900"></i> Document Audit Trail</h3>
+          <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-red-500 transition-colors bg-slate-50 hover:bg-red-50 w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
         </div>
-    </div>
-  </div>
-    <div id="customAlertModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" style="opacity: 0; transition: opacity 0.3s; z-index: 9999;">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6" id="customAlertBox" style="transform: scale(0.95); transition: transform 0.3s;">
-      <div class="flex items-center space-x-4 rtl:space-x-reverse mb-4">
-        <div id="customAlertIcon" class="p-3 rounded-full"></div>
-        <h3 id="customAlertTitle" class="text-lg font-black text-slate-800"></h3>
+        <div id="historyContent" class="space-y-4 text-sm text-slate-600">
+        </div>
       </div>
-      <p id="customAlertMessage" class="text-sm text-slate-600 mb-6 font-medium leading-relaxed"></p>
-      <button onclick="closeCustomAlert()" class="w-full bg-blue-900 text-white font-bold py-3 rounded-xl btn-hover shadow-lg shadow-blue-100">Acknowledged</button>
     </div>
-  </div>
+    <div id="customAlertModal"
+      class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+      style="opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6" id="customAlertBox"
+        style="transform: scale(0.95); transition: transform 0.3s;">
+        <div class="flex items-center space-x-4 rtl:space-x-reverse mb-4">
+          <div id="customAlertIcon" class="p-3 rounded-full"></div>
+          <h3 id="customAlertTitle" class="text-lg font-black text-slate-800"></h3>
+        </div>
+        <p id="customAlertMessage" class="text-sm text-slate-600 mb-6 font-medium leading-relaxed"></p>
+        <button onclick="closeCustomAlert()" class="w-full bg-blue-900 text-white font-bold py-3 rounded-xl btn-hover shadow-lg shadow-blue-100">Acknowledged</button>
+      </div>
+    </div>
 
-  <script>
-    function toggleModal(id) {
+    <script>
+      function toggleModal(id) {
       document.getElementById(id).classList.toggle('hidden');
     }
 
@@ -4516,6 +4686,7 @@
             setTimeout(() => document.addEventListener('click', closeHandler), 10);
         }
     }
-  </script>
+    </script>
 </body>
+
 </html>

@@ -176,6 +176,9 @@
         <button onclick="openCommercialDirectory()" class="w-full md:w-auto bg-indigo-50 text-indigo-700 px-5 py-3 rounded-xl font-bold hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center justify-center">
           <i class="fas fa-file-signature mr-2 text-indigo-500"></i> Contracts
         </button>
+        <button onclick="openScenarioBuilder()" class="w-full md:w-auto bg-emerald-50 text-emerald-700 px-5 py-3 rounded-xl font-bold hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center justify-center shadow-sm" title="Deal Scenario Builder">
+          <i class="fas fa-flask text-emerald-500 md:mr-2"></i> <span class="hidden md:inline">Scenario Builder</span>
+        </button>
         <button onclick="openEngine('new')" class="w-full md:w-auto bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-blue-100 btn-hover flex items-center justify-center">
           <i class="fas fa-plus mr-2 rtl:ml-2"></i> Create Price List
         </button>
@@ -509,6 +512,249 @@
       </div>
 
     </div>
+  </div>
+
+  <div id="scenarioBuilderView" class="hidden max-w-7xl mx-auto space-y-6 pb-20">
+    
+    <div class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
+      <div class="flex items-center space-x-4 rtl:space-x-reverse">
+        <button onclick="closeScenarioBuilder()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition shadow-sm">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900"><i class="fas fa-flask text-emerald-500 mr-2"></i> Deal Scenario Simulator</h1>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Test target tiers, rebates, and margins</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="sbTotalDashboard" class="sticky top-[110px] z-40 bg-slate-800 text-white rounded-3xl p-5 shadow-xl relative overflow-hidden transition-all border border-slate-700">
+        <div class="absolute right-0 bottom-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex flex-col md:flex-row md:items-center justify-between relative z-10 gap-4">
+            <div class="flex items-center gap-2">
+                <h4 class="text-sm font-black text-emerald-400 uppercase tracking-widest"><i class="fas fa-chart-line mr-2"></i> Master Results</h4>
+                <div id="sbTierAlert" class="text-[10px] font-bold bg-emerald-500/20 text-emerald-200 px-2 py-1 rounded hidden animate-pulse">
+                   <i class="fas fa-unlock-alt mr-1"></i> Tier Unlocked!
+                </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 w-full md:w-auto">
+               <div><span class="block text-[10px] text-slate-400 uppercase">Total Revenue</span><span id="sbTotalRev" class="font-mono text-xl font-bold text-white">0.00</span></div>
+               <div><span class="block text-[10px] text-slate-400 uppercase">Total Auto-Cost</span><span id="sbTotalCost" class="font-mono text-xl font-bold text-amber-300">0.00</span></div>
+               <div><span class="block text-[10px] text-slate-400 uppercase">Total Deductions</span><span id="sbTotalDeductions" class="font-mono text-xl font-bold text-red-300">0.00</span></div>
+               <div class="pl-4 border-l border-slate-700"><span class="block text-[10px] text-slate-400 uppercase">Net Margin</span><span id="sbMasterMargin" class="font-black text-2xl text-emerald-400 drop-shadow-md">0.0%</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card space-y-6">
+        
+        <div class="flex flex-col md:flex-row gap-6 items-start relative z-20">
+           <div class="w-full md:w-7/12 flex flex-col sm:flex-row gap-3">
+              <div class="w-full sm:w-2/4">
+                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2"><i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client</h3>
+                 <div class="relative w-full">
+                    <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-sm text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
+                    <input type="hidden" id="sbClientSelect" value="">
+                    <ul id="sbClientList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
+                 </div>
+              </div>
+              <div class="w-full sm:w-1/4">
+                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">Type</h3>
+                 <select id="sbContractType" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-900/20 focus:border-indigo-600 font-bold text-sm text-indigo-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
+                     <option value="Both">Both</option>
+                     <option value="Standard">Standard</option>
+                     <option value="Private Label">P. Label</option>
+                 </select>
+              </div>
+              <div class="w-full sm:w-1/4">
+                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">Scope</h3>
+                 <select id="sbTimeScope" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-900/20 focus:border-emerald-600 font-bold text-sm text-emerald-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
+                     <option value="L12M">Past 12M</option>
+                     <option value="2026" selected>2026 YTD</option>
+                     <option value="2025">2025</option>
+                     <option value="2024">2024</option>
+                     <option value="2023">2023</option>
+                     <option value="2022">2022</option>
+                     <option value="2021">2021</option>
+                 </select>
+              </div>
+           </div>
+           
+           <div id="sbClientRefBox" class="w-full md:w-5/12 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 hidden opacity-0 transition-opacity duration-300">
+              <div class="flex justify-between items-center mb-2">
+                 <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"><i class="fas fa-history mr-1"></i> Historical Data & Terms</h4>
+                 <span id="sbInsightBadge" class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase shadow-sm border border-indigo-200">FY 2025</span>
+              </div>
+              
+              <div id="sbClientChips" class="flex flex-wrap gap-2 mb-4">
+                  </div>
+              
+              <div id="sbClientInsights" class="space-y-4 pt-3 border-t border-slate-100">
+                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Sales Qty</span><span id="sbHistQty" class="font-mono text-sm font-bold text-slate-700">0</span></div>
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Net Sales</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span></div>
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Profit</span><span id="sbHistProfit" class="font-mono text-sm font-bold text-emerald-600">0</span></div>
+                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Margin</span><span id="sbHistMargin" class="font-black text-sm text-emerald-500">0.0%</span></div>
+                 </div>
+                 <div id="sbHistNetRow" class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-inner relative">
+                    <div class="flex items-center gap-2">
+                       <span class="text-[8px] font-black text-emerald-700 uppercase leading-tight"><i class="fas fa-check-double mr-1"></i> Net-Net<br>Benchmark</span>
+                       <button onclick="toggleSbLogicTooltip(event)" class="text-emerald-400 hover:text-emerald-600 transition-colors">
+                          <i class="fas fa-info-circle text-[10px]"></i>
+                       </button>
+                    </div>
+
+                    <div id="sbLogicTooltip" class="hidden absolute left-0 top-full mt-2 z-[100] w-72 bg-slate-800 text-white p-5 rounded-2xl shadow-2xl border border-slate-700 text-[10px] leading-relaxed animate-in fade-in zoom-in duration-200">
+                       <div class="space-y-4">
+                          <p class="font-black text-emerald-400 border-b border-slate-700 pb-2 uppercase tracking-widest">Step-by-Step Logic</p>
+                          
+                          <div class="space-y-1">
+                             <span class="font-bold text-white block">1. Net Revenue</span>
+                             <div class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                                <span id="tipGrossRev">0</span> (Gross) <br>
+                                - <span id="tipRebateAmt">0</span> (<span id="tipRebatePct">0</span>% Rebate) <br>
+                                = <span class="text-blue-400 font-bold" id="tipNetRev">0</span>
+                             </div>
+                          </div>
+
+                          <div class="space-y-1">
+                             <span class="font-bold text-white block">2. Proportional Fixed Fees</span>
+                             <div class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                                (<span id="tipAnnualFixed">0</span> / 365) × <span id="tipDays">0</span> Days <br>
+                                = <span class="text-amber-400 font-bold" id="tipPropFixed">0</span>
+                             </div>
+                          </div>
+
+                          <div class="space-y-1">
+                             <span class="font-bold text-white block">3. Net-Net Profit</span>
+                             <div class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                                <span id="tipNetRevFinal">0</span> (Net Rev) <br>
+                                - <span id="tipProdCost">0</span> (Prod. Cost) <br>
+                                - <span id="tipPropFixedFinal">0</span> (Fees) <br>
+                                = <span class="text-emerald-400 font-bold" id="tipNetProfit">0</span>
+                             </div>
+                          </div>
+                       </div>
+                       <div class="mt-4 pt-2 border-t border-slate-700 text-[8px] text-slate-500 italic text-center">Historical data comparison baseline.</div>
+                    </div>
+                    <div><span class="block text-[8px] text-emerald-600 uppercase font-black">Net Revenue</span><span id="sbHistNetRev" class="font-mono text-sm font-bold text-blue-800">0</span></div>
+                    <div><span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Profit</span><span id="sbHistNetProfit" class="font-mono text-sm font-bold text-emerald-800">0</span></div>
+                    <div><span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Margin</span><span id="sbHistNetMargin" class="font-black text-sm text-emerald-700">0.0%</span></div>
+                 </div>
+              </div>
+           </div>
+        </div>
+           <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+           </div>
+
+    <div id="sbProductMetricsCard" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card hidden">
+       <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance</h3>
+          <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Filtered by Type & Scope</span>
+       </div>
+       <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[800px]">
+             <thead>
+                <tr class="border-b border-slate-100">
+                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase">Product Name</th>
+                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Qty</th>
+                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Base Price</th>
+                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Inv. Disc %</th>
+                   <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net Sales</th>
+                   <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Rebate">Rebates</th>
+                   <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Fixed Fees">Fees</th>
+                   <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Profit</th>
+                   <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Margin</th>
+                </tr>
+             </thead>
+             <tbody id="sbProductMetricsBody" class="text-xs font-bold text-slate-600">
+                </tbody>
+             <tfoot id="sbProductMetricsFooter" class="bg-slate-50 border-t-2 border-slate-200 text-xs font-black text-slate-700">
+                </tfoot>
+          </table>
+       </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
+        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4"><i class="fas fa-file-contract text-indigo-500 mr-2"></i> 3. Proposed Terms</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fixed Fees (Total EGP/Yr)</label>
+                 <input type="number" id="sbFixedFees" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
+              </div>
+              <div>
+                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Marketing Budget (Total EGP)</label>
+                 <input type="number" id="sbMarketing" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
+              </div>
+              <div>
+                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Standard Rebate / Back Margin (%)</label>
+                 <input type="number" id="sbStandardRebate" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0%">
+              </div>
+           </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
+       <div class="flex items-center justify-between mb-4">
+           <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-bullseye text-amber-500 mr-2"></i> 4. Conditional Target Tiers</h3>
+           <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">Triggers Extra Discounts</span>
+       </div>
+       
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+             <div class="col-span-12 md:col-span-2"><span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 1</span></div>
+             <div class="col-span-12 md:col-span-4">
+                <select id="sbTier1Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
+             </div>
+             <div class="col-span-12 md:col-span-3 flex items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-400">></span>
+                <input type="number" id="sbTier1Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
+             </div>
+             <div class="col-span-12 md:col-span-3">
+                <input type="number" id="sbTier1Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
+             </div>
+          </div>
+
+          <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+             <div class="col-span-12 md:col-span-2"><span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 2</span></div>
+             <div class="col-span-12 md:col-span-4">
+                <select id="sbTier2Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
+             </div>
+             <div class="col-span-12 md:col-span-3 flex items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-400">></span>
+                <input type="number" id="sbTier2Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
+             </div>
+             <div class="col-span-12 md:col-span-3">
+                <input type="number" id="sbTier2Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
+             </div>
+          </div>
+       </div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+      <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+         <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-boxes text-slate-500 mr-2"></i> 3. Product Volume Simulation</h3>
+         <button onclick="sbAddProductRow()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-1.5 rounded shadow-sm transition-colors">
+            <i class="fas fa-plus mr-1"></i> Add Product
+         </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left rtl:text-right">
+          <thead class="bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest">
+            <tr>
+              <th class="px-4 py-3 w-1/3">Product</th>
+              <th class="px-4 py-3 text-center">Expected Qty</th>
+              <th class="px-4 py-3 text-center">Base Price</th>
+              <th class="px-4 py-3 text-center">Product Disc %</th>
+              <th class="px-4 py-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sbProductTableBody" class="divide-y divide-slate-100">
+             </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <div id="commercialDirectoryModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4 transition-opacity">
@@ -1508,6 +1754,7 @@
       nextSeqNumber = data.nextSeq;
       globalCommercial = data.commercialData || { invoiceDiscounts: [], clientContracts: [], clientVolumes: {} };
       globalCostingData = data.costingData || {};
+      globalCadenceData = data.cadenceData; // <-- Catches the new sales data from the backend!
       
       // Group Raw Logs by RefNum
       const grouped = {};
@@ -1980,6 +2227,42 @@
     function closeEngine() {
       document.getElementById('dashboardView').classList.remove('hidden');
       document.getElementById('engineView').classList.add('hidden');
+    }
+
+    // --- SCENARIO BUILDER NAVIGATION ---
+    function openScenarioBuilder() {
+      document.getElementById('dashboardView').classList.add('hidden');
+      document.getElementById('engineView').classList.add('hidden');
+      document.getElementById('scenarioBuilderView').classList.remove('hidden');
+      
+      document.getElementById('sbTotalDashboard').style.display = 'block'; 
+      window.scrollTo({top: 0, behavior: 'smooth'});
+      
+      // Populate Combo Box natively by cloning the full list from the Engine
+      let sbList = document.getElementById('sbClientList');
+      if (sbList && sbList.children.length === 0) {
+          let mainList = document.getElementById('clientList');
+          if (mainList) {
+              let html = mainList.innerHTML;
+              // Redirect the native combobox IDs to the Scenario Builder elements
+              html = html.replace(/'clientSelect', 'clientSearch', 'clientList'/g, "'sbClientSelect', 'sbClientSearch', 'sbClientList'");
+              // Redirect the callback trigger
+              html = html.replace(/setTimeout\(checkCommercialInsights, 100\);/g, "setTimeout(handleSbClientSelection, 100);");
+              sbList.innerHTML = html;
+          }
+      }
+      
+      if (document.getElementById('sbProductTableBody').children.length === 0) {
+          sbAddProductRow();
+      }
+      
+      runScenarioSimulation();
+    }
+
+    function closeScenarioBuilder() {
+      document.getElementById('scenarioBuilderView').classList.add('hidden');
+      document.getElementById('dashboardView').classList.remove('hidden');
+      window.scrollTo(0, 0);
     }
 
     // --- AUDIT TRAIL MODAL LOGIC ---
@@ -2942,6 +3225,480 @@
         }
       }, 300);
     }
+
+    // ==========================================
+    // SCENARIO BUILDER MATH ENGINE
+    // ==========================================
+    let sbRowCount = 0;
+
+    function sbAddProductRow() {
+        sbRowCount++;
+        let tbody = document.getElementById('sbProductTableBody');
+        
+        let optionsHtml = '<option value="">-- Select Product --</option>';
+        if (typeof globalProducts !== 'undefined') {
+            globalProducts.forEach(prod => {
+                optionsHtml += `<option value="${prod.arabicName}">[${prod.englishName}] ${prod.arabicName}</option>`;
+            });
+        }
+
+        let tr = document.createElement('tr');
+        tr.id = `sbRow-${sbRowCount}`;
+        tr.className = "hover:bg-slate-50/50 transition border-b border-slate-100";
+        tr.innerHTML = `
+            <td class="px-4 py-3">
+               <select class="sb-prod-select w-full text-xs font-bold border border-slate-200 rounded p-2 focus:ring-emerald-500" onchange="runScenarioSimulation()">${optionsHtml}</select>
+            </td>
+            <td class="px-4 py-3 text-center">
+               <input type="number" class="sb-qty-input w-24 text-xs font-bold border border-slate-200 rounded p-2 focus:ring-emerald-500 text-center" value="0" oninput="runScenarioSimulation()">
+            </td>
+            <td class="px-4 py-3 text-center">
+               <input type="number" class="sb-price-input w-24 text-xs font-bold border border-slate-200 rounded p-2 focus:ring-emerald-500 text-center" placeholder="0.00" oninput="runScenarioSimulation()">
+            </td>
+            <td class="px-4 py-3 text-center">
+               <input type="number" class="sb-disc-input w-20 text-xs font-bold border border-slate-200 rounded p-2 focus:ring-emerald-500 text-center" placeholder="0" oninput="runScenarioSimulation()">
+            </td>
+            <td class="px-4 py-3 text-center">
+               <button onclick="this.closest('tr').nextElementSibling?.classList.contains('sb-insight-row') && this.closest('tr').nextElementSibling.remove(); this.closest('tr').remove(); runScenarioSimulation();" class="text-slate-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function handleSbClientSelection() {
+        let clientName = document.getElementById('sbClientSelect').value;
+        let contractType = document.getElementById('sbContractType').value;
+        let refBox = document.getElementById('sbClientRefBox');
+        let chipsContainer = document.getElementById('sbClientChips');
+        
+        if (!clientName) { 
+            refBox.classList.add('hidden'); 
+            refBox.classList.remove('opacity-100');
+            
+            // Clear inputs if client is deselected
+            document.getElementById('sbFixedFees').value = '';
+            document.getElementById('sbStandardRebate').value = '';
+            runScenarioSimulation();
+            return; 
+        }
+        
+        let chipsHtml = '';
+        let hasData = false;
+        let masterTotalMargin = 0;
+        let masterTotalFixed = 0;
+
+        // 1. Check Invoice Discounts
+        if (typeof globalCommercial !== 'undefined' && globalCommercial.invoiceDiscounts) {
+            let activeDiscounts = globalCommercial.invoiceDiscounts.find(d => d.client.trim().toLowerCase() === clientName.trim().toLowerCase());
+            if (activeDiscounts && Object.keys(activeDiscounts.products).length > 0) {
+                // Front invoice discounts usually only apply to standard products
+                if (contractType !== 'Private Label') {
+                    hasData = true;
+                    chipsHtml += `<span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-blue-200 shadow-sm"><i class="fas fa-tags mr-1"></i> Front Invoice Discounts Active</span>`;
+                }
+            }
+        }
+
+        // 2. Check Contracts (Rebates and Fixed Fees)
+        let contracts = [];
+        let today = new Date(); today.setHours(0,0,0,0);
+        
+        if (typeof globalCommercial !== 'undefined' && globalCommercial.clientContracts) {
+            // Filter for THIS client AND ONLY ACTIVE contracts AND Target Contract Type
+            contracts = globalCommercial.clientContracts.filter(c => {
+                if (c.client.trim().toLowerCase() !== clientName.trim().toLowerCase()) return false;
+                
+                // Toggle Logic: Use exact isPrivateLabel boolean from Google Sheets (Column I)
+                if (contractType !== 'Both') {
+                     let isPrivate = c.isPrivateLabel === true;
+                     
+                     if (contractType === 'Private Label' && !isPrivate) return false;
+                     if (contractType === 'Standard' && isPrivate) return false;
+                }
+
+                if (!c.start || !c.end) return true; // Include open-ended
+                let s = new Date(c.start); let e = new Date(c.end);
+                return today >= s && today <= e;
+            });
+            
+            if (contracts.length > 0) {
+                hasData = true;
+
+                // Aggressive parser to extract pure numbers from strings like "5%" or "25,000"
+                let parsePct = (val) => {
+                    if (!val) return 0;
+                    let num = parseFloat(String(val).replace(/,/g, '').replace(/%/g, ''));
+                    return isNaN(num) ? 0 : num;
+                };
+
+                // Aggregate financials across all active contracts for this client
+                contracts.forEach(c => {
+                    if (c.fees) {
+                        let f = c.fees;
+                        masterTotalMargin += parsePct(f.monthlyPct) + parsePct(f.centralPct) + parsePct(f.quarterlyPct) + parsePct(f.annualPct);
+                        
+                        masterTotalFixed += (parsePct(f.monthlyFixed) * 12) + 
+                                      parsePct(f.q1Fixed) + parsePct(f.q2Fixed) + 
+                                      parsePct(f.q3Fixed) + parsePct(f.q4Fixed) + 
+                                      parsePct(f.annualFixed);
+                    }
+                });
+
+                if (masterTotalFixed > 0) {
+                    chipsHtml += `<span class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-indigo-200 shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Fixed fees: ${masterTotalFixed.toLocaleString()} EGP</span>`;
+                }
+
+                if (masterTotalMargin > 0) {
+                    chipsHtml += `<span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-emerald-200 shadow-sm"><i class="fas fa-undo mr-1"></i> Rebates: ${parseFloat(masterTotalMargin.toFixed(2))}%</span>`;
+                }
+            }
+        }
+
+        // Render the UI
+        if (hasData) {
+            chipsContainer.innerHTML = chipsHtml;
+        } else {
+            chipsContainer.innerHTML = `<span class="text-[10px] font-medium text-slate-400 italic">No active historical terms found.</span>`;
+        }
+        
+        // =========================================================
+        // 1. DATA AGGREGATION (CALCULATIONS)
+        // =========================================================
+        let histQty = 0, histRev = 0, histCost = 0;
+        let timeScope = document.getElementById('sbTimeScope').value;
+        let appliedYearBadge = document.getElementById('sbTimeScope').options[document.getElementById('sbTimeScope').selectedIndex].text.toUpperCase();
+        let productMetrics = {};
+
+        const normalizeStr = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, ' ');
+        const normClient = normalizeStr(clientName);
+
+        if (typeof globalCadenceData !== 'undefined' && typeof globalProducts !== 'undefined') {
+            let cadenceArray = Array.isArray(globalCadenceData) ? globalCadenceData : (globalCadenceData.data || []);
+            let activeInvDiscounts = (typeof globalCommercial !== 'undefined' && globalCommercial.invoiceDiscounts) 
+                ? globalCommercial.invoiceDiscounts.find(d => normalizeStr(d.client) === normClient) : null;
+
+            let targetSales = cadenceArray.filter(sale => {
+                if (!sale.client || normalizeStr(sale.client) !== normClient) return false;
+                if (!sale.date) return false;
+                let d = new Date(typeof sale.date === 'number' ? sale.date : sale.date);
+                if (timeScope === 'L12M') {
+                    let twelveMonthsAgo = new Date(); twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
+                    return d >= twelveMonthsAgo;
+                }
+                return d.getFullYear() === (timeScope === '2026' ? 2026 : parseInt(timeScope));
+            });
+
+            targetSales.forEach(sale => {
+                let pName = sale.product || sale.item;
+                let normPName = normalizeStr(pName);
+                let qty = parseFloat(sale.qty) || 0;
+                let prodDef = globalProducts.find(p => normalizeStr(p.arabicName) === normPName || normalizeStr(p.englishName) === normPName);
+                
+                let isPrivate = prodDef ? (prodDef.isPrivateLabel === true || String(prodDef.isPrivateLabel).toUpperCase() === "TRUE") : false;
+                if (contractType === 'Private Label' && !isPrivate) return;
+                if (contractType === 'Standard' && isPrivate) return;
+
+                if (qty > 0) {
+                    histQty += qty;
+                    let saleRev = parseFloat(sale.netRev || (qty * (prodDef?.price || 0)) || 0);
+                    histRev += saleRev;
+                    let saleCost = (qty * getSbProductCost(pName));
+                    histCost += saleCost;
+
+                    if (!productMetrics[normPName]) {
+                        // Clean discount string to fix the double %% UI glitch
+                        let rawDisc = (activeInvDiscounts?.products) ? (activeInvDiscounts.products[pName] || 0) : 0;
+                        let cleanDisc = parseFloat(String(rawDisc).replace('%', '')) || 0;
+                        productMetrics[normPName] = { name: pName, qty: 0, rev: 0, cost: 0, invDisc: cleanDisc };
+                    }
+                    productMetrics[normPName].qty += qty;
+                    productMetrics[normPName].rev += saleRev;
+                    productMetrics[normPName].cost += saleCost;
+                }
+            });
+        }
+
+        // --- Core Totals & Net-Net Logic ---
+        let histProfit = histRev - histCost;
+        let rebateDeduction = histRev * (masterTotalMargin / 100);
+        let histNetRev = histRev - rebateDeduction;
+        let daysElapsed = Math.ceil((today - new Date(today.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24)) || 1;
+        let proportionalFixed = (masterTotalFixed / 365) * daysElapsed;
+        let is2026 = (timeScope === '2026');
+        let activeFixedFees = is2026 ? proportionalFixed : 0;
+        
+        let histNetProfit = histNetRev - histCost - activeFixedFees;
+        let histNetMargin = histNetRev > 0 ? (histNetProfit / histNetRev) * 100 : 0;
+
+        // =========================================================
+        // 2. RENDER STEP 1: CLIENT CARD (BENCHMARK)
+        // =========================================================
+        document.getElementById('sbInsightBadge').innerText = appliedYearBadge;
+        document.getElementById('sbHistQty').innerText = histQty.toLocaleString();
+        document.getElementById('sbHistRev').innerText = Math.round(histRev).toLocaleString();
+        document.getElementById('sbHistNetRev').innerText = Math.round(histNetRev).toLocaleString();
+        
+        let profEl = document.getElementById('sbHistProfit');
+        let margEl = document.getElementById('sbHistMargin');
+        let netRowEl = document.getElementById('sbHistNetRow');
+        let netProfEl = document.getElementById('sbHistNetProfit');
+        let netMargEl = document.getElementById('sbHistNetMargin');
+
+        profEl.closest('div').style.display = is2026 ? 'block' : 'none';
+        margEl.closest('div').style.display = is2026 ? 'block' : 'none';
+        netRowEl.style.display = is2026 ? 'grid' : 'none';
+
+        if (is2026) {
+            profEl.innerText = Math.round(histProfit).toLocaleString();
+            profEl.className = histProfit >= 0 ? "font-mono text-sm font-bold text-emerald-600" : "font-mono text-sm font-bold text-red-600";
+            margEl.innerText = (histRev > 0 ? (histProfit / histRev * 100) : 0).toFixed(1) + '%';
+            
+            netProfEl.innerText = Math.round(histNetProfit).toLocaleString();
+            netMargEl.innerText = histNetMargin.toFixed(1) + '%';
+            
+            // Dynamic UI Warning: Shift colors to red on loss
+            if (histNetProfit < 0) {
+                netProfEl.className = "font-mono text-sm font-bold text-red-600";
+                netMargEl.className = "font-black text-sm text-red-600";
+                netRowEl.classList.remove('bg-emerald-50', 'border-emerald-100');
+                netRowEl.classList.add('bg-red-50', 'border-red-100');
+            } else {
+                netProfEl.className = "font-mono text-sm font-bold text-emerald-800";
+                netMargEl.className = "font-black text-sm text-emerald-700";
+                netRowEl.classList.remove('bg-red-50', 'border-red-100');
+                netRowEl.classList.add('bg-emerald-50', 'border-emerald-100');
+            }
+            
+            // Sync Tooltip
+            const fmt = (v) => Math.round(v || 0).toLocaleString();
+            document.getElementById('tipGrossRev').innerText = fmt(histRev);
+            document.getElementById('tipRebateAmt').innerText = fmt(rebateDeduction);
+            document.getElementById('tipRebatePct').innerText = masterTotalMargin.toFixed(1);
+            document.getElementById('tipNetRev').innerText = fmt(histNetRev);
+            document.getElementById('tipNetRevFinal').innerText = fmt(histNetRev);
+            document.getElementById('tipAnnualFixed').innerText = fmt(masterTotalFixed);
+            document.getElementById('tipDays').innerText = daysElapsed;
+            document.getElementById('tipPropFixed').innerText = fmt(proportionalFixed);
+            document.getElementById('tipPropFixedFinal').innerText = fmt(proportionalFixed);
+            document.getElementById('tipProdCost').innerText = fmt(histCost);
+            document.getElementById('tipNetProfit').innerText = fmt(histNetProfit);
+        }
+
+        // =========================================================
+        // 3. RENDER STEP 2: PRODUCT METRICS TABLE
+        // =========================================================
+        const body = document.getElementById('sbProductMetricsBody');
+        const footer = document.getElementById('sbProductMetricsFooter');
+        const card = document.getElementById('sbProductMetricsCard');
+        
+        if (Object.keys(productMetrics).length > 0) {
+            let html = '', tQty = 0, tNetRev = 0, tGrossRev = 0, tCost = 0;
+            Object.values(productMetrics).sort((a,b) => b.rev - a.rev).forEach(pm => {
+                
+                // Base Price back-calculation (Fixes the 137.7 vs 133.6 gap)
+                let discFactor = 1 - (pm.invDisc / 100);
+                let rowGrossRev = discFactor > 0 ? (pm.rev / discFactor) : pm.rev;
+                let calcBasePrice = pm.qty > 0 ? (rowGrossRev / pm.qty) : 0;
+                
+                // Distribute Fixed Fees proportionally (Fixes mismatch between Row vs Total Profit)
+                let revShare = histRev > 0 ? (pm.rev / histRev) : 0;
+                let rowFixedFee = activeFixedFees * revShare;
+                
+                // Calculate Net-Net Margin using Post-Rebate Revenue to match the Benchmark logic
+                let rowRebate = pm.rev * (masterTotalMargin / 100);
+                let rowNetRev = pm.rev - rowRebate;
+                let rowNetProfit = pm.rev - pm.cost - rowRebate - rowFixedFee;
+                let rowNetMargin = rowNetRev > 0 ? (rowNetProfit / rowNetRev) * 100 : 0;
+                
+                tQty += pm.qty; tNetRev += pm.rev; tGrossRev += rowGrossRev; tCost += pm.cost;
+
+                html += `<tr class="border-b border-slate-50 hover:bg-slate-50/50">
+                    <td class="py-3 text-slate-800 font-bold">${pm.name}</td>
+                    <td class="py-3 text-center font-mono">${pm.qty.toLocaleString()}</td>
+                    <td class="py-3 text-center font-mono text-slate-500">${calcBasePrice.toFixed(1)}</td>
+                    <td class="py-3 text-center"><span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px]">${pm.invDisc.toFixed(1)}%</span></td>
+                    <td class="py-3 text-center font-mono text-blue-600">${Math.round(pm.rev).toLocaleString()}</td>
+                    <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${Math.round(rowRebate).toLocaleString()}</td>
+                    <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${Math.round(rowFixedFee).toLocaleString()}</td>
+                    <td class="sb-metric-2026 py-3 text-center font-mono ${rowNetProfit >= 0 ? 'text-emerald-600' : 'text-red-500'}">${Math.round(rowNetProfit).toLocaleString()}</td>
+                    <td class="sb-metric-2026 py-3 text-center font-black ${rowNetProfit >= 0 ? 'text-emerald-500' : 'text-red-500'}">${rowNetMargin.toFixed(1)}%</td>
+                </tr>`;
+            });
+            body.innerHTML = html;
+            
+            // Footer Sums & Accurate Weighted Averages
+            let avgBasePrice = tQty > 0 ? (tGrossRev / tQty) : 0;
+            let avgInvDisc = tGrossRev > 0 ? ((1 - (tNetRev / tGrossRev)) * 100) : 0;
+            
+            const fProfitColor = (is2026 && histNetProfit < 0) ? 'text-red-600' : 'text-emerald-800';
+            const fMarginColor = (is2026 && histNetMargin < 0) ? 'text-red-600' : 'text-emerald-700';
+
+            footer.innerHTML = `<tr class="bg-slate-100 font-black">
+                <td class="py-3 px-3 uppercase text-[9px] tracking-widest text-slate-500">Totals / Weighted Avg</td>
+                <td class="py-3 text-center font-mono">${tQty.toLocaleString()}</td>
+                <td class="py-3 text-center font-mono">${avgBasePrice.toFixed(1)}</td>
+                <td class="py-3 text-center text-blue-700">${avgInvDisc.toFixed(1)}%</td>
+                <td class="py-3 text-center font-mono text-blue-900">${Math.round(tNetRev).toLocaleString()}</td>
+                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${is2026 ? Math.round(rebateDeduction).toLocaleString() : '-'}</td>
+                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${is2026 ? Math.round(activeFixedFees).toLocaleString() : '-'}</td>
+                <td class="sb-metric-2026 py-3 text-center font-mono ${fProfitColor}">${is2026 ? Math.round(histNetProfit).toLocaleString() : '-'}</td>
+                <td class="sb-metric-2026 py-3 text-center font-black ${fMarginColor}">${is2026 ? histNetMargin.toFixed(1)+'%' : '-'}</td>
+            </tr>`;
+
+            card.classList.remove('hidden');
+            document.querySelectorAll('.sb-metric-2026').forEach(el => el.style.display = is2026 ? '' : 'none');
+        } else {
+            card.classList.add('hidden');
+        }
+
+        // Toggle overall visibility of step 1 card if no data
+        refBox.classList.toggle('hidden', !(histQty > 0 || hasData));
+        if (histQty > 0 || hasData) setTimeout(() => refBox.classList.add('opacity-100'), 10);
+
+        document.getElementById('sbFixedFees').value = masterTotalFixed > 0 ? masterTotalFixed : '';
+        document.getElementById('sbStandardRebate').value = masterTotalMargin > 0 ? parseFloat(masterTotalMargin.toFixed(2)) : '';
+        
+        runScenarioSimulation();
+    }
+
+    function getSbProductCost(productName) {
+        if (!productName || typeof globalCostingData === 'undefined') return 0;
+        
+        // Handle if globalCostingData is wrapped in { data: [...] } (like Tawoos_Cache_Costing.json)
+        let costArray = Array.isArray(globalCostingData) ? globalCostingData : (globalCostingData.data || null);
+        
+        if (costArray) {
+            let costObj = costArray.find(c => c.product === productName || c.item === productName);
+            if (costObj) return parseFloat(costObj.unitActual || costObj.cost || costObj.unitMarket || 0);
+        }
+        
+        // Fallback for object dictionary structure
+        if (globalCostingData[productName] && Array.isArray(globalCostingData[productName])) {
+            return parseFloat(globalCostingData[productName][0].cost || globalCostingData[productName][0].unitActual || 0);
+        } else if (globalCostingData[productName]) {
+            return parseFloat(globalCostingData[productName].cost || globalCostingData[productName].unitActual || 0);
+        }
+        
+        return 0;
+    }
+
+    function runScenarioSimulation() {
+        let fixedFees = parseFloat(document.getElementById('sbFixedFees').value) || 0;
+        let marketing = parseFloat(document.getElementById('sbMarketing').value) || 0;
+        let baseRebatePct = parseFloat(document.getElementById('sbStandardRebate').value) || 0;
+        
+        let tbody = document.getElementById('sbProductTableBody');
+        let rows = tbody.querySelectorAll('tr:not(.sb-insight-row)');
+        
+        let preliminaryValue = 0;
+        let preliminaryQty = 0;
+        
+        // Pass 1: Total Value & Qty to Check Tiers
+        rows.forEach(row => {
+            let qty = parseFloat(row.querySelector('.sb-qty-input').value) || 0;
+            let price = parseFloat(row.querySelector('.sb-price-input').value) || 0;
+            let discPct = parseFloat(row.querySelector('.sb-disc-input').value) || 0;
+            
+            let unitNet = price * (1 - (discPct/100));
+            preliminaryValue += (unitNet * qty);
+            preliminaryQty += qty;
+        });
+
+        // Evaluate Tiers
+        let unlockedRebateReward = 0;
+        let tierAlert = document.getElementById('sbTierAlert');
+        tierAlert.classList.add('hidden');
+
+        for(let i=1; i<=2; i++) {
+            let type = document.getElementById(`sbTier${i}Type`).value;
+            let target = parseFloat(document.getElementById(`sbTier${i}Target`).value) || 0;
+            let reward = parseFloat(document.getElementById(`sbTier${i}Reward`).value) || 0;
+            
+            if (target > 0 && reward > 0) {
+                if ((type === 'value' && preliminaryValue >= target) || (type === 'qty' && preliminaryQty >= target)) {
+                    unlockedRebateReward += reward;
+                    tierAlert.classList.remove('hidden');
+                }
+            }
+        }
+
+        let effectiveRebatePct = baseRebatePct + unlockedRebateReward;
+
+        // Pass 2: Calculate Row Profits and Distribute Deductions
+        tbody.querySelectorAll('.sb-insight-row').forEach(el => el.remove());
+        
+        let totalMasterRev = 0;
+        let totalMasterCost = 0;
+        
+        rows.forEach(row => {
+            let pName = row.querySelector('.sb-prod-select').value;
+            let qty = parseFloat(row.querySelector('.sb-qty-input').value) || 0;
+            let price = parseFloat(row.querySelector('.sb-price-input').value) || 0;
+            let discPct = parseFloat(row.querySelector('.sb-disc-input').value) || 0;
+            let autoCost = getSbProductCost(pName);
+
+            if (pName && qty > 0) {
+                let unitNetPrice = price * (1 - (discPct/100));
+                let unitRebateAmt = unitNetPrice * (effectiveRebatePct/100);
+                
+                let allocatedFixedFeePerUnit = 0;
+                let allocatedMarketingPerUnit = 0;
+                if (preliminaryQty > 0) {
+                    allocatedFixedFeePerUnit = (fixedFees / preliminaryQty);
+                    allocatedMarketingPerUnit = (marketing / preliminaryQty);
+                }
+
+                let effectiveNetNet = unitNetPrice - unitRebateAmt - allocatedFixedFeePerUnit - allocatedMarketingPerUnit;
+                let unitProfit = effectiveNetNet - autoCost;
+                let unitMargin = effectiveNetNet > 0 ? (unitProfit / effectiveNetNet) * 100 : 0;
+                
+                totalMasterRev += (unitNetPrice * qty); // Raw revenue before back-margin deductions
+                totalMasterCost += (autoCost * qty);
+
+                let insightTr = document.createElement('tr');
+                insightTr.className = "sb-insight-row bg-emerald-50/40 border-b border-emerald-100";
+                
+                let colorClass = unitProfit >= 0 ? 'text-emerald-600' : 'text-red-500';
+                let marginStr = `Profit: ${unitProfit.toFixed(2)} (${unitMargin.toFixed(1)}%)`;
+
+                insightTr.innerHTML = `
+                 <td colspan="5" class="px-4 py-2 text-[10px] text-emerald-900">
+                    <div class="flex flex-wrap items-center justify-between">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <strong class="uppercase tracking-wider text-emerald-600"><i class="fas fa-chart-line mr-1"></i> SIM:</strong>
+                        ${discPct > 0 ? `<span class="bg-white border border-emerald-200 px-2 py-0.5 rounded shadow-sm">Front Disc: <span class="font-bold text-red-500">-${discPct}%</span></span>` : ''}
+                        ${effectiveRebatePct > 0 ? `<span class="bg-white border border-emerald-200 px-2 py-0.5 rounded shadow-sm">Rebate+Tier: <span class="font-bold text-red-500">-${effectiveRebatePct}%</span></span>` : ''}
+                        ${(allocatedFixedFeePerUnit > 0 || allocatedMarketingPerUnit > 0) ? `<span class="bg-white border border-emerald-200 px-2 py-0.5 rounded shadow-sm">Allocated Fees: <span class="font-bold text-amber-600">-${(allocatedFixedFeePerUnit+allocatedMarketingPerUnit).toFixed(2)}/u</span></span>` : ''}
+                        <span class="bg-emerald-600 text-white px-2 py-0.5 rounded shadow-sm font-black">Net-Net: ${effectiveNetNet.toFixed(2)}</span>
+                      </div>
+                      <div class="font-bold ${colorClass}">
+                        Auto-Cost: ${autoCost.toFixed(2)} | <span class="ml-1">${marginStr}</span>
+                      </div>
+                    </div>
+                 </td>`;
+                row.after(insightTr);
+            }
+        });
+
+        // Pass 3: Master Totals
+        // Total Deductions = Fixed Fees + Marketing + (Revenue * Effective Rebate %)
+        let totalRebateDeduction = totalMasterRev * (effectiveRebatePct/100);
+        let totalDeductions = fixedFees + marketing + totalRebateDeduction;
+
+        let masterProfit = totalMasterRev - totalMasterCost - totalDeductions;
+        let masterMargin = totalMasterRev > 0 ? (masterProfit / totalMasterRev) * 100 : 0;
+        
+        document.getElementById('sbTotalRev').innerText = totalMasterRev.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('sbTotalCost').innerText = totalMasterCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('sbTotalDeductions').innerText = totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
+        
+        let dashMarginEl = document.getElementById('sbMasterMargin');
+        dashMarginEl.innerText = masterMargin.toFixed(1) + '%';
+        dashMarginEl.className = masterProfit >= 0 ? "font-black text-2xl text-emerald-400 drop-shadow-md" : "font-black text-2xl text-red-400 drop-shadow-md";
+
+        document.getElementById('sbTotalDashboard').classList.remove('hidden');
+    }
+
     // --- CONTRACT MANAGER LOGIC ---
     function openContractManager(clientName = '', isPL = false) {
       // Clear all fields
@@ -3692,6 +4449,21 @@
             }).saveContractToSheet(payload);
         };
         reader.readAsDataURL(file);
+    }
+
+    function toggleSbLogicTooltip(event) {
+        event.stopPropagation();
+        const tooltip = document.getElementById('sbLogicTooltip');
+        tooltip.classList.toggle('hidden');
+        
+        // Close tooltip if user clicks anywhere else on the screen
+        if (!tooltip.classList.contains('hidden')) {
+            const closeHandler = () => {
+                tooltip.classList.add('hidden');
+                document.removeEventListener('click', closeHandler);
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
     }
   </script>
 </body>

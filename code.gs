@@ -353,6 +353,21 @@ function getInitialData(pin) {
         }
     }
 
+    // 6. Extract Raw Cadence Data for Scenario Builder Item-Level Insights
+    var cadenceData = [];
+    // Prioritize the richer NetSales file for actual revenue/margin history
+    let salesFiles = DriveApp.getFilesByName("Tawoos_Cache_NetSales.json");
+    
+    if (salesFiles.hasNext()) {
+        let sFile = salesFiles.next();
+        try {
+            let sJson = JSON.parse(sFile.getBlob().getDataAsString());
+            cadenceData = sJson.data ? sJson.data : (Array.isArray(sJson) ? sJson : []);
+        } catch(e) {
+            console.error("Failed to parse NetSales JSON: " + e.message);
+        }
+    }
+
   } catch (e) {
     console.error("Error fetching commercial terms: " + e.message);
   }
@@ -360,7 +375,8 @@ function getInitialData(pin) {
   return { 
     products, clients, signatories, nextSeq, docLogs, userName: currentUser, 
     commercialData: { invoiceDiscounts, clientContracts, clientVolumes },
-    costingData: costingData
+    costingData: costingData,
+    cadenceData: cadenceData
   };
 }
 
@@ -627,7 +643,7 @@ function analyzeContractWithAI(payload) {
     // 1. YOUR NEW FREE API KEYS (Get these from aistudio.google.com, console.groq.com, openrouter.ai)
     const API_KEYS = {
       GEMINI: "*****",
-      GROQ: "*******",
+      GROQ: "*****",
       OPENROUTER: "******"
     };
 

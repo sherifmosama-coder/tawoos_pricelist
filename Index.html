@@ -3500,12 +3500,12 @@
         
         let chipsHtml = '';
         let hasData = false;
-        let masterTotalMargin = 0;
-        let masterTotalFixed = 0;
+        const normalizeStr = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, ' ');
+        const normClient = normalizeStr(clientName);
 
         // 1. Check Invoice Discounts
         if (typeof globalCommercial !== 'undefined' && globalCommercial.invoiceDiscounts) {
-            let activeDiscounts = globalCommercial.invoiceDiscounts.find(d => d.client.trim().toLowerCase() === clientName.trim().toLowerCase());
+            let activeDiscounts = globalCommercial.invoiceDiscounts.find(d => normalizeStr(d.client) === normClient);
             if (activeDiscounts && Object.keys(activeDiscounts.products).length > 0) {
                 // Front invoice discounts usually only apply to standard products
                 if (contractType !== 'Private Label') {
@@ -3515,59 +3515,61 @@
             }
         }
 
-        // 2. Check Contracts (Rebates and Fixed Fees)
-        let contracts = [];
+        // =========================================================
+        // 2. TWO-STREAM CONTRACT LOGIC (Standard vs PL)
+        // =========================================================
+        let stdRebatePct = 0, stdFixedTotal = 0;
+        let plRebatePct = 0, plFixedTotal = 0;
         let today = new Date(); today.setHours(0,0,0,0);
         
-        if (typeof globalCommercial !== 'undefined' && globalCommercial.clientContracts) {
-            // Filter for THIS client AND ONLY ACTIVE contracts AND Target Contract Type
-            contracts = globalCommercial.clientContracts.filter(c => {
-                if (c.client.trim().toLowerCase() !== clientName.trim().toLowerCase()) return false;
-                
-                // Toggle Logic: Use exact isPrivateLabel boolean from Google Sheets (Column I)
-                if (contractType !== 'Both') {
-                     let isPrivate = c.isPrivateLabel === true;
-                     
-                     if (contractType === 'Private Label' && !isPrivate) return false;
-                     if (contractType === 'Standard' && isPrivate) return false;
-                }
+        let parsePct = (val) => {
+            if (!val) return 0;
+            let num = parseFloat(String(val).replace(/,/g, '').replace(/%/g, ''));
+            return isNaN(num) ? 0 : num;
+        };
 
-                if (!c.start || !c.end) return true; // Include open-ended
+        if (typeof globalCommercial !== 'undefined' && globalCommercial.clientContracts) {
+            let activeContracts = globalCommercial.clientContracts.filter(c => {
+                if (normalizeStr(c.client) !== normClient) return false;
+                if (!c.start || !c.end) return true; 
                 let s = new Date(c.start); let e = new Date(c.end);
                 return today >= s && today <= e;
             });
             
-            if (contracts.length > 0) {
-                hasData = true;
+            if (activeContracts.length > 0) hasData = true;
 
-                // Aggressive parser to extract pure numbers from strings like "5%" or "25,000"
-                let parsePct = (val) => {
-                    if (!val) return 0;
-                    let num = parseFloat(String(val).replace(/,/g, '').replace(/%/g, ''));
-                    return isNaN(num) ? 0 : num;
-                };
-
-                // Aggregate financials across all active contracts for this client
-                contracts.forEach(c => {
-                    if (c.fees) {
-                        let f = c.fees;
-                        masterTotalMargin += parsePct(f.monthlyPct) + parsePct(f.centralPct) + parsePct(f.quarterlyPct) + parsePct(f.annualPct);
-                        
-                        masterTotalFixed += (parsePct(f.monthlyFixed) * 12) + 
-                                      parsePct(f.q1Fixed) + parsePct(f.q2Fixed) + 
-                                      parsePct(f.q3Fixed) + parsePct(f.q4Fixed) + 
-                                      parsePct(f.annualFixed);
-                    }
-                });
-
-                if (masterTotalFixed > 0) {
-                    chipsHtml += `<span class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-indigo-200 shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Fixed fees: ${masterTotalFixed.toLocaleString()} EGP</span>`;
+            activeContracts.forEach(c => {
+                let isPrivate = c.isPrivateLabel === true;
+                let cRebate = 0, cFixed = 0;
+                
+                if (c.fees) {
+                    let f = c.fees;
+                    cRebate = parsePct(f.monthlyPct) + parsePct(f.centralPct) + parsePct(f.quarterlyPct) + parsePct(f.annualPct);
+                    cFixed = (parsePct(f.monthlyFixed) * 12) + parsePct(f.q1Fixed) + parsePct(f.q2Fixed) + parsePct(f.q3Fixed) + parsePct(f.q4Fixed) + parsePct(f.annualFixed);
                 }
-
-                if (masterTotalMargin > 0) {
-                    chipsHtml += `<span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-emerald-200 shadow-sm"><i class="fas fa-undo mr-1"></i> Rebates: ${parseFloat(masterTotalMargin.toFixed(2))}%</span>`;
+                
+                // Route rates to the correct DNA pool
+                if (isPrivate) {
+                    plRebatePct += cRebate;
+                    plFixedTotal += cFixed;
+                } else {
+                    stdRebatePct += cRebate;
+                    stdFixedTotal += cFixed;
                 }
-            }
+            });
+        }
+
+        // Apply UI dropdown filter constraints to the fetched terms
+        if (contractType === 'Standard') { plRebatePct = 0; plFixedTotal = 0; }
+        if (contractType === 'Private Label') { stdRebatePct = 0; stdFixedTotal = 0; }
+
+        let displayFixed = stdFixedTotal + plFixedTotal;
+        if (displayFixed > 0) {
+            chipsHtml += `<span class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-indigo-200 shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Fixed fees Active</span>`;
+        }
+
+        if (stdRebatePct > 0 || plRebatePct > 0) {
+            chipsHtml += `<span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-emerald-200 shadow-sm"><i class="fas fa-undo mr-1"></i> Rebates Active</span>`;
         }
 
         // Render the UI
@@ -3578,9 +3580,11 @@
         }
         
         // =========================================================
-        // 1. DATA AGGREGATION (CALCULATIONS)
+        // 3. DATA AGGREGATION (DUAL STREAM CALCULATIONS)
         // =========================================================
         let histQty = 0, histGrossRev = 0, histCost = 0;
+        let histGrossRev_Std = 0, histGrossRev_Pl = 0; // The Dual Pools
+        
         let timeScope = document.getElementById('sbTimeScope').value;
         let appliedYearBadge = document.getElementById('sbTimeScope').options[document.getElementById('sbTimeScope').selectedIndex].text.toUpperCase();
         
@@ -3598,8 +3602,6 @@
         }
 
         let productMetrics = {};
-        const normalizeStr = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, ' ');
-        const normClient = normalizeStr(clientName);
 
         if (typeof globalCadenceData !== 'undefined' && typeof globalProducts !== 'undefined') {
             let cadenceArray = Array.isArray(globalCadenceData) ? globalCadenceData : (globalCadenceData.data || []);
@@ -3635,10 +3637,15 @@
                 if (qty > 0) {
                     histQty += qty;
                     
-                    // Natively capture the Gross Invoiced Value (Front discounts applied, Backend Rebates NOT applied)
-                    // We completely ignore sale.netRev from JSON to prevent double false deductions!
                     let saleGrossRev = parseFloat(sale.grossRev || (qty * (prodDef?.price || 0)) || 0);
                     histGrossRev += saleGrossRev;
+                    
+                    // Route Revenue to the correct DNA pool
+                    if (isPrivate) {
+                        histGrossRev_Pl += saleGrossRev;
+                    } else {
+                        histGrossRev_Std += saleGrossRev;
+                    }
                     
                     // --- Date-Aware Costing Logic ---
                     let saleDate = new Date(typeof sale.dateMs === 'number' ? sale.dateMs : (typeof sale.date === 'number' ? sale.date : sale.date));
@@ -3658,7 +3665,14 @@
                     if (!productMetrics[normPName]) {
                         let rawDisc = (activeInvDiscounts?.products) ? (activeInvDiscounts.products[pName] || 0) : 0;
                         let cleanDisc = parseFloat(String(rawDisc).replace('%', '')) || 0;
-                        productMetrics[normPName] = { name: pName, qty: 0, grossRev: 0, cost: 0, invDisc: cleanDisc };
+                        productMetrics[normPName] = { 
+                            name: pName, 
+                            qty: 0, 
+                            grossRev: 0, 
+                            cost: 0, 
+                            invDisc: cleanDisc,
+                            isPrivate: isPrivate // Tag for row-level precision routing
+                        };
                     }
                     productMetrics[normPName].qty += qty;
                     productMetrics[normPName].grossRev += saleGrossRev;
@@ -3667,16 +3681,10 @@
             });
         }
 
-        // --- Core Totals & Net-Net Logic ---
+        // --- Core Totals & Net-Net Logic (Absolute Summation) ---
         let histGrossProfit = histGrossRev - histCost; 
         let histGrossMargin = histGrossRev > 0 ? (histGrossProfit / histGrossRev) * 100 : 0;
 
-        // 1. Calculate Rebates against Invoiced Gross Revenue
-        let rebateDeduction = histGrossRev * (masterTotalMargin / 100);
-        
-        // 2. DYNAMIC NET REVENUE (Gross Invoiced - Simulated Rebate)
-        let histNetRev = histGrossRev - rebateDeduction;
-        
         let daysElapsed = 1;
         if (timeScope === 'CUSTOM' && customStart && customEnd) {
              daysElapsed = Math.ceil((new Date(customEnd) - new Date(customStart)) / (1000 * 60 * 60 * 24)) + 1;
@@ -3685,22 +3693,35 @@
              daysElapsed = Math.ceil((today - new Date(today.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24)) || 1;
         }
         
-        let proportionalFixed = (masterTotalFixed / 365) * daysElapsed;
         let isNetEligible = (timeScope === '2026' || timeScope === 'CUSTOM');
-        let activeFixedFees = isNetEligible ? proportionalFixed : 0;
+
+        // 1. Calculate Targeted Proportional Fixed Fees
+        let activeFixed_Std = isNetEligible ? (stdFixedTotal / 365) * daysElapsed : 0;
+        let activeFixed_Pl = isNetEligible ? (plFixedTotal / 365) * daysElapsed : 0;
+        let totalActiveFixed = activeFixed_Std + activeFixed_Pl;
         
-        // 3. Final Net Profit subtracts dynamically calculated rebates and fixed fees
-        let histNetProfit = histNetRev - histCost - activeFixedFees;
+        // 2. Calculate Targeted Rebates independently
+        let rebateDeduction_Std = histGrossRev_Std * (stdRebatePct / 100);
+        let rebateDeduction_Pl = histGrossRev_Pl * (plRebatePct / 100);
+        let totalRebateDeduction = rebateDeduction_Std + rebateDeduction_Pl;
+        
+        // 3. Blended Math for UI Handoffs
+        let blendedRebatePct = histGrossRev > 0 ? (totalRebateDeduction / histGrossRev) * 100 : (stdRebatePct || plRebatePct);
+        let blendedFixedFees = stdFixedTotal + plFixedTotal;
+
+        // 4. Dynamic Net Revenue & Profit (Summing the pools)
+        let histNetRev = histGrossRev - totalRebateDeduction;
+        let histNetProfit = histNetRev - histCost - totalActiveFixed;
         let histNetMargin = histNetRev > 0 ? (histNetProfit / histNetRev) * 100 : 0;
 
         // =========================================================
-        // 2. RENDER STEP 1: CLIENT CARD (BENCHMARK)
+        // 4. RENDER STEP 1: CLIENT CARD (BENCHMARK)
         // =========================================================
         document.getElementById('sbInsightBadge').innerText = appliedYearBadge;
         document.getElementById('sbHistQty').innerText = histQty.toLocaleString();
         document.getElementById('sbHistRev').innerText = Math.round(histGrossRev).toLocaleString();
         document.getElementById('sbHistCogs').innerText = Math.round(histCost).toLocaleString();
-        document.getElementById('sbHistNetRev').innerText = Math.round(histNetRev).toLocaleString(); // Now fully dynamic
+        document.getElementById('sbHistNetRev').innerText = Math.round(histNetRev).toLocaleString(); 
         
         let profEl = document.getElementById('sbHistProfit');
         let margEl = document.getElementById('sbHistMargin');
@@ -3735,20 +3756,20 @@
             // Sync Tooltip
             const fmt = (v) => Math.round(v || 0).toLocaleString();
             document.getElementById('tipGrossRev').innerText = fmt(histGrossRev);
-            document.getElementById('tipRebateAmt').innerText = fmt(rebateDeduction);
-            document.getElementById('tipRebatePct').innerText = masterTotalMargin.toFixed(1);
+            document.getElementById('tipRebateAmt').innerText = fmt(totalRebateDeduction);
+            document.getElementById('tipRebatePct').innerText = blendedRebatePct.toFixed(1);
             document.getElementById('tipNetRev').innerText = fmt(histNetRev);
             document.getElementById('tipNetRevFinal').innerText = fmt(histNetRev);
-            document.getElementById('tipAnnualFixed').innerText = fmt(masterTotalFixed);
+            document.getElementById('tipAnnualFixed').innerText = fmt(blendedFixedFees);
             document.getElementById('tipDays').innerText = daysElapsed;
-            document.getElementById('tipPropFixed').innerText = fmt(proportionalFixed);
-            document.getElementById('tipPropFixedFinal').innerText = fmt(proportionalFixed);
+            document.getElementById('tipPropFixed').innerText = fmt(totalActiveFixed);
+            document.getElementById('tipPropFixedFinal').innerText = fmt(totalActiveFixed);
             document.getElementById('tipProdCost').innerText = fmt(histCost);
             document.getElementById('tipNetProfit').innerText = fmt(histNetProfit);
         }
 
         // =========================================================
-        // 3. RENDER STEP 2: PRODUCT METRICS TABLE
+        // 5. RENDER STEP 2: PRODUCT METRICS TABLE
         // =========================================================
         const body = document.getElementById('sbProductMetricsBody');
         const footer = document.getElementById('sbProductMetricsFooter');
@@ -3757,17 +3778,21 @@
             let html = '', tQty = 0, tGrossRev = 0, tNetRev = 0, tCost = 0;
             Object.values(productMetrics).sort((a,b) => b.grossRev - a.grossRev).forEach(pm => {
                 
-                // Back-calculate pure List Price before invoice discounts
                 let discFactor = 1 - (pm.invDisc / 100);
                 let rowListRev = discFactor > 0 ? (pm.grossRev / discFactor) : pm.grossRev;
                 let calcBasePrice = pm.qty > 0 ? (rowListRev / pm.qty) : 0;
                 let calcUnitCost = pm.qty > 0 ? (pm.cost / pm.qty) : 0;
                 
-                let revShare = histGrossRev > 0 ? (pm.grossRev / histGrossRev) : 0;
-                let rowFixedFee = activeFixedFees * revShare;
+                // Route deductions according to the product's DNA
+                let isPL = pm.isPrivate;
+                let rowRebatePct = isPL ? plRebatePct : stdRebatePct;
+                let rowActiveFixedPool = isPL ? activeFixed_Pl : activeFixed_Std;
+                let rowGrossPool = isPL ? histGrossRev_Pl : histGrossRev_Std;
+
+                let revShare = rowGrossPool > 0 ? (pm.grossRev / rowGrossPool) : 0;
+                let rowFixedFee = rowActiveFixedPool * revShare;
                 
-                // Dynamic Row Net-Net Math
-                let rowRebate = pm.grossRev * (masterTotalMargin / 100);
+                let rowRebate = pm.grossRev * (rowRebatePct / 100);
                 let rowNetRev = pm.grossRev - rowRebate;
                 let rowNetProfit = rowNetRev - pm.cost - rowFixedFee;
                 let rowNetMargin = rowNetRev > 0 ? (rowNetProfit / rowNetRev) * 100 : 0;
@@ -3791,9 +3816,7 @@
             body.innerHTML = html;
             
             let avgBasePrice = tQty > 0 ? ((tGrossRev / (1 - (tGrossRev > 0 ? (1-(tNetRev/tGrossRev)) : 0))) / tQty) : 0; 
-            // Simplified Invoice Discount weighted average
             let avgInvDisc = tQty > 0 ? (Object.values(productMetrics).reduce((sum, p) => sum + (p.invDisc * p.grossRev), 0) / tGrossRev) : 0;
-            // Back-calc proper average base price
             let pureListRev = tGrossRev / (1 - (avgInvDisc/100));
             avgBasePrice = tQty > 0 ? (pureListRev / tQty) : 0;
             
@@ -3810,8 +3833,8 @@
                 <td class="py-3 text-center text-blue-700">${avgInvDisc.toFixed(1)}%</td>
                 <td class="py-3 text-center font-mono text-blue-900">${Math.round(tGrossRev).toLocaleString()}</td>
                 <td class="py-3 text-center font-mono text-red-600">${Math.round(tCost).toLocaleString()}</td>
-                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${isNetEligible ? Math.round(rebateDeduction).toLocaleString() : '-'}</td>
-                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${isNetEligible ? Math.round(activeFixedFees).toLocaleString() : '-'}</td>
+                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${isNetEligible ? Math.round(totalRebateDeduction).toLocaleString() : '-'}</td>
+                <td class="sb-metric-2026 py-3 text-center font-mono text-amber-600">-${isNetEligible ? Math.round(totalActiveFixed).toLocaleString() : '-'}</td>
                 <td class="sb-metric-2026 py-3 text-center font-mono ${fProfitColor}">${isNetEligible ? Math.round(histNetProfit).toLocaleString() : '-'}</td>
                 <td class="sb-metric-2026 py-3 text-center font-black ${fMarginColor}">${isNetEligible ? histNetMargin.toFixed(1)+'%' : '-'}</td>
             </tr>`;
@@ -3825,8 +3848,9 @@
         refBox.classList.toggle('hidden', !(histQty > 0 || hasData));
         if (histQty > 0 || hasData) setTimeout(() => refBox.classList.add('opacity-100'), 10);
 
-        document.getElementById('sbFixedFees').value = masterTotalFixed > 0 ? masterTotalFixed : '';
-        document.getElementById('sbStandardRebate').value = masterTotalMargin > 0 ? parseFloat(masterTotalMargin.toFixed(2)) : '';
+        // Populate the Simulation Side with True Blended Averages
+        document.getElementById('sbFixedFees').value = blendedFixedFees > 0 ? blendedFixedFees : '';
+        document.getElementById('sbStandardRebate').value = blendedRebatePct > 0 ? parseFloat(blendedRebatePct.toFixed(2)) : '';
         
         runScenarioSimulation();
     }

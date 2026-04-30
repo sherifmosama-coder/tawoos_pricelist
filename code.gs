@@ -364,20 +364,33 @@ function getInitialData(pin) {
             let sJson = JSON.parse(sFile.getBlob().getDataAsString());
             cadenceData = sJson.data ? sJson.data : (Array.isArray(sJson) ? sJson : []);
         } catch(e) {
-            console.error("Failed to parse NetSales JSON: " + e.message);
-        }
-    }
+            console.error("Failed to parse NetSales JSON: " + e.message);
+        }
+    }
 
-  } catch (e) {
-    console.error("Error fetching commercial terms: " + e.message);
-  }
+  } catch (e) {
+    console.error("Error fetching commercial terms: " + e.message);
+  }
 
-  return { 
-    products, clients, signatories, nextSeq, docLogs, userName: currentUser, 
-    commercialData: { invoiceDiscounts, clientContracts, clientVolumes },
-    costingData: costingData,
-    cadenceData: cadenceData
-  };
+  // Extract the absolute latest (current) cost for every product for the Deal Simulator
+  const currentCosts = {};
+  if (typeof costingData !== 'undefined') {
+    Object.keys(costingData).forEach(productName => {
+      let history = costingData[productName];
+      if (history && history.length > 0) {
+        // The map is already sorted by date descending, so index [0] is the latest
+        currentCosts[productName] = parseFloat(history[0].cost || history[0].totalCost || history[0].unitCost || 0);
+      }
+    });
+  }
+
+  return { 
+    products, clients, signatories, nextSeq, docLogs, userName: currentUser, 
+    commercialData: { invoiceDiscounts, clientContracts, clientVolumes },
+    costingData: costingData,
+    currentCosts: currentCosts, // The Live Cost Bridge for the Simulator
+    cadenceData: cadenceData
+  };
 }
 
 function addNewClient(clientName, pin) {
@@ -642,8 +655,8 @@ function analyzeContractWithAI(payload) {
   try {
     // 1. YOUR NEW FREE API KEYS (Get these from aistudio.google.com, console.groq.com, openrouter.ai)
     const API_KEYS = {
-      GEMINI: "*****",
-      GROQ: "*****",
+      GEMINI: "******",
+      GROQ: "******",
       OPENROUTER: "******"
     };
 

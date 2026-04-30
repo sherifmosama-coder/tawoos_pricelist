@@ -193,6 +193,7 @@
       color: #64748b;
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body class="p-4 md:p-8 text-slate-800 bg-slate-200 min-h-screen">
@@ -674,7 +675,7 @@
               <div class="sm:col-span-2">
                  <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2"><i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client</h3>
                  <div class="relative w-full">
-                    <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-sm text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
+                    <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-xl text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" style="font-family: 'Tajawal', sans-serif;" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
                     <input type="hidden" id="sbClientSelect" value="">
                     <ul id="sbClientList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
                  </div>
@@ -3507,10 +3508,29 @@
         if (typeof globalCommercial !== 'undefined' && globalCommercial.invoiceDiscounts) {
             let activeDiscounts = globalCommercial.invoiceDiscounts.find(d => normalizeStr(d.client) === normClient);
             if (activeDiscounts && Object.keys(activeDiscounts.products).length > 0) {
-                // Front invoice discounts usually only apply to standard products
                 if (contractType !== 'Private Label') {
                     hasData = true;
-                    chipsHtml += `<span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-blue-200 shadow-sm"><i class="fas fa-tags mr-1"></i> Front Invoice Discounts Active</span>`;
+                    
+                    // Map out products and percentages for the beautiful Tailwind popover
+                    let discListHtml = Object.entries(activeDiscounts.products)
+                        .map(([prod, pct]) => `<div class="flex justify-between items-center gap-4 py-1.5 border-b border-slate-50 last:border-0"><span class="text-slate-600 truncate font-medium" title="${prod.replace(/"/g, '&quot;')}">${prod}</span><span class="font-black text-blue-600 whitespace-nowrap">${pct}</span></div>`)
+                        .join('');
+                    
+                    chipsHtml += `
+                    <div class="relative group inline-block">
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-blue-200 shadow-sm cursor-help hover:bg-blue-200 transition-colors flex items-center">
+                            <i class="fas fa-tags mr-1"></i> Front Invoice Discounts Active
+                        </span>
+                        <!-- Custom Tailwind Popover Tooltip -->
+                        <div class="absolute left-0 mt-2 top-full w-max min-w-[260px] max-w-xs bg-white border border-slate-200 shadow-2xl rounded-xl p-3 z-[100] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+                            <div class="text-[10px] font-black text-slate-800 uppercase tracking-wider mb-2 pb-2 border-b border-slate-100 flex items-center">
+                                <i class="fas fa-tags text-blue-500 mr-2"></i> Applied Product Discounts
+                            </div>
+                            <div class="text-[11px] max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                                ${discListHtml}
+                            </div>
+                        </div>
+                    </div>`;
                 }
             }
         }
@@ -3565,11 +3585,17 @@
 
         let displayFixed = stdFixedTotal + plFixedTotal;
         if (displayFixed > 0) {
-            chipsHtml += `<span class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-indigo-200 shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Fixed fees Active</span>`;
+            let fText = [];
+            if (stdFixedTotal > 0) fText.push(`Std: ${stdFixedTotal.toLocaleString()} EGP`);
+            if (plFixedTotal > 0) fText.push(`PL: ${plFixedTotal.toLocaleString()} EGP`);
+            chipsHtml += `<span class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-indigo-200 shadow-sm"><i class="fas fa-file-invoice-dollar mr-1"></i> Fixed fees: ${fText.join(' | ')}</span>`;
         }
 
         if (stdRebatePct > 0 || plRebatePct > 0) {
-            chipsHtml += `<span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-emerald-200 shadow-sm"><i class="fas fa-undo mr-1"></i> Rebates Active</span>`;
+            let rText = [];
+            if (stdRebatePct > 0) rText.push(`Std: ${stdRebatePct.toFixed(1)}%`);
+            if (plRebatePct > 0) rText.push(`PL: ${plRebatePct.toFixed(1)}%`);
+            chipsHtml += `<span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-emerald-200 shadow-sm"><i class="fas fa-undo mr-1"></i> Rebates: ${rText.join(' | ')}</span>`;
         }
 
         // Render the UI

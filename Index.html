@@ -666,6 +666,12 @@
       </div>
     </div>
 
+    <!-- MACRO SECTION 1: HISTORICAL OVERVIEW -->
+    <div class="bg-slate-50 rounded-3xl p-2 sm:p-4 border border-slate-200 shadow-inner mb-8">
+       <h2 class="text-2xl font-black text-slate-800 mb-4 ml-2" style="font-family: 'Tajawal', sans-serif;">
+           <i class="fas fa-history text-blue-500 mr-2"></i> Phase 1: Historical Baseline
+       </h2>
+       
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card space-y-6">
 
       <div class="flex flex-col md:flex-row gap-6 items-start relative z-20">
@@ -828,6 +834,39 @@
         </table>
       </div>
     </div>
+    </div> <!-- END OF MACRO SECTION 1 -->
+
+    <!-- MACRO SECTION 2: DEAL SIMULATOR -->
+    <div class="bg-blue-50/50 rounded-3xl p-2 sm:p-4 border border-blue-100 shadow-inner mt-8">
+       <h2 class="text-2xl font-black text-blue-900 mb-4 ml-2" style="font-family: 'Tajawal', sans-serif;">
+           <i class="fas fa-rocket text-blue-500 mr-2"></i> Phase 2: Deal Simulator
+       </h2>
+       
+       <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden p-6 mb-6">
+           <!-- Simulator Type Selector -->
+                        <div class="mb-6 flex gap-4 border-b border-slate-100 pb-4">
+                            <button id="tabBonusScheme" onclick="switchSimulatorMode('bonus')" class="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-xl hover:bg-slate-200 transition-all">Bonus Scheme (Free Goods)</button>
+                            <button id="tabContractMode" onclick="switchSimulatorMode('contract')" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-sm transition-all">Contract-Based (Tiers)</button>
+                        </div>
+
+          <!-- BONUS SCHEME ENGINE (PHASE 1) -->
+          <div id="bonusSchemeEngine" class="hidden space-y-4">
+          
+            <!-- Dynamic Scenarios Accordions Container -->
+            <div id="scenariosContainer" class="space-y-4"></div>
+          
+            <!-- Add Scenario Button -->
+            <button onclick="addNewScenario()" class="w-full py-3 border-2 border-dashed border-slate-300 text-slate-500 rounded-xl hover:bg-slate-50 hover:text-slate-700 hover:border-slate-400 font-bold transition-all flex items-center justify-center text-sm shadow-sm">
+                                             <i class="fas fa-layer-group mr-2"></i> Add Scenario to Compare
+                                         </button>
+          
+            <!-- Comparison Matrix Output Container -->
+            <div id="comparisonMatrixContainer" class="pt-6 border-t border-slate-200 mt-8"></div>
+          
+          </div>
+
+           <!-- CONTRACT ENGINE (PHASE 2 - NEXT STEP) -->
+                        <div id="contractSchemeEngine" class="space-y-6">
 
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
       <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4">
@@ -917,6 +956,11 @@
         </table>
       </div>
     </div>
+
+           </div> <!-- End of Contract Scheme Engine -->
+       </div>
+    </div> <!-- END OF MACRO SECTION 2 -->
+
   </div>
 
   <div id="commercialDirectoryModal"
@@ -1422,6 +1466,8 @@
     let nextSeqNumber = 1;
     let globalCommercial = { invoiceDiscounts: [], clientContracts: [], clientVolumes: {} };
     let globalCostingData = {};
+    let globalCadenceData = [];
+    let globalCurrentCosts = {}; // LIVE COST BRIDGE
     
     // Engine State
     let currentMode = 'new';
@@ -1972,7 +2018,10 @@
       globalCommercial = data.commercialData || { invoiceDiscounts: [], clientContracts: [], clientVolumes: {} };
       globalCostingData = data.costingData || {};
       globalCadenceData = data.cadenceData; // <-- Catches the new sales data from the backend!
+      globalCurrentCosts = data.currentCosts || {}; // LIVE COST BRIDGE
       
+      if (typeof populateBonusProducts === 'function') populateBonusProducts(); // Init Phase 1 Simulator Dropdowns
+
       // Group Raw Logs by RefNum
       const grouped = {};
       if(data.docLogs) {
@@ -4784,6 +4833,363 @@
             };
             setTimeout(() => document.addEventListener('click', closeHandler), 10);
         }
+    }
+
+    // =========================================================
+    // DEAL SIMULATOR: LOGIC ENGINE
+    // =========================================================
+    function switchSimulatorMode(mode) {
+        document.getElementById('bonusSchemeEngine').classList.toggle('hidden', mode !== 'bonus');
+        document.getElementById('contractSchemeEngine').classList.toggle('hidden', mode !== 'contract');
+        
+        document.getElementById('tabBonusScheme').className = mode === 'bonus' 
+            ? 'px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-sm transition-all' 
+            : 'px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-xl hover:bg-slate-200 transition-all';
+            
+        document.getElementById('tabContractMode').className = mode === 'contract' 
+            ? 'px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-sm transition-all' 
+            : 'px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-xl hover:bg-slate-200 transition-all';
+    }
+
+    let scenarioCounter = 0;
+
+    function populateBonusProducts() {
+        document.getElementById('scenariosContainer').innerHTML = '';
+        scenarioCounter = 0;
+        addNewScenario(); // Initializes the first scenario automatically
+    }
+
+    function toggleScenario(id) {
+        let body = document.getElementById(`scenario_body_${id}`);
+        let chevron = document.getElementById(`scenario_chevron_${id}`);
+        if (body.classList.contains('hidden')) {
+            body.classList.remove('hidden');
+            chevron.style.transform = 'rotate(0deg)';
+        } else {
+            body.classList.add('hidden');
+            chevron.style.transform = 'rotate(-90deg)';
+        }
+    }
+
+    function addNewScenario() {
+        scenarioCounter++;
+        const sId = scenarioCounter;
+        const container = document.getElementById('scenariosContainer');
+        
+        // Collapse all existing scenarios
+        document.querySelectorAll('.scenario-body').forEach(b => b.classList.add('hidden'));
+        document.querySelectorAll('.scenario-chevron').forEach(c => c.style.transform = 'rotate(-90deg)');
+
+        let optionsHtml = '<option value="">-- Select Product --</option>';
+        if (typeof globalProducts !== 'undefined') {
+            globalProducts.forEach(p => {
+                optionsHtml += `<option value="${p.arabicName}">${p.arabicName}</option>`;
+            });
+        }
+
+        let html = `
+        <div class="scenario-container bg-white border border-slate-200 rounded-xl shadow-sm transition-all" id="scenario_${sId}">
+            <!-- Header (Accordion Toggle & Name) -->
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleScenario('${sId}')">
+                <div class="flex items-center space-x-3 rtl:space-x-reverse" onclick="event.stopPropagation()">
+                    <i class="fas fa-chevron-down text-slate-400 transition-transform duration-300 scenario-chevron" id="scenario_chevron_${sId}" onclick="toggleScenario('${sId}')"></i>
+                    <input type="text" value="Scenario ${sId}" class="scenario-name-input font-black text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5 text-sm w-48 transition-colors" oninput="calculateBonusScheme()">
+                </div>
+                <div class="flex items-center space-x-4 rtl:space-x-reverse" onclick="event.stopPropagation()">
+                    <label class="flex items-center cursor-pointer" title="Toggle Blended Discount">
+                        <div class="relative">
+                            <input type="checkbox" class="sr-only peer scenario-blended-toggle" checked onchange="calculateBonusScheme()">
+                            <div class="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </div>
+                        <span class="ml-1.5 text-[9px] font-bold text-slate-500 select-none">Blended</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Body (Unified Deal Basket) -->
+            <div class="scenario-body p-4" id="scenario_body_${sId}">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <th class="pb-2 pl-2 w-1/3">Product</th>
+                                <th class="pb-2 text-center w-24">Role</th>
+                                <th class="pb-2 text-center w-16">Qty</th>
+                                <th class="pb-2 text-center w-20">Unit Cost</th>
+                                <th class="pb-2 text-center w-24">Sell Price</th>
+                                <th class="pb-2 text-center text-emerald-600 w-24">Unit Net Price</th>
+                                <th class="pb-2 text-center w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_scenario_${sId}" class="divide-y divide-slate-100">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 flex justify-center border-t border-slate-200 pt-4">
+                    <button onclick="dsAddBasketRow('${sId}', 'paid')" class="bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300 px-6 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm w-full md:w-auto"><i class="fas fa-plus mr-2"></i> Add Product to Scenario</button>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        
+        // Add default layout (1 Paid, 1 Bonus)
+        dsAddBasketRow(sId, 'paid');
+        dsAddBasketRow(sId, 'bonus');
+    }
+
+    function dsAddBasketRow(scenarioId, defaultRole = 'paid') {
+        let tbody = document.getElementById(`tbody_scenario_${scenarioId}`);
+        if (!tbody) return;
+        let rowId = 'dsRow_' + Date.now() + Math.floor(Math.random() * 1000);
+        
+        let optionsHtml = '<option value="">-- Select Product --</option>';
+        if (typeof globalProducts !== 'undefined') {
+            globalProducts.forEach(p => {
+                optionsHtml += `<option value="${p.arabicName}">${p.arabicName}</option>`;
+            });
+        }
+
+        let tr = document.createElement('tr');
+        tr.id = rowId;
+        tr.className = "hover:bg-slate-100/50 transition-colors border-b border-slate-100";
+        tr.innerHTML = `
+            <td class="py-2 pl-2 pr-4">
+                <select class="ds-prod-select w-full p-2 bg-white border border-slate-300 rounded text-xs font-bold focus:ring-blue-500" onchange="syncDsBasketPrice('${rowId}')">${optionsHtml}</select>
+            </td>
+            <td class="py-2 text-center flex justify-center items-center mt-1">
+                <label class="flex items-center cursor-pointer bg-slate-100 rounded-full p-0.5 border border-slate-200 w-max shadow-inner">
+                   <input type="checkbox" class="sr-only peer ds-role-toggle" onchange="calculateBonusScheme()" ${defaultRole === 'bonus' ? 'checked' : ''}>
+                   <span class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all bg-blue-600 text-white shadow-sm peer-checked:bg-transparent peer-checked:text-slate-400 peer-checked:shadow-none">Paid</span>
+                   <span class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all bg-transparent text-slate-400 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-sm">Bonus</span>
+                </label>
+            </td>
+            <td class="py-2 text-center">
+                <input type="number" placeholder="1" min="1" class="ds-qty-input w-16 p-2 bg-white border border-slate-300 rounded text-xs font-mono font-bold text-center focus:ring-blue-500" oninput="calculateBonusScheme()">
+            </td>
+            <td class="py-2 text-center">
+                <span class="ds-cost-display text-xs font-mono font-bold text-amber-600">0.00</span>
+            </td>
+            <td class="py-2 text-center">
+                <input type="number" placeholder="0.00" min="0" class="ds-price-input w-20 p-2 bg-white border border-slate-300 rounded text-xs font-mono font-bold text-center focus:ring-blue-500" oninput="calculateBonusScheme()">
+            </td>
+            <td class="py-2 text-center">
+                <span class="ds-net-price text-sm font-mono font-black text-emerald-600">0.00</span>
+                <span class="ds-net-disc block text-[9px] font-bold text-emerald-500 mt-0.5">(-0%)</span>
+            </td>
+            <td class="py-2 text-center">
+                <button onclick="document.getElementById('${rowId}').remove(); calculateBonusScheme();" class="text-slate-400 hover:text-red-500 p-1"><i class="fas fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        calculateBonusScheme();
+    }
+
+    function syncDsBasketPrice(rowId) {
+        let tr = document.getElementById(rowId);
+        if(!tr) return;
+        let prodName = tr.querySelector('.ds-prod-select').value;
+        let priceInput = tr.querySelector('.ds-price-input');
+        let costDisplay = tr.querySelector('.ds-cost-display');
+        
+        if(!prodName) {
+            priceInput.value = '';
+            if(costDisplay) costDisplay.innerText = '0.00';
+        } else {
+            const norm = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, ' ');
+            let prod = globalProducts.find(p => norm(p.arabicName) === norm(prodName));
+            
+            // Sync Selling Price
+            let price = parseFloat(prod?.price) || 0;
+            let selected = selectedProducts.find(p => norm(p.arabicName) === norm(prodName));
+            if(selected && selected.officialPrice) price = selected.officialPrice;
+            
+            // Smart Inheritance: Scans ALL scenarios to inherit previously typed prices for this product
+            let allRows = document.querySelectorAll('.scenario-container tbody tr');
+            for (let r of allRows) {
+                if (r.id === rowId) continue;
+                if (r.querySelector('.ds-prod-select').value === prodName) {
+                    let rPrice = parseFloat(r.querySelector('.ds-price-input').value);
+                    if (!isNaN(rPrice) && rPrice > 0) {
+                        price = rPrice;
+                        break; 
+                    }
+                }
+            }
+            
+            priceInput.value = price > 0 ? price : '';
+            
+            // Sync Unit Cost
+            let cost = globalCurrentCosts[prodName] || getSbProductCost(prodName) || 0;
+            if(costDisplay) costDisplay.innerText = cost.toFixed(2);
+        }
+        calculateBonusScheme();
+    }
+
+    function calculateBonusScheme() {
+        let matrixContainer = document.getElementById('comparisonMatrixContainer');
+        if(!matrixContainer) return;
+        
+        let scenarios = document.querySelectorAll('.scenario-container');
+        if (scenarios.length === 0) {
+            matrixContainer.innerHTML = '';
+            return;
+        }
+
+        // Generate the Matrix Headers with adjusted dynamic widths for the compact Profit Card
+        let matrixHtml = `
+            <div class="hidden md:grid grid-cols-[40px_minmax(0,3fr)_minmax(0,2fr)_auto] gap-4 px-2 mb-2">
+                <div></div>
+                <div class="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-2">Basket Details & Unit Net Prices</div>
+                <div class="text-center text-[10px] font-black text-slate-400 uppercase tracking-wider">Discount Arbitrage</div>
+                <div class="text-center text-[10px] font-black text-slate-400 uppercase tracking-wider self-end">Net Profit</div>
+            </div>
+        `;
+
+        // Iterate through all scenarios and generate their comparison row
+        scenarios.forEach(scenario => {
+            let sName = scenario.querySelector('.scenario-name-input').value || "Unnamed Scenario";
+            let isBlended = scenario.querySelector('.scenario-blended-toggle').checked;
+            let rows = scenario.querySelectorAll('tbody tr');
+            
+            let totalPaidValue = 0, totalBonusValue = 0, totalActualCost = 0, totalBonusCost = 0, totalBasketValue = 0;
+            let parsedRows = [];
+
+            // PASS 1: Aggregate Costs & Values
+            rows.forEach(tr => {
+                let prodName = tr.querySelector('.ds-prod-select').value;
+                let isBonus = tr.querySelector('.ds-role-toggle').checked;
+                let role = isBonus ? 'bonus' : 'paid';
+                let qty = parseFloat(tr.querySelector('.ds-qty-input').value) || 0;
+                let price = parseFloat(tr.querySelector('.ds-price-input').value) || 0;
+                
+                if(!prodName || qty <= 0) return;
+                
+                let lineValue = qty * price;
+                let lineCost = qty * (globalCurrentCosts[prodName] || getSbProductCost(prodName) || 0);
+
+                totalBasketValue += lineValue;
+                totalActualCost += lineCost;
+
+                if (role === 'paid') {
+                    totalPaidValue += lineValue;
+                } else {
+                    totalBonusValue += lineValue;
+                    totalBonusCost += lineCost;
+                }
+                parsedRows.push({ tr, role, qty, price, lineValue, name: prodName });
+            });
+
+            // PASS 2: Calculate Row-Level Net Prices
+            let blendedDiscPct = totalBasketValue > 0 ? (totalBonusValue / totalBasketValue) : 0;
+
+            parsedRows.forEach(item => {
+                let netPrice = 0, discPct = 0;
+                if (isBlended) {
+                    netPrice = item.price * (1 - blendedDiscPct);
+                    discPct = blendedDiscPct * 100;
+                } else {
+                    if (item.role === 'bonus') {
+                        netPrice = 0;
+                        discPct = 100;
+                    } else {
+                        let rowDiscountAllocation = totalPaidValue > 0 ? (totalBonusValue * (item.lineValue / totalPaidValue)) : 0;
+                        let rowNetValue = Math.max(0, item.lineValue - rowDiscountAllocation);
+                        netPrice = item.qty > 0 ? rowNetValue / item.qty : 0;
+                        discPct = item.price > 0 ? ((item.price - netPrice) / item.price) * 100 : 0;
+                    }
+                }
+
+                item.netPrice = netPrice;
+                item.discPct = discPct;
+                item.tr.querySelector('.ds-net-price').innerText = netPrice.toFixed(2);
+                item.tr.querySelector('.ds-net-disc').innerText = `(-${discPct.toFixed(1)}%)`;
+            });
+
+            // BUILD CARD 1: Itemized Basket Details (Replacing Summary with Line Items)
+            let itemsHtml = '';
+            parsedRows.forEach(item => {
+                let roleBadge = item.role === 'paid' 
+                    ? '<span class="bg-blue-100 text-blue-700 px-1 py-0.5 rounded text-[8px] font-black uppercase">Paid</span>'
+                    : '<span class="bg-amber-100 text-amber-700 px-1 py-0.5 rounded text-[8px] font-black uppercase">Free</span>';
+                
+                itemsHtml += `
+                    <div class="flex justify-between items-center bg-slate-50 border border-slate-100 px-2 py-1.5 rounded mb-1">
+                        <div class="flex items-center w-2/5 truncate pr-2">
+                            ${roleBadge}
+                            <span class="text-[10px] font-bold text-slate-700 truncate ml-1.5" title="${item.name}">${item.name}</span>
+                        </div>
+                        <div class="w-1/5 text-center text-[10px] font-medium text-slate-500">${item.qty} <span class="text-[8px]">units</span></div>
+                        <div class="w-1/5 text-center text-[10px] font-mono text-slate-500">${item.price > 0 ? item.price : '0'} <span class="text-[8px]">EGP</span></div>
+                        <div class="w-1/5 text-right font-mono font-black text-emerald-600 text-[11px] whitespace-nowrap">${item.netPrice.toFixed(2)} <span class="text-[9px] text-emerald-500 ml-0.5">(-${item.discPct.toFixed(0)}%)</span></div>
+                    </div>
+                `;
+            });
+
+            // Calculate Macro Metrics for this scenario
+            const fmt = (v) => Math.round(v).toLocaleString();
+            let macroDiscPct = totalBasketValue > 0 ? (totalBonusValue / totalBasketValue) * 100 : 0;
+            let actualCostPct = totalPaidValue > 0 ? (totalBonusCost / totalPaidValue) * 100 : 0;
+            let valueLeverage = totalBonusCost > 0 ? ((totalBonusValue - totalBonusCost) / totalBonusCost) * 100 : 0;
+            let netProfit = totalPaidValue - totalActualCost;
+            let netMargin = totalPaidValue > 0 ? (netProfit / totalPaidValue) * 100 : 0;
+
+            // Generate Output Row for the Comparison Matrix
+            matrixHtml += `
+                <div class="grid grid-cols-1 md:grid-cols-[40px_minmax(0,3fr)_minmax(0,2fr)_auto] gap-3 mb-3 relative hover:shadow-md transition-shadow rounded-xl p-1 bg-slate-50 border border-slate-100">
+                   
+                   <!-- Vertical Chip -->
+                   <div class="hidden md:flex items-center justify-center bg-slate-800 text-white rounded-l-xl rounded-r-md shadow-sm relative overflow-hidden">
+                       <div class="absolute inset-0 bg-gradient-to-b from-blue-500/20 to-transparent"></div>
+                       <span class="text-[11px] font-black uppercase tracking-widest relative z-10 whitespace-nowrap py-4" style="writing-mode: vertical-rl; transform: rotate(180deg);">${sName}</span>
+                   </div>
+                   
+                   <!-- Card 1: Client Basket Detailed -->
+                   <div class="bg-white border-2 border-emerald-100 p-3 rounded-xl shadow-sm flex flex-col justify-between">
+                       <div class="flex text-[8px] font-black text-slate-400 uppercase mb-1 px-2">
+                           <div class="w-2/5">Product</div>
+                           <div class="w-1/5 text-center">Qty</div>
+                           <div class="w-1/5 text-center">List Price</div>
+                           <div class="w-1/5 text-right">Net Price</div>
+                       </div>
+                       <div class="flex-1 overflow-y-auto max-h-[120px] mb-2 pr-1 custom-scrollbar">
+                           ${itemsHtml || '<span class="text-xs font-bold text-slate-400 italic block text-center mt-6">No active products</span>'}
+                       </div>
+                       <div class="pt-2 border-t border-emerald-100 flex justify-between items-center px-1 shrink-0">
+                          <span class="text-[10px] font-bold text-emerald-800">Total Gross: ${fmt(totalBasketValue)} EGP</span>
+                          <span class="text-[10px] font-black text-emerald-600">Avg Deal Disc: ${macroDiscPct.toFixed(1)}%</span>
+                       </div>
+                   </div>
+
+                   <!-- Card 2: Discount Arbitrage -->
+                   <div class="bg-white border-2 border-amber-100 p-3 rounded-xl shadow-sm flex flex-col justify-center">
+                       <div class="flex justify-between items-center bg-emerald-50 px-2 py-1.5 rounded mb-1.5">
+                           <span class="text-[10px] font-bold text-emerald-800">Perceived Value</span>
+                           <span class="font-mono font-black text-emerald-700 text-sm">${fmt(totalBonusValue)} EGP <span class="text-[9px]">(${macroDiscPct.toFixed(1)}%)</span></span>
+                       </div>
+                       <div class="flex justify-between items-center bg-amber-50 px-2 py-1.5 rounded mb-2">
+                           <span class="text-[10px] font-bold text-amber-800">Actual Hit (COGS)</span>
+                           <span class="font-mono font-black text-amber-700 text-sm">${fmt(totalBonusCost)} EGP <span class="text-[9px]">(${actualCostPct.toFixed(1)}%)</span></span>
+                       </div>
+                       <div class="text-center pt-1.5 border-t border-slate-100">
+                           <span class="text-[10px] font-black text-slate-500">Value Leverage:</span>
+                           <span class="text-xs font-black ${valueLeverage >= 0 ? 'text-emerald-600' : 'text-red-600'} ml-1">${valueLeverage >= 0 ? '+' : ''}${valueLeverage.toFixed(1)}%</span>
+                       </div>
+                   </div>
+
+                   <!-- Card 3: Net Profitability (Compact Horizontal) -->
+                   <div class="${netProfit < 0 ? 'bg-red-600 border-red-700' : 'bg-emerald-600 border-emerald-700'} border-2 px-3 py-2 rounded-xl shadow-sm flex flex-col items-center justify-center text-center text-white transition-colors duration-300">
+                       <span class="text-[9px] font-black uppercase tracking-widest mb-1.5 ${netProfit < 0 ? 'text-red-200' : 'text-emerald-200'}">Net Profit</span>
+                       <span class="text-xl font-mono font-black leading-none mb-1.5">${fmt(netProfit)} <span class="text-[10px] font-bold">EGP</span></span>
+                       <span class="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-md whitespace-nowrap">Margin: ${netMargin.toFixed(1)}%</span>
+                   </div>
+                </div>
+            `;
+        });
+
+        matrixContainer.innerHTML = matrixHtml;
     }
     </script>
 </body>

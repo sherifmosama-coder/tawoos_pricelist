@@ -655,9 +655,9 @@ function analyzeContractWithAI(payload) {
   try {
     // 1. YOUR NEW FREE API KEYS (Get these from aistudio.google.com, console.groq.com, openrouter.ai)
     const API_KEYS = {
-      GEMINI: "******",
-      GROQ: "******",
-      OPENROUTER: "******"
+      GEMINI: "********",
+      GROQ: "********",
+      OPENROUTER: "*********"
     };
 
     let documentString = "";
@@ -914,4 +914,91 @@ function getDriveFileBase64(url) {
   } catch (e) {
     return { success: false, message: e.message };
   }
+}
+
+// =====================================================================
+// DEAL DESK STATE MANAGEMENT (CRUD API)
+// =====================================================================
+
+function getDsTemplates() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('DS_Templates');
+  if (!sheet) return [];
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  
+  let templates = [];
+  for (let i = 1; i < data.length; i++) {
+    templates.push({
+      savedId: data[i][0],
+      name: data[i][1],
+      data: JSON.parse(data[i][2]), // Deserializes the JSON string back into an object
+      lastUpdated: data[i][3]
+    });
+  }
+  return templates;
+}
+
+function saveDsTemplate(payload) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('DS_Templates');
+  if (!sheet) throw new Error("Sheet 'DS_Templates' not found.");
+  
+  const data = sheet.getDataRange().getValues();
+  let rowIndex = -1;
+  // Search for existing ID to Overwrite
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === payload.savedId) {
+      rowIndex = i + 1; // +1 for 1-based indexing in Apps Script
+      break;
+    }
+  }
+  
+  const timestamp = new Date().toISOString();
+  if (rowIndex > -1) {
+    // UPDATE existing record
+    sheet.getRange(rowIndex, 2, 1, 3).setValues([[payload.name, JSON.stringify(payload), timestamp]]);
+  } else {
+    // INSERT new record
+    sheet.appendRow([payload.savedId, payload.name, JSON.stringify(payload), timestamp]);
+  }
+  return true;
+}
+
+function getDsWorkspaces() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('DS_Workspaces');
+  if (!sheet) return [];
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  
+  let workspaces = [];
+  for (let i = 1; i < data.length; i++) {
+    workspaces.push({
+      id: data[i][0],
+      name: data[i][1],
+      data: JSON.parse(data[i][2]),
+      lastUpdated: data[i][3]
+    });
+  }
+  return workspaces;
+}
+
+function saveDsWorkspace(payload) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('DS_Workspaces');
+  if (!sheet) throw new Error("Sheet 'DS_Workspaces' not found.");
+  
+  const data = sheet.getDataRange().getValues();
+  let rowIndex = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === payload.id) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+  
+  const timestamp = new Date().toISOString();
+  if (rowIndex > -1) {
+    sheet.getRange(rowIndex, 2, 1, 3).setValues([[payload.name, JSON.stringify(payload), timestamp]]);
+  } else {
+    sheet.appendRow([payload.id, payload.name, JSON.stringify(payload), timestamp]);
+  }
+  return true;
 }

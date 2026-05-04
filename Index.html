@@ -852,10 +852,19 @@
           <!-- BONUS SCHEME ENGINE (PHASE 1) -->
           <div id="bonusSchemeEngine" class="hidden space-y-4">
           
-            <!-- Dynamic Scenarios Accordions Container -->
-            <div id="scenariosContainer" class="space-y-4"></div>
-          
-            <!-- Add Scenario Button -->
+            <!-- Workspace Management Toolbar -->
+                               <div class="flex flex-col md:flex-row justify-between items-center mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200 shadow-sm gap-3">
+                                   <div class="flex space-x-2 rtl:space-x-reverse w-full md:w-auto">
+                                       <button onclick="dsSaveWorkspace()" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-cloud-upload-alt mr-2"></i> Save Workspace</button>
+                                       <button onclick="dsLoadWorkspace()" class="flex-1 md:flex-none bg-white hover:bg-slate-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-folder-open mr-2"></i> Load Workspace</button>
+                                   </div>
+                                   <button onclick="dsLoadScenarioTemplate()" class="w-full md:w-auto bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-download mr-2"></i> Import Scenario Template</button>
+                               </div>
+
+                               <!-- Dynamic Scenarios Accordions Container -->
+                               <div id="scenariosContainer" class="space-y-4 mb-4"></div>
+                               
+                               <!-- Add Scenario Button -->
                                <button onclick="addNewScenario()" class="w-full py-3 border-2 border-dashed border-slate-300 text-slate-500 rounded-xl hover:bg-slate-50 hover:text-slate-700 hover:border-slate-400 font-bold transition-all flex items-center justify-center text-sm shadow-sm">
                                    <i class="fas fa-layer-group mr-2"></i> Add Scenario to Compare
                                </button>
@@ -904,6 +913,23 @@
                                    <!-- The A4 Document Container -->
                                    <div id="dsPrintDocumentContainer" class="bg-white shadow-2xl my-8 p-0 w-[1024px] min-h-[720px] relative overflow-hidden flex-shrink-0">
                                        <!-- Injected Vanilla HTML Goes Here -->
+                                   </div>
+                               </div>
+
+                               <!-- UNIVERSAL TAILWIND MODAL (ALERTS, CONFIRMS, PROMPTS) -->
+                               <div id="dsCustomModal" class="hidden fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+                                   <div id="dsCustomModalDialog" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all duration-300 scale-95 opacity-0 m-4">
+                                       <div class="flex items-center space-x-4 rtl:space-x-reverse mb-4">
+                                           <div id="dsModalIcon" class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner"></div>
+                                           <h3 id="dsModalTitle" class="text-xl font-black text-slate-800 tracking-tight"></h3>
+                                       </div>
+                                       <p id="dsModalMessage" class="text-sm text-slate-600 mb-6 font-medium whitespace-pre-line leading-relaxed"></p>
+                                       <input type="text" id="dsModalInput" class="hidden w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none mb-6 transition-all shadow-inner">
+                                       <div id="dsModalChipContainer" class="hidden w-full flex flex-wrap gap-2 mb-6 max-h-64 overflow-y-auto custom-scrollbar p-1"></div>
+                                       <div class="flex justify-end space-x-3 rtl:space-x-reverse">
+                                           <button id="dsModalBtnCancel" class="hidden px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors shadow-sm focus:ring-2 focus:ring-slate-300 outline-none"></button>
+                                           <button id="dsModalBtnConfirm" class="px-5 py-2.5 rounded-xl text-sm font-black text-white transition-colors shadow-md focus:ring-2 focus:ring-blue-500 outline-none"></button>
+                                       </div>
                                    </div>
                                </div>
           
@@ -4915,7 +4941,7 @@
         }
     }
 
-    function addNewScenario() {
+    function addNewScenario(initialData = null) {
         scenarioCounter++;
         const sId = scenarioCounter;
         const container = document.getElementById('scenariosContainer');
@@ -4924,29 +4950,30 @@
         document.querySelectorAll('.scenario-body').forEach(b => b.classList.add('hidden'));
         document.querySelectorAll('.scenario-chevron').forEach(c => c.style.transform = 'rotate(-90deg)');
 
-        let optionsHtml = '<option value="">-- Select Product --</option>';
-        if (typeof globalProducts !== 'undefined') {
-            globalProducts.forEach(p => {
-                optionsHtml += `<option value="${p.arabicName}">${p.arabicName}</option>`;
-            });
-        }
+        let sName = initialData ? initialData.name : `Scenario ${sId}`;
+        let isBlended = initialData ? initialData.isBlended : true;
+        let savedId = initialData ? initialData.savedId : '';
+        let blendedCheck = isBlended ? 'checked' : '';
 
         let html = `
-        <div class="scenario-container bg-white border border-slate-200 rounded-xl shadow-sm transition-all" id="scenario_${sId}">
+        <div class="scenario-container bg-white border border-slate-200 rounded-xl shadow-sm transition-all group" id="scenario_${sId}" data-saved-id="${savedId}">
             <!-- Header (Accordion Toggle & Name) -->
             <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleScenario('${sId}')">
                 <div class="flex items-center space-x-3 rtl:space-x-reverse" onclick="event.stopPropagation()">
                     <i class="fas fa-chevron-down text-slate-400 transition-transform duration-300 scenario-chevron" id="scenario_chevron_${sId}" onclick="toggleScenario('${sId}')"></i>
-                    <input type="text" value="Scenario ${sId}" class="scenario-name-input font-black text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5 text-sm w-48 transition-colors" oninput="calculateBonusScheme()">
+                    <input type="text" value="${sName}" class="scenario-name-input font-black text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5 text-sm w-48 transition-colors" oninput="calculateBonusScheme()">
                 </div>
                 <div class="flex items-center space-x-4 rtl:space-x-reverse" onclick="event.stopPropagation()">
                     <label class="flex items-center cursor-pointer" title="Toggle Blended Discount">
                         <div class="relative">
-                            <input type="checkbox" class="sr-only peer scenario-blended-toggle" checked onchange="calculateBonusScheme()">
+                            <input type="checkbox" class="sr-only peer scenario-blended-toggle" ${blendedCheck} onchange="calculateBonusScheme()">
                             <div class="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
                         </div>
                         <span class="ml-1.5 text-[9px] font-bold text-slate-500 select-none">Blended</span>
                     </label>
+                    <button onclick="dsSaveScenarioTemplate('${sId}')" class="text-slate-400 hover:text-indigo-600 transition-colors px-1" title="Save scenario as template"><i class="fas fa-save text-lg"></i></button>
+                    <div class="h-4 w-px bg-slate-300 hidden md:block"></div>
+                    <button onclick="dsRemoveScenario('${sId}')" class="text-slate-400 hover:text-red-500 transition-colors px-1" title="Delete Scenario"><i class="fas fa-trash text-lg"></i></button>
                 </div>
             </div>
             
@@ -4966,11 +4993,10 @@
                             </tr>
                         </thead>
                         <tbody id="tbody_scenario_${sId}" class="divide-y divide-slate-100">
-                            <!-- Dynamic Rows -->
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-4 flex justify-center border-t border-slate-200 pt-4">
+                <div class="mt-4 flex flex-col md:flex-row justify-end items-center border-t border-slate-200 pt-4 gap-4">
                     <button onclick="dsAddBasketRow('${sId}', 'paid')" class="bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300 px-6 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm w-full md:w-auto"><i class="fas fa-plus mr-2"></i> Add Product to Scenario</button>
                 </div>
             </div>
@@ -4979,12 +5005,20 @@
         
         container.insertAdjacentHTML('beforeend', html);
         
-        // Add default layout (1 Paid, 1 Bonus)
-        dsAddBasketRow(sId, 'paid');
-        dsAddBasketRow(sId, 'bonus');
+        // Populate Rows Based on Data or Default
+        if (initialData && initialData.rows && initialData.rows.length > 0) {
+            initialData.rows.forEach(r => {
+                dsAddBasketRow(sId, r.role, r.prodName, r.qty, r.price);
+            });
+        } else {
+            dsAddBasketRow(sId, 'paid');
+            dsAddBasketRow(sId, 'bonus');
+        }
+        
+        calculateBonusScheme();
     }
 
-    function dsAddBasketRow(scenarioId, defaultRole = 'paid') {
+    function dsAddBasketRow(scenarioId, defaultRole = 'paid', initProd = '', initQty = '', initPrice = '') {
         let tbody = document.getElementById(`tbody_scenario_${scenarioId}`);
         if (!tbody) return;
         let rowId = 'dsRow_' + Date.now() + Math.floor(Math.random() * 1000);
@@ -4992,7 +5026,8 @@
         let optionsHtml = '<option value="">-- Select Product --</option>';
         if (typeof globalProducts !== 'undefined') {
             globalProducts.forEach(p => {
-                optionsHtml += `<option value="${p.arabicName}">${p.arabicName}</option>`;
+                let isSelected = p.arabicName === initProd ? 'selected' : '';
+                optionsHtml += `<option value="${p.arabicName}" ${isSelected}>${p.arabicName}</option>`;
             });
         }
 
@@ -5011,13 +5046,13 @@
                 </label>
             </td>
             <td class="py-2 text-center">
-                <input type="number" placeholder="1" min="1" class="ds-qty-input w-16 p-2 bg-white border border-slate-300 rounded text-xs font-mono font-bold text-center focus:ring-blue-500" oninput="calculateBonusScheme()">
+                <input type="number" placeholder="1" min="1" value="${initQty}" class="ds-qty-input w-16 p-2 bg-white border border-slate-300 rounded text-xs font-mono font-bold text-center focus:ring-blue-500" oninput="calculateBonusScheme()">
             </td>
             <td class="py-2 text-center">
                 <span class="ds-cost-display text-xs font-mono font-bold text-amber-600">0.00</span>
             </td>
             <td class="py-2 text-center">
-                <input type="number" placeholder="0.00" min="0" class="ds-price-input w-20 p-2 bg-white border border-slate-300 rounded text-xs font-mono font-bold text-center focus:ring-blue-500" oninput="calculateBonusScheme()">
+                <input type="number" placeholder="0.00" min="0" value="${initPrice}" class="ds-price-input w-20 p-2 bg-white border border-slate-300 rounded text-xs font-mono font-bold text-center focus:ring-blue-500" oninput="calculateBonusScheme()">
             </td>
             <td class="py-2 text-center">
                 <span class="ds-net-price text-sm font-mono font-black text-emerald-600">0.00</span>
@@ -5028,16 +5063,22 @@
             </td>
         `;
         tbody.appendChild(tr);
-        calculateBonusScheme();
+        
+        // If data was injected, trigger a sync but block it from overriding the saved price
+        if(initProd) {
+            syncDsBasketPrice(rowId, true); 
+        }
     }
 
-    function syncDsBasketPrice(rowId) {
+    function syncDsBasketPrice(rowId, keepExistingPrice = false) {
         let tr = document.getElementById(rowId);
         if(!tr) return;
         let prodName = tr.querySelector('.ds-prod-select').value;
         let priceInput = tr.querySelector('.ds-price-input');
         let costDisplay = tr.querySelector('.ds-cost-display');
         
+        let currentPriceVal = priceInput.value; // Store user's typed/loaded price
+
         if(!prodName) {
             priceInput.value = '';
             if(costDisplay) costDisplay.innerText = '0.00';
@@ -5045,27 +5086,30 @@
             const norm = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, ' ');
             let prod = globalProducts.find(p => norm(p.arabicName) === norm(prodName));
             
-            // Sync Selling Price
-            let price = parseFloat(prod?.price) || 0;
-            let selected = selectedProducts.find(p => norm(p.arabicName) === norm(prodName));
-            if(selected && selected.officialPrice) price = selected.officialPrice;
-            
-            // Smart Inheritance: Scans ALL scenarios to inherit previously typed prices for this product
-            let allRows = document.querySelectorAll('.scenario-container tbody tr');
-            for (let r of allRows) {
-                if (r.id === rowId) continue;
-                if (r.querySelector('.ds-prod-select').value === prodName) {
-                    let rPrice = parseFloat(r.querySelector('.ds-price-input').value);
-                    if (!isNaN(rPrice) && rPrice > 0) {
-                        price = rPrice;
-                        break; 
+            // Only search for inheritance/global prices if we are NOT preserving a loaded template price
+            if (!keepExistingPrice) {
+                let price = parseFloat(prod?.price) || 0;
+                let selected = selectedProducts.find(p => norm(p.arabicName) === norm(prodName));
+                if(selected && selected.officialPrice) price = selected.officialPrice;
+                
+                // Smart Inheritance
+                let allRows = document.querySelectorAll('.scenario-container tbody tr');
+                for (let r of allRows) {
+                    if (r.id === rowId) continue;
+                    if (r.querySelector('.ds-prod-select').value === prodName) {
+                        let rPrice = parseFloat(r.querySelector('.ds-price-input').value);
+                        if (!isNaN(rPrice) && rPrice > 0) {
+                            price = rPrice;
+                            break; 
+                        }
                     }
                 }
+                priceInput.value = price > 0 ? price : '';
+            } else {
+                priceInput.value = currentPriceVal; // Restore the injected template price
             }
             
-            priceInput.value = price > 0 ? price : '';
-            
-            // Sync Unit Cost
+            // Sync Unit Cost (Always live, never saved)
             let cost = globalCurrentCosts[prodName] || getSbProductCost(prodName) || 0;
             if(costDisplay) costDisplay.innerText = cost.toFixed(2);
         }
@@ -5567,6 +5611,380 @@
         html2pdf().set(opt).from(element).save().then(() => {
             dsClosePrintPreview();
         });
+    }
+    // --- UNIVERSAL MODAL ENGINE ---
+    
+    function dsShowCustomModal(options) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('dsCustomModal');
+            const dialog = document.getElementById('dsCustomModalDialog');
+            const titleEl = document.getElementById('dsModalTitle');
+            const msgEl = document.getElementById('dsModalMessage');
+            const iconEl = document.getElementById('dsModalIcon');
+            const inputEl = document.getElementById('dsModalInput');
+            const btnCancel = document.getElementById('dsModalBtnCancel');
+            const btnConfirm = document.getElementById('dsModalBtnConfirm');
+
+            // Text Setup
+            titleEl.innerText = options.title || 'Notification';
+            msgEl.innerText = options.message || '';
+
+            // Dynamic Icon Setup
+            if (options.iconType === 'success') {
+                iconEl.className = "w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner bg-emerald-100 text-emerald-600 text-xl";
+                iconEl.innerHTML = '<i class="fas fa-check"></i>';
+            } else if (options.iconType === 'warning') {
+                iconEl.className = "w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner bg-amber-100 text-amber-600 text-xl";
+                iconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            } else if (options.iconType === 'question' || options.type === 'prompt') {
+                iconEl.className = "w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner bg-blue-100 text-blue-600 text-xl";
+                iconEl.innerHTML = '<i class="fas fa-question"></i>';
+            } else {
+                iconEl.className = "w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner bg-slate-100 text-slate-600 text-xl";
+                iconEl.innerHTML = '<i class="fas fa-info"></i>';
+            }
+
+            // Input Setup for Prompts & Chips
+            let selectedChips = [];
+            const chipContainer = document.getElementById('dsModalChipContainer');
+            
+            if (options.type === 'prompt') {
+                inputEl.classList.remove('hidden');
+                inputEl.value = options.defaultValue || '';
+                chipContainer.classList.add('hidden');
+                setTimeout(() => inputEl.focus(), 100); // Auto-focus input
+            } else if (options.type === 'chipSelect') {
+                inputEl.classList.add('hidden');
+                chipContainer.classList.remove('hidden');
+                chipContainer.innerHTML = ''; // Clear previous chips
+                
+                options.items.forEach(item => {
+                    let chip = document.createElement('button');
+                    chip.className = "text-left px-3 py-2 rounded-lg border-2 border-slate-200 bg-white hover:border-indigo-300 transition-all focus:outline-none flex flex-col min-w-[140px] flex-1 max-w-[200px]";
+                    chip.innerHTML = `<span class="text-xs font-black text-slate-700 block truncate w-full" title="${item.label}">${item.label}</span>
+                                      <span class="text-[10px] font-bold text-slate-400 block mt-0.5">${item.subtext}</span>`;
+                    
+                    // Chip Click Handler
+                    chip.onclick = () => {
+                        if (options.multi) {
+                            let idx = selectedChips.indexOf(item.id);
+                            if (idx > -1) {
+                                selectedChips.splice(idx, 1);
+                                chip.classList.remove('border-indigo-500', 'bg-indigo-50');
+                                chip.classList.add('border-slate-200', 'bg-white');
+                            } else {
+                                selectedChips.push(item.id);
+                                chip.classList.remove('border-slate-200', 'bg-white');
+                                chip.classList.add('border-indigo-500', 'bg-indigo-50');
+                            }
+                        } else {
+                            // Single Select Logic
+                            selectedChips = [item.id];
+                            Array.from(chipContainer.children).forEach(c => {
+                                c.classList.remove('border-indigo-500', 'bg-indigo-50');
+                                c.classList.add('border-slate-200', 'bg-white');
+                            });
+                            chip.classList.remove('border-slate-200', 'bg-white');
+                            chip.classList.add('border-indigo-500', 'bg-indigo-50');
+                        }
+                        
+                        // Toggle Confirm Button State
+                        btnConfirm.disabled = selectedChips.length === 0;
+                        btnConfirm.classList.toggle('opacity-50', selectedChips.length === 0);
+                        btnConfirm.classList.toggle('cursor-not-allowed', selectedChips.length === 0);
+                    };
+                    chipContainer.appendChild(chip);
+                });
+                
+                // Disable confirm button initially
+                btnConfirm.disabled = true;
+                btnConfirm.classList.add('opacity-50', 'cursor-not-allowed');
+
+            } else {
+                inputEl.classList.add('hidden');
+                chipContainer.classList.add('hidden');
+            }
+
+            // Button Setup
+            btnConfirm.innerText = options.confirmText || 'OK';
+            if (options.danger) {
+                btnConfirm.className = "px-5 py-2.5 rounded-xl text-sm font-black text-white bg-red-600 hover:bg-red-700 transition-colors shadow-md outline-none";
+            } else {
+                btnConfirm.className = "px-5 py-2.5 rounded-xl text-sm font-black text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md outline-none";
+            }
+
+            if (options.type === 'alert') {
+                btnCancel.classList.add('hidden');
+            } else {
+                btnCancel.classList.remove('hidden');
+                btnCancel.innerText = options.cancelText || 'Cancel';
+            }
+
+            // Clean & Resolve Actions
+            const cleanup = () => {
+                dialog.classList.remove('scale-100', 'opacity-100');
+                modal.classList.remove('opacity-100');
+                setTimeout(() => modal.classList.add('hidden'), 300); // wait for fade out
+                btnConfirm.onclick = null;
+                btnCancel.onclick = null;
+            };
+
+            btnConfirm.onclick = () => {
+                if(btnConfirm.disabled) return; // Prevent clicks if no chips are selected
+                cleanup();
+                if (options.type === 'prompt') resolve(inputEl.value);
+                else if (options.type === 'chipSelect') resolve(selectedChips);
+                else resolve(true);
+            };
+
+            btnCancel.onclick = () => {
+                cleanup();
+                resolve(null);
+            };
+
+            // Animate In
+            modal.classList.remove('hidden');
+            // Trigger reflow
+            void modal.offsetWidth;
+            modal.classList.add('opacity-100');
+            dialog.classList.add('scale-100', 'opacity-100');
+        });
+    }
+
+    // Helper Wrappers for cleaner code
+    const dsAlert = (title, message, iconType='info') => dsShowCustomModal({ type: 'alert', title, message, iconType });
+    const dsConfirm = (title, message, confirmText='OK', cancelText='Cancel', danger=false) => dsShowCustomModal({ type: 'confirm', title, message, confirmText, cancelText, danger, iconType: danger ? 'warning' : 'question' });
+    const dsPrompt = (title, message, defaultValue='') => dsShowCustomModal({ type: 'prompt', title, message, defaultValue });
+    const dsChipSelect = (title, message, items, multi=false, confirmText='Select') => dsShowCustomModal({ type: 'chipSelect', title, message, items, multi, confirmText, cancelText: 'Cancel', iconType: 'info' });
+
+    // --- STATE MANAGEMENT ENGINE (CRUD VIA APPS SCRIPT) ---
+
+    async function dsRemoveScenario(sId) {
+        let confirmed = await dsConfirm("Remove Scenario", "Are you sure you want to remove this scenario from the comparison?", "Remove", "Cancel", true);
+        if(!confirmed) return;
+
+        let scenario = document.getElementById(`scenario_${sId}`);
+        if(scenario) scenario.remove();
+        calculateBonusScheme();
+    }
+
+    function dsExtractScenarioData(sId) {
+        let scenario = document.getElementById(`scenario_${sId}`);
+        if(!scenario) return null;
+        let sName = scenario.querySelector('.scenario-name-input').value;
+        let isBlended = scenario.querySelector('.scenario-blended-toggle').checked;
+        let savedId = scenario.getAttribute('data-saved-id') || ('tmpl_' + Date.now() + Math.floor(Math.random()*1000));
+        
+        let rows = [];
+        scenario.querySelectorAll('tbody tr').forEach(tr => {
+            let prodName = tr.querySelector('.ds-prod-select').value;
+            let isBonus = tr.querySelector('.ds-role-toggle').checked;
+            let qty = tr.querySelector('.ds-qty-input').value;
+            let price = tr.querySelector('.ds-price-input').value;
+            if(prodName) rows.push({prodName, role: isBonus ? 'bonus' : 'paid', qty, price});
+        });
+        
+        return { savedId, name: sName, isBlended, rows };
+    }
+
+    // --- Scenario Templates ---
+    async function dsSaveScenarioTemplate(sId) {
+        let data = dsExtractScenarioData(sId);
+        if(!data.rows.length) return await dsAlert('Empty Scenario', 'Cannot save an empty scenario. Please add products first.', 'warning');
+        
+        let btn = event.currentTarget;
+        let icon = btn.querySelector('i');
+        let originalClass = icon.className;
+        
+        // Transform the icon into a loading spinner
+        icon.className = 'fas fa-spinner fa-spin text-lg text-indigo-500';
+        btn.disabled = true;
+
+        google.script.run.withSuccessHandler(async function(saves) {
+            // 1. Check for ID Match (Is this an already loaded template?)
+            let existingById = saves.find(s => s.savedId === data.savedId);
+
+            if (existingById) {
+                let doOverwrite = await dsConfirm(
+                    'Template Already Exists', 
+                    'This scenario is linked to a previously saved template.\n\nDo you want to Overwrite the existing file, or Save as a new Copy?', 
+                    'Overwrite', 
+                    'Save as Copy', 
+                    true
+                );
+
+                if(!doOverwrite) {
+                    // User chose "Save as Copy", so we break the link to the original
+                    data.savedId = 'tmpl_' + Date.now();
+                }
+            } else if (!data.savedId || !data.savedId.startsWith('tmpl_')) {
+                // Ensure brand new scenarios get a proper ID
+                data.savedId = 'tmpl_' + Date.now();
+            }
+
+            // 2. Name Collision Check
+            // Find if ANY other template in the database shares this exact name
+            let nameConflict = saves.find(s => s.name.trim().toLowerCase() === data.name.trim().toLowerCase() && s.savedId !== data.savedId);
+
+            if (nameConflict) {
+                let resolveAction = await dsConfirm(
+                    'Name Conflict', 
+                    `A template named "${data.name}" already exists.\n\nDo you want to Rename this template, or Save Anyway (we will automatically append a timestamp)?`, 
+                    'Rename Scenario', 
+                    'Save Anyway', 
+                    false
+                );
+
+                if (resolveAction) { // User chose Rename
+                    let newName = await dsPrompt("Rename Scenario", "Enter a unique name for this template:", data.name);
+                    if (!newName) { // User canceled the prompt, abort the entire save
+                        icon.className = originalClass;
+                        btn.disabled = false;
+                        return;
+                    }
+                    data.name = newName;
+                } else { // User chose Save Anyway
+                    // Append a clean timestamp identifier
+                    data.name = data.name + '_' + new Date().getTime().toString().slice(-6);
+                }
+
+                // Update the UI Input instantly to reflect the new resolved name
+                let nameInput = document.getElementById(`scenario_${sId}`).querySelector('.scenario-name-input');
+                if (nameInput) nameInput.value = data.name;
+            }
+            
+            // Sync the resolved ID back to the HTML container
+            document.getElementById(`scenario_${sId}`).setAttribute('data-saved-id', data.savedId);
+            
+            // 3. Push to Backend
+            google.script.run.withSuccessHandler(async function() {
+                // Revert button styling and show success
+                icon.className = originalClass;
+                btn.disabled = false;
+                await dsAlert('Saved Successfully', 'The Scenario Template has been saved to the database.', 'success');
+            }).saveDsTemplate(data);
+            
+        }).getDsTemplates();
+    }
+
+    async function dsLoadScenarioTemplate() {
+        let btn = event.currentTarget;
+        let originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Fetching...';
+        btn.disabled = true;
+
+        google.script.run.withSuccessHandler(async function(saves) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            if(!saves.length) return await dsAlert('No Templates', 'No saved scenario templates were found in the database.', 'warning');
+            
+            // Map database results into format required by the chip engine
+            let chipItems = saves.map((s, index) => ({
+                id: index,
+                label: s.name,
+                subtext: new Date(s.lastUpdated).toLocaleDateString()
+            }));
+            
+            // Trigger Multi-Select Modal
+            let selectedIndexes = await dsChipSelect('Import Templates', 'Select one or more scenario templates to import into your active workspace:', chipItems, true, 'Import Selected');
+            
+            if(selectedIndexes && selectedIndexes.length > 0) {
+                selectedIndexes.forEach(index => {
+                    if(saves[index]) addNewScenario(saves[index].data);
+                });
+            }
+        }).getDsTemplates();
+    }
+
+    // --- Workspaces ---
+    async function dsSaveWorkspace() {
+        let scenarios = document.querySelectorAll('.scenario-container');
+        if(!scenarios.length) return await dsAlert('Empty Board', 'There are no active scenarios on the board to save.', 'warning');
+        
+        let container = document.getElementById('scenariosContainer');
+        let workspaceId = container.getAttribute('data-workspace-id') || ('ws_' + Date.now());
+        let defaultName = container.getAttribute('data-workspace-name') || ('Deal Session ' + new Date().toLocaleDateString());
+        
+        let btn = event.currentTarget;
+        let originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+        btn.disabled = true;
+
+        google.script.run.withSuccessHandler(async function(saves) {
+            let existingIndex = saves.findIndex(w => w.id === workspaceId);
+            
+            let wsName = await dsPrompt("Save Workspace", "Enter a name for this Workspace Session:", defaultName);
+            
+            if(!wsName) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            let wsData = { id: workspaceId, name: wsName, scenarios: [] };
+            scenarios.forEach(scen => {
+                let sId = scen.id.replace('scenario_', '');
+                wsData.scenarios.push(dsExtractScenarioData(sId));
+            });
+
+            if(existingIndex >= 0 && saves[existingIndex].name !== wsName) {
+                let isNewCopy = await dsConfirm('Name Changed', 'You changed the workspace name.\n\nDo you want to save this as a brand new workspace, or overwrite the existing file?', 'Save As New', 'Overwrite Existing');
+                if(isNewCopy) {
+                    wsData.id = 'ws_' + Date.now();
+                }
+            }
+            
+            // Push to Backend
+            google.script.run.withSuccessHandler(async function() {
+                container.setAttribute('data-workspace-id', wsData.id);
+                container.setAttribute('data-workspace-name', wsData.name);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                await dsAlert('Saved Successfully', 'The full Workspace has been securely saved to the database.', 'success');
+            }).saveDsWorkspace(wsData);
+
+        }).getDsWorkspaces();
+    }
+
+    async function dsLoadWorkspace() {
+        let btn = event.currentTarget;
+        let originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Fetching...';
+        btn.disabled = true;
+
+        google.script.run.withSuccessHandler(async function(saves) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            if(!saves.length) return await dsAlert('No Workspaces', 'No saved workspaces were found in the database.', 'warning');
+            
+            let chipItems = saves.map((w, index) => ({
+                id: index,
+                label: w.name,
+                subtext: new Date(w.lastUpdated).toLocaleDateString()
+            }));
+            
+            // Trigger Single-Select Modal
+            let selectedIndexes = await dsChipSelect('Load Workspace', 'Select a Workspace Session to load.\nWARNING: This will replace your entire current board.', chipItems, false, 'Load Workspace');
+            
+            if(selectedIndexes && selectedIndexes.length > 0) {
+                let index = selectedIndexes[0];
+                if(saves[index]) {
+                    let ws = saves[index].data; 
+                    let container = document.getElementById('scenariosContainer');
+                    container.innerHTML = '';
+                    container.setAttribute('data-workspace-id', ws.id);
+                    container.setAttribute('data-workspace-name', ws.name);
+                    scenarioCounter = 0;
+                    
+                    ws.scenarios.forEach(scenData => {
+                        addNewScenario(scenData);
+                    });
+                    if(ws.scenarios.length === 0) calculateBonusScheme(); 
+                }
+            }
+        }).getDsWorkspaces();
     }
     </script>
 </body>

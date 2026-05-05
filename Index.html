@@ -13,6 +13,8 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Drag and Drop Library -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <link
@@ -191,6 +193,33 @@
       padding-left: 1rem !important;
       border-left: 3px solid #cbd5e1 !important;
       color: #64748b;
+    }
+
+    /* Modern Circular Color Picker Styling */
+    .scenario-color-picker {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-color: transparent;
+      border: none;
+      padding: 0;
+    }
+    
+    /* Chrome, Safari, Edge */
+    .scenario-color-picker::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    .scenario-color-picker::-webkit-color-swatch {
+      border-radius: 50%; /* Change to 8px if you prefer rounded squares instead of circles */
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Firefox */
+    .scenario-color-picker::-moz-color-swatch {
+      border-radius: 50%; /* Change to 8px if you prefer rounded squares instead of circles */
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800&display=swap" rel="stylesheet">
@@ -4954,14 +4983,20 @@
         let isBlended = initialData ? initialData.isBlended : true;
         let savedId = initialData ? initialData.savedId : '';
         let blendedCheck = isBlended ? 'checked' : '';
+        
+        // Color Generator (Cycles through distinct professional colors)
+        const defaultColors = ['#4f46e5', '#059669', '#ea580c', '#db2777', '#2563eb', '#8b5cf6', '#14b8a6'];
+        let sColor = (initialData && initialData.color) ? initialData.color : defaultColors[(sId - 1) % defaultColors.length];
 
         let html = `
-        <div class="scenario-container bg-white border border-slate-200 rounded-xl shadow-sm transition-all group" id="scenario_${sId}" data-saved-id="${savedId}">
+        <div class="scenario-container bg-white border-t-4 border-slate-200 rounded-xl shadow-sm transition-all group" id="scenario_${sId}" data-saved-id="${savedId}" style="border-top-color: ${sColor};">
             <!-- Header (Accordion Toggle & Name) -->
-            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleScenario('${sId}')">
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-lg cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleScenario('${sId}')">
                 <div class="flex items-center space-x-3 rtl:space-x-reverse" onclick="event.stopPropagation()">
+                    <i class="fas fa-grip-vertical text-slate-300 hover:text-indigo-500 cursor-grab px-2 ds-drag-handle transition-colors" title="Drag to reorder scenario"></i>
                     <i class="fas fa-chevron-down text-slate-400 transition-transform duration-300 scenario-chevron" id="scenario_chevron_${sId}" onclick="toggleScenario('${sId}')"></i>
-                    <input type="text" value="${sName}" class="scenario-name-input font-black text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5 text-sm w-48 transition-colors" oninput="calculateBonusScheme()">
+                    <input type="color" value="${sColor}" class="scenario-color-picker w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent shadow-sm" onchange="this.closest('.scenario-container').style.borderTopColor = this.value; this.nextElementSibling.style.color = this.value; calculateBonusScheme();" title="Choose Scenario Color">
+                    <input type="text" value="${sName}" class="scenario-name-input font-black bg-transparent border-b border-transparent hover:border-slate-300 outline-none px-1 py-0.5 text-sm w-48 transition-colors" style="color: ${sColor};" oninput="calculateBonusScheme()">
                 </div>
                 <div class="flex items-center space-x-4 rtl:space-x-reverse" onclick="event.stopPropagation()">
                     <label class="flex items-center cursor-pointer" title="Toggle Blended Discount">
@@ -5145,6 +5180,7 @@
         // Iterate through all scenarios and generate their comparison row
         scenarios.forEach(scenario => {
             let sName = scenario.querySelector('.scenario-name-input').value || "Unnamed Scenario";
+            let sColor = scenario.querySelector('.scenario-color-picker')?.value || '#4f46e5';
             let isBlended = scenario.querySelector('.scenario-blended-toggle').checked;
             let rows = scenario.querySelectorAll('tbody tr');
             
@@ -5239,7 +5275,7 @@
 
             // Generate Output Row for the Comparison Matrix
             matrixHtml += `
-                <div class="grid grid-cols-1 md:grid-cols-[40px_minmax(0,3fr)_minmax(0,2fr)_auto] gap-3 mb-3 relative hover:shadow-md transition-shadow rounded-xl p-1 bg-slate-50 border border-slate-100 ds-matrix-row">
+                <div class="grid grid-cols-1 md:grid-cols-[40px_minmax(0,3fr)_minmax(0,2fr)_auto] gap-3 mb-3 relative hover:shadow-md transition-shadow rounded-xl p-1 bg-slate-50 border-l-4 border-y border-r border-slate-100 ds-matrix-row" style="border-left-color: ${sColor};">
                    
                    <!-- Vertical Chip -->
                    <div class="hidden md:flex items-center justify-center bg-slate-800 text-white rounded-l-xl rounded-r-md shadow-sm relative overflow-hidden">
@@ -5453,6 +5489,7 @@
         // Process Each Scenario
         scenarios.forEach(scenario => {
             let sName = scenario.querySelector('.scenario-name-input').value || "Unnamed Scenario";
+            let sColor = scenario.querySelector('.scenario-color-picker')?.value || '#0f172a';
             let isBlended = scenario.querySelector('.scenario-blended-toggle').checked;
             let rows = scenario.querySelectorAll('tbody tr');
             
@@ -5483,9 +5520,9 @@
 
             let blendedDiscPct = totalBasketValue > 0 ? (totalBonusValue / totalBasketValue) : 0;
             
-            // Section Header
-            html += `<div style="margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
-                        <h3 style="margin: 0 0 15px 0; color: #334155; font-size: 18px;">${sName}</h3>`;
+            // Section Header (Colored)
+            html += `<div style="margin-top: 30px; border-top: 3px solid ${sColor}; padding-top: 20px;">
+                        <h3 style="margin: 0 0 15px 0; color: ${sColor}; font-size: 18px; font-weight: 900;">${sName}</h3>`;
 
             // Vanilla Table for Basket Details
             html += `<table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px;">
@@ -5772,6 +5809,7 @@
         let scenario = document.getElementById(`scenario_${sId}`);
         if(!scenario) return null;
         let sName = scenario.querySelector('.scenario-name-input').value;
+        let sColor = scenario.querySelector('.scenario-color-picker').value;
         let isBlended = scenario.querySelector('.scenario-blended-toggle').checked;
         let savedId = scenario.getAttribute('data-saved-id') || ('tmpl_' + Date.now() + Math.floor(Math.random()*1000));
         
@@ -5784,7 +5822,7 @@
             if(prodName) rows.push({prodName, role: isBonus ? 'bonus' : 'paid', qty, price});
         });
         
-        return { savedId, name: sName, isBlended, rows };
+        return { savedId, name: sName, color: sColor, isBlended, rows };
     }
 
     // --- Scenario Templates ---
@@ -5986,6 +6024,23 @@
             }
         }).getDsWorkspaces();
     }
+
+    // --- DRAG AND DROP REORDERING ENGINE ---
+    window.addEventListener('DOMContentLoaded', () => {
+        let scContainer = document.getElementById('scenariosContainer');
+        if (scContainer && typeof Sortable !== 'undefined') {
+            Sortable.create(scContainer, {
+                handle: '.ds-drag-handle', // Only allow dragging from the grip icon
+                animation: 200,            // Smooth sliding animation in ms
+                ghostClass: 'opacity-40',  // Dim the item being dragged
+                easing: "cubic-bezier(1, 0, 0, 1)",
+                onEnd: function (evt) {
+                    // Instantly rebuild the comparison matrix in the newly sorted DOM order
+                    calculateBonusScheme(); 
+                }
+            });
+        }
+    });
     </script>
 </body>
 

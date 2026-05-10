@@ -281,14 +281,17 @@
       </div>
       <div
         class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3 rtl:space-x-reverse w-full md:w-auto">
-        <button onclick="openContractAnalyzer()" class="w-full md:w-auto bg-purple-50 text-purple-700 px-5 py-3 rounded-xl font-bold hover:bg-purple-100 border border-purple-200 transition-all flex items-center justify-center shadow-sm" title="AI Contract Analyzer">
+        <button onclick="openContractAnalyzer()" class="w-full md:w-auto bg-purple-50 text-purple-700 px-2 py-2 rounded-xl font-bold hover:bg-purple-100 border border-purple-200 transition-all flex items-center justify-center shadow-sm" title="AI Contract Analyzer">
           <i class="fas fa-file-contract text-purple-500 md:mr-2"></i> <span class="hidden md:inline">Contract Analyzer</span>
         </button>
-        <button onclick="openCommercialDirectory()" class="w-full md:w-auto bg-indigo-50 text-indigo-700 px-5 py-3 rounded-xl font-bold hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center justify-center">
+        <button onclick="openCommercialDirectory()" class="w-full md:w-auto bg-indigo-50 text-indigo-700 px-2 py-2 rounded-xl font-bold hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center justify-center">
           <i class="fas fa-file-signature mr-2 text-indigo-500"></i> Contracts
         </button>
-        <button onclick="openScenarioBuilder()" class="w-full md:w-auto bg-emerald-50 text-emerald-700 px-5 py-3 rounded-xl font-bold hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center justify-center shadow-sm" title="Deal Scenario Builder">
-          <i class="fas fa-flask text-emerald-500 md:mr-2"></i> <span class="hidden md:inline">Scenario Builder</span>
+        <button onclick="openClientPerformance()" class="w-full md:w-auto bg-blue-50 text-blue-700 px-2 py-2 rounded-xl font-bold hover:bg-blue-100 border border-blue-200 transition-all flex items-center justify-center shadow-sm" title="Client Performance Analysis">
+          <i class="fas fa-chart-line text-blue-500 md:mr-2"></i> <span class="hidden md:inline">Performance Analysis</span>
+        </button>
+        <button onclick="openDealVisualizer()" class="w-full md:w-auto bg-emerald-50 text-emerald-700 px-2 py-2 rounded-xl font-bold hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center justify-center shadow-sm" title="Deal Visualizer">
+          <i class="fas fa-flask text-emerald-500 md:mr-2"></i> <span class="hidden md:inline">Deal Visualizer</span>
         </button>
         <button onclick="openEngine('new')" class="w-full md:w-auto bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-blue-100 btn-hover flex items-center justify-center">
           <i class="fas fa-plus mr-2 rtl:ml-2"></i> Create Price List
@@ -646,60 +649,24 @@
     </div>
   </div>
 
-  <div id="scenarioBuilderView" class="hidden max-w-7xl mx-auto space-y-6 pb-20">
-
-    <div
-      class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
+  <!-- CLIENT PERFORMANCE ANALYSIS VIEW -->
+  <div id="clientPerformanceView" class="hidden max-w-7xl mx-auto space-y-6 pb-20">
+    <div class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
-        <button onclick="closeScenarioBuilder()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition shadow-sm">
+        <button onclick="closeViews()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition shadow-sm">
             <i class="fas fa-arrow-left"></i> Back
           </button>
         <div>
           <h1 class="text-2xl font-black tracking-tight text-slate-900">
-            <i class="fas fa-flask text-emerald-500 mr-2"></i>
-            Deal Scenario Simulator</h1>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Test target tiers, rebates, and margins
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div id="sbTotalDashboard"
-      class="sticky top-[110px] z-40 bg-slate-800 text-white rounded-3xl p-5 shadow-xl relative overflow-hidden transition-all border border-slate-700">
-      <div class="absolute right-0 bottom-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none">
-      </div>
-      <div class="flex flex-col md:flex-row md:items-center justify-between relative z-10 gap-4">
-        <div class="flex items-center gap-2">
-          <h4 class="text-sm font-black text-emerald-400 uppercase tracking-widest">
-            <i class="fas fa-chart-line mr-2"></i>
-            Master Results</h4>
-          <div id="sbTierAlert"
-            class="text-[10px] font-bold bg-emerald-500/20 text-emerald-200 px-2 py-1 rounded hidden animate-pulse">
-            <i class="fas fa-unlock-alt mr-1"></i> Tier Unlocked!
-          </div>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 w-full md:w-auto">
-          <div>
-            <span class="block text-[10px] text-slate-400 uppercase">Total Revenue</span><span id="sbTotalRev" class="font-mono text-xl font-bold text-white">0.00</span>
-          </div>
-          <div>
-            <span class="block text-[10px] text-slate-400 uppercase">Total Auto-Cost</span><span id="sbTotalCost" class="font-mono text-xl font-bold text-amber-300">0.00</span>
-          </div>
-          <div>
-            <span class="block text-[10px] text-slate-400 uppercase">Total Deductions</span><span id="sbTotalDeductions" class="font-mono text-xl font-bold text-red-300">0.00</span>
-          </div>
-          <div class="pl-4 border-l border-slate-700">
-            <span class="block text-[10px] text-slate-400 uppercase">Net Margin</span><span id="sbMasterMargin" class="font-black text-2xl text-emerald-400 drop-shadow-md">0.0%</span>
-          </div>
+            <i class="fas fa-chart-line text-blue-500 mr-2"></i>
+            Client Performance Analysis</h1>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Review historical baseline metrics and past behavior</p>
         </div>
       </div>
     </div>
 
     <!-- MACRO SECTION 1: HISTORICAL OVERVIEW -->
     <div class="bg-slate-50 rounded-3xl p-2 sm:p-4 border border-slate-200 shadow-inner mb-8">
-       <h2 class="text-2xl font-black text-slate-800 mb-4 ml-2" style="font-family: 'Tajawal', sans-serif;">
-           <i class="fas fa-history text-blue-500 mr-2"></i> Phase 1: Historical Baseline
-       </h2>
        
     <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card space-y-6">
 
@@ -864,12 +831,26 @@
       </div>
     </div>
     </div> <!-- END OF MACRO SECTION 1 -->
+  </div> <!-- END OF CLIENT PERFORMANCE VIEW -->
+
+  <!-- DEAL VISUALIZER VIEW -->
+  <div id="dealVisualizerView" class="hidden max-w-7xl mx-auto space-y-6 pb-20">
+    <div class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
+      <div class="flex items-center space-x-4 rtl:space-x-reverse">
+        <button onclick="closeViews()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition shadow-sm">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900">
+            <i class="fas fa-flask text-emerald-500 mr-2"></i>
+            Deal Visualizer</h1>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Simulate deal structures, calculate margins, and compare</p>
+        </div>
+      </div>
+    </div>
 
     <!-- MACRO SECTION 2: DEAL SIMULATOR -->
     <div class="bg-blue-50/50 rounded-3xl p-2 sm:p-4 border border-blue-100 shadow-inner mt-8">
-       <h2 class="text-2xl font-black text-blue-900 mb-4 ml-2" style="font-family: 'Tajawal', sans-serif;">
-           <i class="fas fa-rocket text-blue-500 mr-2"></i> Phase 2: Deal Simulator
-       </h2>
        
        <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden p-6 mb-6">
            <!-- Simulator Type Selector -->
@@ -2323,31 +2304,69 @@
         return;
       }
 
+      // 1. Group the filtered documents by Client Name
+      let groupedByClient = {};
       filtered.forEach(doc => {
-        let dateStr = new Date(doc.docDate).toLocaleDateString();
-        let badge = doc.isPromo === 'Yes' 
-          ? `<span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Promo</span>`
-          : `<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Standard</span>`;
-          
-        let pList = doc.items.map(i => i.productAr).join(', ');
-        if(pList.length > 40) pList = pList.substring(0, 40) + '...';
-
-        tbody.innerHTML += `
-          <tr class="hover:bg-blue-50/50 transition border-b border-slate-50 last:border-none">
-            <td class="px-6 py-4 text-xs font-bold text-slate-400">${doc.refNum}</td>
-            <td class="px-6 py-4 font-semibold text-slate-600">${dateStr}</td>
-            <td class="px-6 py-4 text-lg font-black text-blue-900">${doc.client}</td>
-            <td class="px-6 py-4">${badge}<br><span class="text-xs text-slate-400 mt-1 block">${doc.items.length} Items: ${pList}</span></td>
-            <td class="px-6 py-4 text-center space-x-2 rtl:space-x-reverse whitespace-nowrap">
-              <button onclick="exportToExcel('${doc.refNum}')" class="text-green-600 hover:text-green-800 bg-green-50 p-2 rounded-lg transition-colors" title="Export Excel"><i class="fas fa-file-excel"></i></button>
-              <button onclick="openEngine('view', '${doc.refNum}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg" title="Print Preview"><i class="fas fa-print"></i></button>
-              <button onclick="openEngine('edit', '${doc.refNum}')" class="text-amber-600 hover:text-amber-900 bg-amber-50 p-2 rounded-lg" title="Edit & Update"><i class="fas fa-edit"></i></button>
-              <button onclick="openEngine('copy', '${doc.refNum}')" class="text-emerald-600 hover:text-emerald-900 bg-emerald-50 p-2 rounded-lg" title="Duplicate"><i class="fas fa-copy"></i></button>
-              <button onclick="viewHistory('${doc.refNum}')" class="text-slate-500 hover:text-slate-800 bg-slate-100 p-2 rounded-lg" title="Audit Trail"><i class="fas fa-history"></i></button>
-            </td>
-          </tr>
-        `;
+          if (!groupedByClient[doc.client]) {
+              groupedByClient[doc.client] = [];
+          }
+          groupedByClient[doc.client].push(doc);
       });
+
+      // 2. Sort the Client Names alphabetically
+      let sortedClients = Object.keys(groupedByClient).sort((a, b) => a.localeCompare(b));
+
+      let finalHtml = '';
+
+      // 3. Iterate through each sorted client group
+      sortedClients.forEach(client => {
+          let clientDocs = groupedByClient[client];
+          
+          // Sort documents within the client group by Date (Newest First)
+          clientDocs.sort((a, b) => new Date(b.docDate) - new Date(a.docDate));
+
+          // Inject the Group Header Row
+          finalHtml += `
+            <tr class="bg-indigo-50/60 border-y-2 border-indigo-100">
+                <td colspan="5" class="px-6 py-2.5">
+                    <div class="flex items-center">
+                        <i class="fas fa-building text-indigo-500 mr-2 rtl:ml-2"></i>
+                        <span class="text-sm font-black text-indigo-900 tracking-wide">${client}</span>
+                        <span class="ml-3 rtl:mr-3 bg-white text-indigo-600 text-[10px] px-2 py-0.5 rounded-full border border-indigo-200 font-bold shadow-sm">${clientDocs.length} Docs</span>
+                    </div>
+                </td>
+            </tr>
+          `;
+
+          // Inject the Individual Document Rows
+          clientDocs.forEach(doc => {
+            let dateStr = new Date(doc.docDate).toLocaleDateString();
+            let badge = doc.isPromo === 'Yes' 
+              ? `<span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Promo</span>`
+              : `<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Standard</span>`;
+              
+            let pList = doc.items.map(i => i.productAr).join(', ');
+            if(pList.length > 40) pList = pList.substring(0, 40) + '...';
+
+            finalHtml += `
+              <tr class="hover:bg-blue-50/50 transition border-b border-slate-50 last:border-none">
+                <td class="px-6 py-4 text-xs font-bold text-slate-500"><div class="border-l-4 border-indigo-200 rtl:border-l-0 rtl:border-r-4 pl-3 rtl:pr-3">${doc.refNum}</div></td>
+                <td class="px-6 py-4 font-semibold text-slate-600">${dateStr}</td>
+                <td class="px-6 py-4 text-xs font-bold text-slate-400 opacity-60">${doc.client}</td>
+                <td class="px-6 py-4">${badge}<br><span class="text-xs text-slate-400 mt-1 block">${doc.items.length} Items: ${pList}</span></td>
+                <td class="px-6 py-4 text-center space-x-2 rtl:space-x-reverse whitespace-nowrap">
+                  <button onclick="exportToExcel('${doc.refNum}')" class="text-green-600 hover:text-green-800 bg-green-50 p-2 rounded-lg transition-colors" title="Export Excel"><i class="fas fa-file-excel"></i></button>
+                  <button onclick="openEngine('view', '${doc.refNum}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg" title="Print Preview"><i class="fas fa-print"></i></button>
+                  <button onclick="openEngine('edit', '${doc.refNum}')" class="text-amber-600 hover:text-amber-900 bg-amber-50 p-2 rounded-lg" title="Edit & Update"><i class="fas fa-edit"></i></button>
+                  <button onclick="openEngine('copy', '${doc.refNum}')" class="text-emerald-600 hover:text-emerald-900 bg-emerald-50 p-2 rounded-lg" title="Duplicate"><i class="fas fa-copy"></i></button>
+                  <button onclick="viewHistory('${doc.refNum}')" class="text-slate-500 hover:text-slate-800 bg-slate-100 p-2 rounded-lg" title="Audit Trail"><i class="fas fa-history"></i></button>
+                </td>
+              </tr>
+            `;
+          });
+      });
+
+      tbody.innerHTML = finalHtml;
     }
 
     function openEngine(mode, refNum = null) {
@@ -2594,13 +2613,10 @@
       document.getElementById('engineView').classList.add('hidden');
     }
 
-    // --- SCENARIO BUILDER NAVIGATION ---
-    function openScenarioBuilder() {
-      document.getElementById('dashboardView').classList.add('hidden');
-      document.getElementById('engineView').classList.add('hidden');
-      document.getElementById('scenarioBuilderView').classList.remove('hidden');
-      
-      document.getElementById('sbTotalDashboard').style.display = 'block'; 
+    // --- ANALYSIS & VISUALIZER NAVIGATION ---
+    function openClientPerformance() {
+      hideAllMainViews();
+      document.getElementById('clientPerformanceView').classList.remove('hidden');
       window.scrollTo({top: 0, behavior: 'smooth'});
       
       // Populate Combo Box natively by cloning the full list from the Engine
@@ -2609,23 +2625,33 @@
           let mainList = document.getElementById('clientList');
           if (mainList) {
               let html = mainList.innerHTML;
-              // Redirect the native combobox IDs to the Scenario Builder elements
               html = html.replace(/'clientSelect', 'clientSearch', 'clientList'/g, "'sbClientSelect', 'sbClientSearch', 'sbClientList'");
-              // Redirect the callback trigger
               html = html.replace(/setTimeout\(checkCommercialInsights, 100\);/g, "setTimeout(handleSbClientSelection, 100);");
               sbList.innerHTML = html;
           }
       }
+    }
+
+    function openDealVisualizer() {
+      hideAllMainViews();
+      document.getElementById('dealVisualizerView').classList.remove('hidden');
+      window.scrollTo({top: 0, behavior: 'smooth'});
       
       if (document.getElementById('sbProductTableBody').children.length === 0) {
           sbAddProductRow();
       }
-      
       runScenarioSimulation();
     }
 
-    function closeScenarioBuilder() {
-      document.getElementById('scenarioBuilderView').classList.add('hidden');
+    function hideAllMainViews() {
+      document.getElementById('dashboardView').classList.add('hidden');
+      document.getElementById('engineView').classList.add('hidden');
+      if(document.getElementById('clientPerformanceView')) document.getElementById('clientPerformanceView').classList.add('hidden');
+      if(document.getElementById('dealVisualizerView')) document.getElementById('dealVisualizerView').classList.add('hidden');
+    }
+
+    function closeViews() {
+      hideAllMainViews();
       document.getElementById('dashboardView').classList.remove('hidden');
       window.scrollTo(0, 0);
     }
@@ -4164,7 +4190,6 @@
         dashMarginEl.innerText = masterMargin.toFixed(1) + '%';
         dashMarginEl.className = masterProfit >= 0 ? "font-black text-2xl text-emerald-400 drop-shadow-md" : "font-black text-2xl text-red-400 drop-shadow-md";
 
-        document.getElementById('sbTotalDashboard').classList.remove('hidden');
     }
 
     // --- CONTRACT MANAGER LOGIC ---

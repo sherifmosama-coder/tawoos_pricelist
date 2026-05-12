@@ -5085,10 +5085,27 @@
         
         let optionsHtml = '<option value="">-- Select Product --</option>';
         if (typeof globalProducts !== 'undefined') {
-            globalProducts.forEach(p => {
-                let isSelected = p.arabicName === initProd ? 'selected' : '';
-                optionsHtml += `<option value="${p.arabicName}" ${isSelected}>${p.arabicName}</option>`;
-            });
+            let officialProds = globalProducts.filter(p => !p.isCustom);
+            let customProds = globalProducts.filter(p => p.isCustom);
+
+            if (officialProds.length > 0) {
+                optionsHtml += '<optgroup label="Official Catalog">';
+                officialProds.forEach(p => {
+                    let isSelected = p.arabicName === initProd ? 'selected' : '';
+                    optionsHtml += `<option value="${p.arabicName}" ${isSelected}>${p.arabicName}</option>`;
+                });
+                optionsHtml += '</optgroup>';
+            }
+
+            if (customProds.length > 0) {
+                optionsHtml += '<optgroup label="Manually Added Products">';
+                customProds.forEach(p => {
+                    let isSelected = p.arabicName === initProd ? 'selected' : '';
+                    // Display [Custom] in the UI, but keep the raw value clean for the database
+                    optionsHtml += `<option value="${p.arabicName}" ${isSelected}>[Custom] ${p.arabicName}</option>`;
+                });
+                optionsHtml += '</optgroup>';
+            }
         }
 
         let tr = document.createElement('tr');

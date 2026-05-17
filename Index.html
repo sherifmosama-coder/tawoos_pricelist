@@ -204,20 +204,23 @@
       border: none;
       padding: 0;
     }
-    
+
     /* Chrome, Safari, Edge */
     .scenario-color-picker::-webkit-color-swatch-wrapper {
       padding: 0;
     }
+
     .scenario-color-picker::-webkit-color-swatch {
-      border-radius: 50%; /* Change to 8px if you prefer rounded squares instead of circles */
+      border-radius: 50%;
+      /* Change to 8px if you prefer rounded squares instead of circles */
       border: 2px solid #ffffff;
       box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
     }
-    
+
     /* Firefox */
     .scenario-color-picker::-moz-color-swatch {
-      border-radius: 50%; /* Change to 8px if you prefer rounded squares instead of circles */
+      border-radius: 50%;
+      /* Change to 8px if you prefer rounded squares instead of circles */
       border: 2px solid #ffffff;
       box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
     }
@@ -286,9 +289,6 @@
         </button>
         <button onclick="openCommercialDirectory()" class="w-full md:w-auto bg-indigo-50 text-indigo-700 px-2 py-2 rounded-xl font-bold hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center justify-center">
           <i class="fas fa-file-signature mr-2 text-indigo-500"></i> Contracts
-        </button>
-        <button onclick="openClientPerformance()" class="w-full md:w-auto bg-blue-50 text-blue-700 px-2 py-2 rounded-xl font-bold hover:bg-blue-100 border border-blue-200 transition-all flex items-center justify-center shadow-sm" title="Client Performance Analysis">
-          <i class="fas fa-chart-line text-blue-500 md:mr-2"></i> <span class="hidden md:inline">Performance Analysis</span>
         </button>
         <button onclick="openDealVisualizer()" class="w-full md:w-auto bg-emerald-50 text-emerald-700 px-2 py-2 rounded-xl font-bold hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center justify-center shadow-sm" title="Deal Visualizer">
           <i class="fas fa-flask text-emerald-500 md:mr-2"></i> <span class="hidden md:inline">Deal Visualizer</span>
@@ -649,193 +649,10 @@
     </div>
   </div>
 
-  <!-- CLIENT PERFORMANCE ANALYSIS VIEW -->
-  <div id="clientPerformanceView" class="hidden max-w-7xl mx-auto space-y-6 pb-20">
-    <div class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
-      <div class="flex items-center space-x-4 rtl:space-x-reverse">
-        <button onclick="closeViews()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition shadow-sm">
-            <i class="fas fa-arrow-left"></i> Back
-          </button>
-        <div>
-          <h1 class="text-2xl font-black tracking-tight text-slate-900">
-            <i class="fas fa-chart-line text-blue-500 mr-2"></i>
-            Client Performance Analysis</h1>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Review historical baseline metrics and past behavior</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- MACRO SECTION 1: HISTORICAL OVERVIEW -->
-    <div class="bg-slate-50 rounded-3xl p-2 sm:p-4 border border-slate-200 shadow-inner mb-8">
-       
-    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card space-y-6">
-
-      <div class="flex flex-col md:flex-row gap-6 items-start relative z-20">
-           
-           <div class="w-full md:w-1/2 grid grid-cols-1 sm:grid-cols-4 gap-3">
-              
-              <div class="sm:col-span-2">
-                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2"><i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client</h3>
-                 <div class="relative w-full">
-                    <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-xl text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" style="font-family: 'Tajawal', sans-serif;" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
-                    <input type="hidden" id="sbClientSelect" value="">
-                    <ul id="sbClientList" class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl"></ul>
-                 </div>
-              </div>
-
-              <div class="sm:col-span-1">
-                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">Type</h3>
-                 <select id="sbContractType" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-900/20 focus:border-indigo-600 font-bold text-sm text-indigo-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
-                     <option value="Both">Both</option>
-                     <option value="Standard">Standard</option>
-                     <option value="Private Label">P. Label</option>
-                 </select>
-              </div>
-
-              <div class="sm:col-span-1">
-                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">Scope</h3>
-                 <select id="sbTimeScope" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-900/20 focus:border-emerald-600 font-bold text-sm text-emerald-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
-                     <option value="L12M">Past 12M</option>
-                     <option value="2026" selected>2026 YTD</option>
-                     <option value="2025">2025</option>
-                     <option value="2024">2024</option>
-                     <option value="2023">2023</option>
-                     <option value="2022">2022</option>
-                     <option value="2021">2021</option>
-                     <option value="CUSTOM">Custom Range</option>
-                 </select>
-              </div>
-
-              <div id="sbCustomDateBox" class="hidden sm:col-span-4 grid grid-cols-2 gap-3 mt-1 animate-in fade-in duration-300 border-t border-slate-100 pt-3">
-                  <div>
-                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 block">Start Date</label>
-                      <input type="date" id="sbCustomStart" class="w-full p-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-bold text-sm text-slate-700" onchange="handleSbClientSelection()">
-                  </div>
-                  <div>
-                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 block">End Date</label>
-                      <input type="date" id="sbCustomEnd" class="w-full p-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-bold text-sm text-slate-700" onchange="handleSbClientSelection()">
-                  </div>
-              </div>
-           </div>
-           
-           <div id="sbClientRefBox" class="w-full md:w-1/2 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 hidden opacity-0 transition-opacity duration-300">
-          <div class="flex justify-between items-center mb-2">
-            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-              <i class="fas fa-history mr-1"></i>
-              Historical Data & Terms</h4>
-            <span id="sbInsightBadge" class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase shadow-sm border border-indigo-200">FY 2025</span>
-          </div>
-
-          <div id="sbClientChips" class="flex flex-wrap gap-2 mb-4">
-          </div>
-
-          <div id="sbClientInsights" class="space-y-4 pt-3 border-t border-slate-100">
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Sales Qty</span><span id="sbHistQty" class="font-mono text-sm font-bold text-slate-700">0</span></div>
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Revenue (before rebates)</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span></div>
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">COGS</span><span id="sbHistCogs" class="font-mono text-sm font-bold text-red-500">0</span></div>
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Profit</span><span id="sbHistProfit" class="font-mono text-sm font-bold text-emerald-600">0</span></div>
-                    <div><span class="block text-[8px] text-slate-400 uppercase font-black">Gross Margin</span><span id="sbHistMargin" class="font-black text-sm text-emerald-500">0.0%</span></div>
-                 </div>
-                 <div id="sbHistNetRow" class="grid grid-cols-2 sm:grid-cols-5 gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-inner relative">
-                    <div class="flex items-center gap-2 col-span-2 sm:col-span-1">
-                       <span class="text-[8px] font-black text-emerald-700 uppercase leading-tight"><i class="fas fa-check-double mr-1"></i> Net-Net<br>Benchmark</span>
-                <button onclick="toggleSbLogicTooltip(event)" class="text-emerald-400 hover:text-emerald-600 transition-colors">
-                            <i class="fas fa-info-circle text-[10px]"></i>
-                         </button>
-              </div>
-
-              <div id="sbLogicTooltip"
-                class="hidden absolute left-0 top-full mt-2 z-[100] w-72 bg-slate-800 text-white p-5 rounded-2xl shadow-2xl border border-slate-700 text-[10px] leading-relaxed animate-in fade-in zoom-in duration-200">
-                <div class="space-y-4">
-                  <p class="font-black text-emerald-400 border-b border-slate-700 pb-2 uppercase tracking-widest">
-                    Step-by-Step Logic</p>
-
-                  <div class="space-y-1">
-                    <span class="font-bold text-white block">1. Net Revenue</span>
-                    <div
-                      class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
-                      <span id="tipGrossRev">0</span> (Gross) <br>
-                                  - <span id="tipRebateAmt">0</span> (<span id="tipRebatePct">0</span>% Rebate) <br>
-                                  = <span class="text-blue-400 font-bold" id="tipNetRev">0</span>
-                    </div>
-                  </div>
-
-                  <div class="space-y-1">
-                    <span class="font-bold text-white block">2. Proportional Fixed Fees</span>
-                    <div
-                      class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
-                      (<span id="tipAnnualFixed">0</span> / 365) × <span id="tipDays">0</span> Days <br>
-                                  = <span class="text-amber-400 font-bold" id="tipPropFixed">0</span>
-                    </div>
-                  </div>
-
-                  <div class="space-y-1">
-                    <span class="font-bold text-white block">3. Net-Net Profit</span>
-                    <div
-                      class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
-                      <span id="tipNetRevFinal">0</span> (Net Rev) <br>
-                                  - <span id="tipProdCost">0</span> (Prod. Cost) <br>
-                                  - <span id="tipPropFixedFinal">0</span> (Fees) <br>
-                                  = <span class="text-emerald-400 font-bold" id="tipNetProfit">0</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="mt-4 pt-2 border-t border-slate-700 text-[8px] text-slate-500 italic text-center">Historical
-                  data comparison baseline.</div>
-              </div>
-              <div>
-                <span class="block text-[8px] text-emerald-600 uppercase font-black">Net Revenue</span><span id="sbHistNetRev" class="font-mono text-sm font-bold text-blue-800">0</span>
-              </div>
-              <div>
-                <span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Profit</span><span id="sbHistNetProfit" class="font-mono text-sm font-bold text-emerald-800">0</span>
-              </div>
-              <div>
-                <span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Margin</span><span id="sbHistNetMargin" class="font-black text-sm text-emerald-700">0.0%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
-    </div>
-
-    <div id="sbProductMetricsCard" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
-       <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider"><i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance</h3>
-          <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Filtered by Type & Scope</span>
-       </div>
-       <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse min-w-[800px]">
-              <thead>
-                <tr class="border-b border-slate-100">
-                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase">Product Name</th>
-                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Qty</th>
-                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Base Price</th>
-                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Unit Cost</th>
-                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Inv. Disc %</th>
-                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Gross Rev.</th>
-                    <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">COGS</th>
-                    <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Rebate">Rebates</th>
-                    <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600" title="Distributed Fixed Fees">Fees</th>
-                    <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Profit</th>
-                    <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Net-Net Margin</th>
-                </tr>
-          </thead>
-          <tbody id="sbProductMetricsBody" class="text-xs font-bold text-slate-600">
-          </tbody>
-          <tfoot id="sbProductMetricsFooter"
-            class="bg-slate-50 border-t-2 border-slate-200 text-xs font-black text-slate-700">
-          </tfoot>
-        </table>
-      </div>
-    </div>
-    </div> <!-- END OF MACRO SECTION 1 -->
-  </div> <!-- END OF CLIENT PERFORMANCE VIEW -->
-
   <!-- DEAL VISUALIZER VIEW -->
   <div id="dealVisualizerView" class="hidden max-w-7xl mx-auto space-y-6 pb-20">
-    <div class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
+    <div
+      class="sticky top-4 z-50 flex flex-col md:flex-row md:items-center justify-between bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-md border border-slate-200 transition-all mt-6">
       <div class="flex items-center space-x-4 rtl:space-x-reverse">
         <button onclick="closeViews()" class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl hover:bg-slate-200 transition shadow-sm">
             <i class="fas fa-arrow-left"></i> Back
@@ -843,202 +660,426 @@
         <div>
           <h1 class="text-2xl font-black tracking-tight text-slate-900">
             <i class="fas fa-flask text-emerald-500 mr-2"></i>
-            Deal Visualizer</h1>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Simulate deal structures, calculate margins, and compare</p>
+            Deal Visualizer
+          </h1>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Simulate deal structures, calculate
+            margins, and compare</p>
         </div>
       </div>
     </div>
 
     <!-- MACRO SECTION 2: DEAL SIMULATOR -->
     <div class="bg-blue-50/50 rounded-3xl p-2 sm:p-4 border border-blue-100 shadow-inner mt-8">
-       
-       <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden p-6 mb-6">
-           <!-- Simulator Type Selector -->
-                        <div class="mb-6 flex gap-4 border-b border-slate-100 pb-4">
-                            <button id="tabBonusScheme" onclick="switchSimulatorMode('bonus')" class="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-xl hover:bg-slate-200 transition-all">Bonus Scheme (Free Goods)</button>
-                            <button id="tabContractMode" onclick="switchSimulatorMode('contract')" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-sm transition-all">Contract-Based (Tiers)</button>
-                        </div>
 
-          <!-- BONUS SCHEME ENGINE (PHASE 1) -->
-          <div id="bonusSchemeEngine" class="hidden space-y-4">
-          
-            <!-- Workspace Management Toolbar -->
-                               <div class="flex flex-col md:flex-row justify-between items-center mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200 shadow-sm gap-3">
-                                   <div class="flex space-x-2 rtl:space-x-reverse w-full md:w-auto">
-                                       <button onclick="dsSaveWorkspace()" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-cloud-upload-alt mr-2"></i> Save Workspace</button>
-                                       <button onclick="dsLoadWorkspace()" class="flex-1 md:flex-none bg-white hover:bg-slate-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-folder-open mr-2"></i> Load Workspace</button>
-                                   </div>
-                                   <button onclick="dsLoadScenarioTemplate()" class="w-full md:w-auto bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-download mr-2"></i> Import Scenario Template</button>
-                               </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden p-6 mb-6">
+        <!-- Simulator Type Selector -->
+        <div class="mb-6 flex gap-4 border-b border-slate-100 pb-4">
+          <button id="tabBonusScheme" onclick="switchSimulatorMode('bonus')" class="px-6 py-2 bg-slate-100 text-slate-500 font-bold rounded-xl hover:bg-slate-200 transition-all">Bonus Scheme (Free Goods)</button>
+          <button id="tabContractMode" onclick="switchSimulatorMode('contract')" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-sm transition-all">Contract-Based (Tiers)</button>
+        </div>
 
-                               <!-- Dynamic Scenarios Accordions Container -->
-                               <div id="scenariosContainer" class="space-y-4 mb-4"></div>
-                               
-                               <!-- Add Scenario Button -->
-                               <button onclick="addNewScenario()" class="w-full py-3 border-2 border-dashed border-slate-300 text-slate-500 rounded-xl hover:bg-slate-50 hover:text-slate-700 hover:border-slate-400 font-bold transition-all flex items-center justify-center text-sm shadow-sm">
+        <!-- BONUS SCHEME ENGINE (PHASE 1) -->
+        <div id="bonusSchemeEngine" class="hidden space-y-4">
+
+          <!-- Workspace Management Toolbar -->
+          <div
+            class="flex flex-col md:flex-row justify-between items-center mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200 shadow-sm gap-3">
+            <div class="flex space-x-2 rtl:space-x-reverse w-full md:w-auto">
+              <button onclick="dsSaveWorkspace()" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-cloud-upload-alt mr-2"></i> Save Workspace</button>
+              <button onclick="dsLoadWorkspace()" class="flex-1 md:flex-none bg-white hover:bg-slate-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-folder-open mr-2"></i> Load Workspace</button>
+            </div>
+            <button onclick="dsLoadScenarioTemplate()" class="w-full md:w-auto bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 px-4 py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-download mr-2"></i> Import Scenario Template</button>
+          </div>
+
+          <!-- Dynamic Scenarios Accordions Container -->
+          <div id="scenariosContainer" class="space-y-4 mb-4"></div>
+
+          <!-- Add Scenario Button -->
+          <button onclick="addNewScenario()" class="w-full py-3 border-2 border-dashed border-slate-300 text-slate-500 rounded-xl hover:bg-slate-50 hover:text-slate-700 hover:border-slate-400 font-bold transition-all flex items-center justify-center text-sm shadow-sm">
                                    <i class="fas fa-layer-group mr-2"></i> Add Scenario to Compare
                                </button>
 
-                               <!-- Export PDF Header & Dropdown -->
-                               <div id="dsExportButtonContainer" class="hidden flex justify-end pt-6 mt-4 border-t border-slate-200 relative z-50">
-                                   <div class="relative">
-                                       <button onclick="dsToggleExportMenu()" class="bg-slate-800 text-white hover:bg-slate-900 px-5 py-2 rounded-lg text-xs font-black transition-colors shadow-sm flex items-center">
+          <!-- Export PDF Header & Dropdown -->
+          <div id="dsExportButtonContainer"
+            class="hidden flex justify-end pt-6 mt-4 border-t border-slate-200 relative z-50">
+            <div class="relative">
+              <button onclick="dsToggleExportMenu()" class="bg-slate-800 text-white hover:bg-slate-900 px-5 py-2 rounded-lg text-xs font-black transition-colors shadow-sm flex items-center">
                                            <i class="fas fa-file-pdf mr-2 text-red-400"></i> Export PDF <i class="fas fa-chevron-down ml-2 text-slate-400 text-[10px]"></i>
                                        </button>
-                                       <!-- Dropdown Menu -->
-                                       <div id="dsExportMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 transform origin-top-right transition-all">
-                                           <button onclick="dsExecuteExport('client')" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 font-bold border-b border-slate-100 flex items-center transition-colors">
+              <!-- Dropdown Menu -->
+              <div id="dsExportMenu"
+                class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 transform origin-top-right transition-all">
+                <button onclick="dsExecuteExport('client')" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 font-bold border-b border-slate-100 flex items-center transition-colors">
                                                <i class="fas fa-user-tie mr-2 text-blue-500"></i> Client Quote
                                            </button>
-                                           <button id="dsBtnInternalExport" onclick="dsPrepareInternalExport(event)" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 font-bold flex items-center transition-colors">
+                <button id="dsBtnInternalExport" onclick="dsPrepareInternalExport(event)" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 font-bold flex items-center transition-colors">
                                                <i class="fas fa-lock mr-2 text-amber-500"></i> Internal Use
                                            </button>
-                                       </div>
-                                   </div>
-                               </div>
-
-                                <!-- Export Styles Removed in favor of Vanilla HTML Print Preview -->
-                               <!-- Comparison Matrix Output Container -->
-                               <div id="comparisonMatrixWrapper" class="bg-white p-2">
-                                   <div id="comparisonMatrixContainer" class="pt-2"></div>
-                               </div>
-
-                               <!-- PRINT PREVIEW MODAL -->
-                               <div id="dsPrintPreviewModal" class="hidden fixed inset-0 z-[9999] bg-slate-900/90 flex flex-col items-center justify-start overflow-y-auto backdrop-blur-sm">
-                                   <!-- Toolbar -->
-                                   <div class="sticky top-0 w-full bg-slate-800 text-white p-4 flex justify-between items-center shadow-lg z-50">
-                                       <div class="font-black tracking-widest uppercase text-sm"><i class="fas fa-search mr-2"></i> Document Preview</div>
-                                       <div class="flex items-center space-x-4 rtl:space-x-reverse">
-                                           <!-- Language Toggle -->
-                                           <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-700 shadow-inner">
-                                               <button onclick="dsSetPreviewLang('en')" id="dsBtnLangEn" class="px-3 py-1.5 rounded-md text-xs font-black bg-slate-700 text-white transition-all shadow-sm">EN</button>
-                                               <button onclick="dsSetPreviewLang('ar')" id="dsBtnLangAr" class="px-3 py-1.5 rounded-md text-xs font-black text-slate-400 hover:text-white transition-all">AR</button>
-                                           </div>
-                                           <div class="h-6 w-px bg-slate-700"></div> <!-- Divider -->
-                                           <button onclick="dsClosePrintPreview()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm">Cancel</button>
-                                           <button onclick="dsDownloadActualPDF()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg text-xs font-black shadow-md flex items-center transition-colors"><i class="fas fa-download mr-2"></i> Save PDF</button>
-                                       </div>
-                                   </div>
-                                   
-                                   <!-- The A4 Document Container -->
-                                   <div id="dsPrintDocumentContainer" class="bg-white shadow-2xl my-8 p-0 w-[1024px] min-h-[720px] relative overflow-hidden flex-shrink-0">
-                                       <!-- Injected Vanilla HTML Goes Here -->
-                                   </div>
-                               </div>
-
-                               <!-- UNIVERSAL TAILWIND MODAL (ALERTS, CONFIRMS, PROMPTS) -->
-                               <div id="dsCustomModal" class="hidden fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0">
-                                   <div id="dsCustomModalDialog" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all duration-300 scale-95 opacity-0 m-4">
-                                       <div class="flex items-center space-x-4 rtl:space-x-reverse mb-4">
-                                           <div id="dsModalIcon" class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner"></div>
-                                           <h3 id="dsModalTitle" class="text-xl font-black text-slate-800 tracking-tight"></h3>
-                                       </div>
-                                       <p id="dsModalMessage" class="text-sm text-slate-600 mb-6 font-medium whitespace-pre-line leading-relaxed"></p>
-                                       <input type="text" id="dsModalInput" class="hidden w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none mb-6 transition-all shadow-inner">
-                                       <div id="dsModalChipContainer" class="hidden w-full flex flex-wrap gap-2 mb-6 max-h-64 overflow-y-auto custom-scrollbar p-1"></div>
-                                       <div class="flex justify-end space-x-3 rtl:space-x-reverse">
-                                           <button id="dsModalBtnCancel" class="hidden px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors shadow-sm focus:ring-2 focus:ring-slate-300 outline-none"></button>
-                                           <button id="dsModalBtnConfirm" class="px-5 py-2.5 rounded-xl text-sm font-black text-white transition-colors shadow-md focus:ring-2 focus:ring-blue-500 outline-none"></button>
-                                       </div>
-                                   </div>
-                               </div>
-          
+              </div>
+            </div>
           </div>
 
-           <!-- CONTRACT ENGINE (PHASE 2 - NEXT STEP) -->
-                        <div id="contractSchemeEngine" class="space-y-6">
+          <!-- Export Styles Removed in favor of Vanilla HTML Print Preview -->
+          <!-- Comparison Matrix Output Container -->
+          <div id="comparisonMatrixWrapper" class="bg-white p-2">
+            <div id="comparisonMatrixContainer" class="pt-2"></div>
+          </div>
 
-    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
-      <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4">
-        <i class="fas fa-file-contract text-indigo-500 mr-2"></i> 3. Proposed Terms
-      </h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fixed Fees (Total EGP/Yr)</label>
-          <input type="number" id="sbFixedFees" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Marketing Budget (Total EGP)</label>
-          <input type="number" id="sbMarketing" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Standard Rebate / Back Margin (%)</label>
-          <input type="number" id="sbStandardRebate" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0%">
-        </div>
-      </div>
-    </div>
+          <!-- PRINT PREVIEW MODAL -->
+          <div id="dsPrintPreviewModal"
+            class="hidden fixed inset-0 z-[9999] bg-slate-900/90 flex flex-col items-center justify-start overflow-y-auto backdrop-blur-sm">
+            <!-- Toolbar -->
+            <div
+              class="sticky top-0 w-full bg-slate-800 text-white p-4 flex justify-between items-center shadow-lg z-50">
+              <div class="font-black tracking-widest uppercase text-sm"><i class="fas fa-search mr-2"></i> Document
+                Preview</div>
+              <div class="flex items-center space-x-4 rtl:space-x-reverse">
+                <!-- Language Toggle -->
+                <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-700 shadow-inner">
+                  <button onclick="dsSetPreviewLang('en')" id="dsBtnLangEn" class="px-3 py-1.5 rounded-md text-xs font-black bg-slate-700 text-white transition-all shadow-sm">EN</button>
+                  <button onclick="dsSetPreviewLang('ar')" id="dsBtnLangAr" class="px-3 py-1.5 rounded-md text-xs font-black text-slate-400 hover:text-white transition-all">AR</button>
+                </div>
+                <div class="h-6 w-px bg-slate-700"></div> <!-- Divider -->
+                <button onclick="dsClosePrintPreview()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm">Cancel</button>
+                <button onclick="dsDownloadActualPDF()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg text-xs font-black shadow-md flex items-center transition-colors"><i class="fas fa-download mr-2"></i> Save PDF</button>
+              </div>
+            </div>
 
-    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
-          <i class="fas fa-bullseye text-amber-500 mr-2"></i> 4. Conditional Target Tiers
-        </h3>
-        <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">Triggers Extra Discounts</span>
-      </div>
+            <!-- The A4 Document Container -->
+            <div id="dsPrintDocumentContainer"
+              class="bg-white shadow-2xl my-8 p-0 w-[1024px] min-h-[720px] relative overflow-hidden flex-shrink-0">
+              <!-- Injected Vanilla HTML Goes Here -->
+            </div>
+          </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <div class="col-span-12 md:col-span-2">
-            <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 1</span>
+          <!-- UNIVERSAL TAILWIND MODAL (ALERTS, CONFIRMS, PROMPTS) -->
+          <div id="dsCustomModal"
+            class="hidden fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+            <div id="dsCustomModalDialog"
+              class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all duration-300 scale-95 opacity-0 m-4">
+              <div class="flex items-center space-x-4 rtl:space-x-reverse mb-4">
+                <div id="dsModalIcon"
+                  class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner"></div>
+                <h3 id="dsModalTitle" class="text-xl font-black text-slate-800 tracking-tight"></h3>
+              </div>
+              <p id="dsModalMessage"
+                class="text-sm text-slate-600 mb-6 font-medium whitespace-pre-line leading-relaxed"></p>
+              <input type="text" id="dsModalInput" class="hidden w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none mb-6 transition-all shadow-inner">
+              <div id="dsModalChipContainer"
+                class="hidden w-full flex flex-wrap gap-2 mb-6 max-h-64 overflow-y-auto custom-scrollbar p-1"></div>
+              <div class="flex justify-end space-x-3 rtl:space-x-reverse">
+                <button id="dsModalBtnCancel" class="hidden px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors shadow-sm focus:ring-2 focus:ring-slate-300 outline-none"></button>
+                <button id="dsModalBtnConfirm" class="px-5 py-2.5 rounded-xl text-sm font-black text-white transition-colors shadow-md focus:ring-2 focus:ring-blue-500 outline-none"></button>
+              </div>
+            </div>
           </div>
-          <div class="col-span-12 md:col-span-4">
-            <select id="sbTier1Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
-          </div>
-          <div class="col-span-12 md:col-span-3 flex items-center gap-2">
-            <span class="text-[10px] font-bold text-slate-400"></span>
-            <input type="number" id="sbTier1Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
-          </div>
-          <div class="col-span-12 md:col-span-3">
-            <input type="number" id="sbTier1Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
-          </div>
+
         </div>
 
-        <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <div class="col-span-12 md:col-span-2">
-            <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 2</span>
-          </div>
-          <div class="col-span-12 md:col-span-4">
-            <select id="sbTier2Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
-          </div>
-          <div class="col-span-12 md:col-span-3 flex items-center gap-2">
-            <span class="text-[10px] font-bold text-slate-400"></span>
-            <input type="number" id="sbTier2Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
-          </div>
-          <div class="col-span-12 md:col-span-3">
-            <input type="number" id="sbTier2Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
-          </div>
-        </div>
-      </div>
-    </div>
+        <div id="contractSchemeEngine" class="space-y-6">
 
-    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-      <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
-          <i class="fas fa-boxes text-slate-500 mr-2"></i> 5. Product Volume Simulation
-        </h3>
-        <button onclick="sbAddProductRow()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-1.5 rounded shadow-sm transition-colors">
+          <div id="macroSection1"
+            class="bg-indigo-50/40 rounded-3xl p-2 sm:p-4 border border-indigo-100 shadow-inner mb-6 transition-all duration-300">
+            <div class="flex justify-between items-center cursor-pointer select-none px-2 py-2"
+              onclick="document.getElementById('histBaselineBody').classList.toggle('hidden'); document.getElementById('histBaselineChevron').classList.toggle('rotate-180');">
+              <h2 class="text-lg md:text-xl font-black text-indigo-900" style="font-family: 'Tajawal', sans-serif;">
+                <i class="fas fa-chart-line text-indigo-500 mr-2"></i> Client Performance Analysis
+              </h2>
+              <div class="flex items-center">
+                <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mr-4 hidden sm:block">Click to expand</span>
+                <i id="histBaselineChevron" class="fas fa-chevron-down text-indigo-400 text-xl transition-transform duration-300"></i>
+              </div>
+            </div>
+
+            <div id="histBaselineBody" class="hidden mt-4 space-y-6">
+
+              <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card space-y-6">
+                <div class="flex flex-col md:flex-row gap-6 items-start relative z-20">
+                  <div class="w-full md:w-1/2 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div class="sm:col-span-2">
+                      <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
+                        <i class="fas fa-building text-blue-500 mr-2"></i> 1. Target Client</h3>
+                      <div class="relative w-full">
+                        <input type="text" id="sbClientSearch" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-900/20 focus:border-blue-600 font-bold text-xl text-blue-900 transition-all shadow-sm placeholder:font-medium placeholder:text-slate-400" style="font-family: 'Tajawal', sans-serif;" placeholder="🔍 Search clients..." autocomplete="off" oninput="filterCombo('sbClientList', this.value); if(!this.value) { document.getElementById('sbClientSelect').value=''; handleSbClientSelection(); }" onfocus="showCombo('sbClientList')" onblur="hideCombo('sbClientList')">
+                        <input type="hidden" id="sbClientSelect" value="">
+                        <ul id="sbClientList"
+                          class="hidden absolute z-[100] w-full bg-white border border-slate-200 rounded-xl mt-1 max-h-60 overflow-y-auto shadow-2xl">
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div class="sm:col-span-1">
+                      <h3
+                        class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
+                        Type</h3>
+                      <select id="sbContractType" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-900/20 focus:border-indigo-600 font-bold text-sm text-indigo-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
+                                   <option value="Both">Both</option>
+                                   <option value="Standard">Standard</option>
+                                   <option value="Private Label">P. Label</option>
+                               </select>
+                    </div>
+
+                    <div class="sm:col-span-1">
+                      <h3
+                        class="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 text-transparent hidden sm:block">
+                        Scope</h3>
+                      <select id="sbTimeScope" class="w-full p-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-900/20 focus:border-emerald-600 font-bold text-sm text-emerald-900 transition-all shadow-sm" onchange="handleSbClientSelection()">
+                                   <option value="L12M">Past 12M</option>
+                                   <option value="2026" selected>2026 YTD</option>
+                                   <option value="2025">2025</option>
+                                   <option value="2024">2024</option>
+                                   <option value="2023">2023</option>
+                                   <option value="2022">2022</option>
+                                   <option value="2021">2021</option>
+                                   <option value="CUSTOM">Custom Range</option>
+                               </select>
+                    </div>
+
+                    <div id="sbCustomDateBox"
+                      class="hidden sm:col-span-4 grid grid-cols-2 gap-3 mt-1 animate-in fade-in duration-300 border-t border-slate-100 pt-3">
+                      <div>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 block">Start Date</label>
+                        <input type="date" id="sbCustomStart" class="w-full p-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-bold text-sm text-slate-700" onchange="handleSbClientSelection()">
+                      </div>
+                      <div>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 block">End Date</label>
+                        <input type="date" id="sbCustomEnd" class="w-full p-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-bold text-sm text-slate-700" onchange="handleSbClientSelection()">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="sbClientRefBox"
+                    class="w-full md:w-1/2 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 hidden opacity-0 transition-opacity duration-300">
+                    <div class="flex justify-between items-center mb-2">
+                      <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <i class="fas fa-history mr-1"></i>
+                        Historical Data & Terms
+                      </h4>
+                      <span id="sbInsightBadge" class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase shadow-sm border border-indigo-200">FY 2025</span>
+                    </div>
+
+                    <div id="sbClientChips" class="flex flex-wrap gap-2 mb-4">
+                    </div>
+
+                    <div id="sbClientInsights" class="space-y-4 pt-3 border-t border-slate-100">
+                      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div>
+                          <span class="block text-[8px] text-slate-400 uppercase font-black">Sales Qty</span><span id="sbHistQty" class="font-mono text-sm font-bold text-slate-700">0</span>
+                        </div>
+                        <div>
+                          <span class="block text-[8px] text-slate-400 uppercase font-black">Gross Revenue (before rebates)</span><span id="sbHistRev" class="font-mono text-sm font-bold text-blue-600">0</span>
+                        </div>
+                        <div>
+                          <span class="block text-[8px] text-slate-400 uppercase font-black">COGS</span><span id="sbHistCogs" class="font-mono text-sm font-bold text-red-500">0</span>
+                        </div>
+                        <div>
+                          <span class="block text-[8px] text-slate-400 uppercase font-black">Gross Profit</span><span id="sbHistProfit" class="font-mono text-sm font-bold text-emerald-600">0</span>
+                        </div>
+                        <div>
+                          <span class="block text-[8px] text-slate-400 uppercase font-black">Gross Margin</span><span id="sbHistMargin" class="font-black text-sm text-emerald-500">0.0%</span>
+                        </div>
+                      </div>
+                      <div id="sbHistNetRow"
+                        class="grid grid-cols-2 sm:grid-cols-5 gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-inner relative">
+                        <div class="flex items-center gap-2 col-span-2 sm:col-span-1">
+                          <span class="text-[8px] font-black text-emerald-700 uppercase leading-tight"><i class="fas fa-check-double mr-1"></i> Net-Net<br>Benchmark</span>
+                          <button onclick="toggleSbLogicTooltip(event)" class="text-emerald-400 hover:text-emerald-600 transition-colors">
+                                          <i class="fas fa-info-circle text-[10px]"></i>
+                                       </button>
+                        </div>
+
+                        <div id="sbLogicTooltip"
+                          class="hidden absolute left-0 top-full mt-2 z-[100] w-72 bg-slate-800 text-white p-5 rounded-2xl shadow-2xl border border-slate-700 text-[10px] leading-relaxed animate-in fade-in zoom-in duration-200">
+                          <div class="space-y-4">
+                            <p
+                              class="font-black text-emerald-400 border-b border-slate-700 pb-2 uppercase tracking-widest">
+                              Step-by-Step Logic</p>
+
+                            <div class="space-y-1">
+                              <span class="font-bold text-white block">1. Net Revenue</span>
+                              <div
+                                class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                                <span id="tipGrossRev">0</span> (Gross) <br>
+                                                - <span id="tipRebateAmt">0</span> (<span id="tipRebatePct">0</span>%
+                                Rebate) <br>
+                                                = <span class="text-blue-400 font-bold" id="tipNetRev">0</span>
+                              </div>
+                            </div>
+
+                            <div class="space-y-1">
+                              <span class="font-bold text-white block">2. Proportional Fixed Fees</span>
+                              <div
+                                class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                                (<span id="tipAnnualFixed">0</span> / 365) × <span id="tipDays">0</span> Days <br>
+                                                = <span class="text-amber-400 font-bold" id="tipPropFixed">0</span>
+                              </div>
+                            </div>
+
+                            <div class="space-y-1">
+                              <span class="font-bold text-white block">3. Net-Net Profit</span>
+                              <div
+                                class="text-[9px] text-slate-400 font-mono bg-slate-900/40 p-2 rounded border border-slate-700/50">
+                                <span id="tipNetRevFinal">0</span> (Net Rev) <br>
+                                                - <span id="tipProdCost">0</span> (Prod. Cost) <br>
+                                                - <span id="tipPropFixedFinal">0</span> (Fees) <br>
+                                                = <span class="text-emerald-400 font-bold" id="tipNetProfit">0</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="mt-4 pt-2 border-t border-slate-700 text-[8px] text-slate-500 italic text-center">
+                            Historical
+                            data comparison baseline.</div>
+                        </div>
+                        <div>
+                          <span class="block text-[8px] text-emerald-600 uppercase font-black">Net Revenue</span><span id="sbHistNetRev" class="font-mono text-sm font-bold text-blue-800">0</span>
+                        </div>
+                        <div>
+                          <span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Profit</span><span id="sbHistNetProfit" class="font-mono text-sm font-bold text-emerald-800">0</span>
+                        </div>
+                        <div>
+                          <span class="block text-[8px] text-emerald-600 uppercase font-black">Net-Net Margin</span><span id="sbHistNetMargin" class="font-black text-sm text-emerald-700">0.0%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+              </div>
+
+              <div id="sbProductMetricsCard"
+                class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
+                    <i class="fas fa-boxes text-purple-500 mr-2"></i> 2. Historical Product Performance</h3>
+                  <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Filtered by Type & Scope</span>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse min-w-[800px]">
+                    <thead>
+                      <tr class="border-b border-slate-100">
+                        <th class="pb-3 text-[10px] font-black text-slate-400 uppercase">Product Name</th>
+                        <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Qty</th>
+                        <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Base Price
+                        </th>
+                        <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Avg. Unit Cost</th>
+                        <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Inv. Disc %</th>
+                        <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">Gross Rev.</th>
+                        <th class="pb-3 text-[10px] font-black text-slate-400 uppercase text-center">COGS</th>
+                        <th
+                          class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600"
+                          title="Distributed Rebate">Rebates</th>
+                        <th
+                          class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center text-amber-600"
+                          title="Distributed Fixed Fees">Fees</th>
+                        <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">
+                          Net-Net Profit</th>
+                        <th class="sb-metric-2026 pb-3 text-[10px] font-black text-slate-400 uppercase text-center">
+                          Net-Net Margin</th>
+                      </tr>
+                    </thead>
+                    <tbody id="sbProductMetricsBody" class="text-xs font-bold text-slate-600">
+                    </tbody>
+                    <tfoot id="sbProductMetricsFooter"
+                      class="bg-slate-50 border-t-2 border-slate-200 text-xs font-black text-slate-700">
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4">
+              <i class="fas fa-file-contract text-indigo-500 mr-2"></i> 3. Proposed Terms
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fixed Fees (Total EGP/Yr)</label>
+                <input type="number" id="sbFixedFees" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Marketing Budget (Total EGP)</label>
+                <input type="number" id="sbMarketing" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Standard Rebate / Back Margin (%)</label>
+                <input type="number" id="sbStandardRebate" oninput="runScenarioSimulation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500" placeholder="0%">
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover-card">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
+                <i class="fas fa-bullseye text-amber-500 mr-2"></i> 4. Conditional Target Tiers
+              </h3>
+              <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">Triggers Extra Discounts</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="col-span-12 md:col-span-2">
+                  <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 1</span>
+                </div>
+                <div class="col-span-12 md:col-span-4">
+                  <select id="sbTier1Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
+                </div>
+                <div class="col-span-12 md:col-span-3 flex items-center gap-2">
+                  <span class="text-[10px] font-bold text-slate-400"></span>
+                  <input type="number" id="sbTier1Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
+                </div>
+                <div class="col-span-12 md:col-span-3">
+                  <input type="number" id="sbTier1Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="col-span-12 md:col-span-2">
+                  <span class="text-xs font-black text-slate-700 bg-white px-2 py-1 rounded shadow-sm">Tier 2</span>
+                </div>
+                <div class="col-span-12 md:col-span-4">
+                  <select id="sbTier2Type" class="text-xs font-bold p-2.5 rounded-lg border border-slate-200 w-full focus:ring-amber-500" onchange="runScenarioSimulation()"><option value="value">If Value (EGP)</option><option value="qty">If Units (Qty)</option></select>
+                </div>
+                <div class="col-span-12 md:col-span-3 flex items-center gap-2">
+                  <span class="text-[10px] font-bold text-slate-400"></span>
+                  <input type="number" id="sbTier2Target" class="w-full text-xs font-bold p-2.5 rounded-lg border border-slate-200 focus:ring-amber-500" placeholder="Target" oninput="runScenarioSimulation()">
+                </div>
+                <div class="col-span-12 md:col-span-3">
+                  <input type="number" id="sbTier2Reward" class="w-full text-xs font-bold p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 focus:ring-amber-500" placeholder="Reward +X%" oninput="runScenarioSimulation()">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+              <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
+                <i class="fas fa-boxes text-slate-500 mr-2"></i> 5. Product Volume Simulation
+              </h3>
+              <button onclick="sbAddProductRow()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-1.5 rounded shadow-sm transition-colors">
                 <i class="fas fa-plus mr-1"></i> Add Product
              </button>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left rtl:text-right">
-          <thead class="bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest">
-            <tr>
-              <th class="px-4 py-3 w-1/3">Product</th>
-              <th class="px-4 py-3 text-center">Expected Qty</th>
-              <th class="px-4 py-3 text-center">Base Price</th>
-              <th class="px-4 py-3 text-center">Product Disc %</th>
-              <th class="px-4 py-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="sbProductTableBody" class="divide-y divide-slate-100">
-          </tbody>
-        </table>
-      </div>
-    </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left rtl:text-right">
+                <thead class="bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest">
+                  <tr>
+                    <th class="px-4 py-3 w-1/3">Product</th>
+                    <th class="px-4 py-3 text-center">Expected Qty</th>
+                    <th class="px-4 py-3 text-center">Base Price</th>
+                    <th class="px-4 py-3 text-center">Product Disc %</th>
+                    <th class="px-4 py-3 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="sbProductTableBody" class="divide-y divide-slate-100">
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-           </div> <!-- End of Contract Scheme Engine -->
-       </div>
+        </div> <!-- End of Contract Scheme Engine -->
+      </div>
     </div> <!-- END OF MACRO SECTION 2 -->
 
   </div>
@@ -1202,7 +1243,8 @@
 
       <div class="bg-indigo-600 p-5 flex justify-between items-center text-white">
         <h3 id="cmModalTitle" class="text-xl font-black flex items-center tracking-wide">
-          <i class="fas fa-file-signature mr-3"></i> Add / Edit Contract</h3>
+          <i class="fas fa-file-signature mr-3"></i> Add / Edit Contract
+        </h3>
         <button onclick="closeContractManager()" class="text-indigo-200 hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
       </div>
 
@@ -1242,7 +1284,8 @@
         </div>
 
         <h4 class="text-sm font-black text-indigo-900 border-l-4 border-indigo-500 pl-2">Margin Percentages
-          <span class="text-slate-400 font-normal text-xs ml-2">(Type exact format, e.g., "5%")</span></h4>
+          <span class="text-slate-400 font-normal text-xs ml-2">(Type exact format, e.g., "5%")</span>
+        </h4>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
           <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Monthly %</label><input type="text" id="cmMPct" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
           </div>
@@ -1255,7 +1298,8 @@
         </div>
 
         <h4 class="text-sm font-black text-amber-700 border-l-4 border-amber-500 pl-2">Fixed Fees
-          <span class="text-slate-400 font-normal text-xs ml-2">(EGP per specified period)</span></h4>
+          <span class="text-slate-400 font-normal text-xs ml-2">(EGP per specified period)</span>
+        </h4>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 bg-amber-50/30 p-4 rounded-xl border border-amber-100">
           <div><label class="block text-[11px] font-bold text-slate-700 mb-1">Monthly Fixed</label><input type="number" id="cmMFixed" class="w-full bg-white border border-slate-200 rounded p-2 text-sm text-center">
           </div>
@@ -1277,7 +1321,8 @@
           <input type="file" id="cmFile" accept="application/pdf,image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
           <p id="cmExistingFileNote" class="text-xs text-indigo-600 mt-2 hidden">
             <i class="fas fa-check-circle mr-1"></i> A contract file is already attached. Uploading a new one will
-            replace it.</p>
+            replace it.
+          </p>
           <input type="hidden" id="cmExistingLink">
         </div>
 
@@ -1428,7 +1473,8 @@
         id="historyBox">
         <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
           <h3 class="text-xl font-black text-slate-800 flex items-center">
-            <i class="fas fa-history mr-3 text-blue-900"></i> Document Audit Trail</h3>
+            <i class="fas fa-history mr-3 text-blue-900"></i> Document Audit Trail
+          </h3>
           <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-red-500 transition-colors bg-slate-50 hover:bg-red-50 w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
         </div>
         <div id="historyContent" class="space-y-4 text-sm text-slate-600">
@@ -2613,10 +2659,10 @@
       document.getElementById('engineView').classList.add('hidden');
     }
 
-    // --- ANALYSIS & VISUALIZER NAVIGATION ---
-    function openClientPerformance() {
+    // --- VISUALIZER NAVIGATION ---
+    function openDealVisualizer() {
       hideAllMainViews();
-      document.getElementById('clientPerformanceView').classList.remove('hidden');
+      document.getElementById('dealVisualizerView').classList.remove('hidden');
       window.scrollTo({top: 0, behavior: 'smooth'});
       
       // Populate Combo Box natively by cloning the full list from the Engine
@@ -2630,13 +2676,7 @@
               sbList.innerHTML = html;
           }
       }
-    }
 
-    function openDealVisualizer() {
-      hideAllMainViews();
-      document.getElementById('dealVisualizerView').classList.remove('hidden');
-      window.scrollTo({top: 0, behavior: 'smooth'});
-      
       if (document.getElementById('sbProductTableBody').children.length === 0) {
           sbAddProductRow();
       }
@@ -2646,7 +2686,6 @@
     function hideAllMainViews() {
       document.getElementById('dashboardView').classList.add('hidden');
       document.getElementById('engineView').classList.add('hidden');
-      if(document.getElementById('clientPerformanceView')) document.getElementById('clientPerformanceView').classList.add('hidden');
       if(document.getElementById('dealVisualizerView')) document.getElementById('dealVisualizerView').classList.add('hidden');
     }
 

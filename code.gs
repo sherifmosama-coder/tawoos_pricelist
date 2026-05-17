@@ -100,41 +100,42 @@ function getInitialData(pin) {
   
   for (let i = 1; i < productsData.length; i++) {
     
-    // 1. Process Imported Products (Column A)
+    // 1. Process Imported Products (Columns A-P)
     let impName = String(productsData[i][0] || '');
     if (impName) { 
       products.push({
-        index: 'imp_' + i, // Unique ID for imported
-        arabicName: impName,      
-        englishName: String(productsData[i][1] || ''),     
-        unit: String(productsData[i][2] || ''),            
-        barcode: String(productsData[i][9] || ''),
-        isPrivateLabel: productsData[i][10] === true || String(productsData[i][10]).toLowerCase() === 'true', // Column K
-        unitCapacity: parseFloat(productsData[i][4]) || 1, 
-        taxRate: parseFloat(productsData[i][7]) || 0,      
-        packDescAr: String(productsData[i][12] || ''),             
-        packDescEn: String(productsData[i][13] || ''),     
-        netCapacity: String(productsData[i][15] || '')     
+        index: 'imp_' + i, 
+        arabicName: impName,                                  // [0] Col A
+        englishName: String(productsData[i][1] || ''),        // [1] Col B
+        unit: String(productsData[i][2] || ''),               // [2] Col C
+        unitCapacity: parseFloat(productsData[i][4]) || 1,    // [4] Col E
+        taxRate: parseFloat(productsData[i][7]) || 0,         // [7] Col H
+        barcode: String(productsData[i][9] || ''),            // [9] Col J
+        isPrivateLabel: productsData[i][10] === true || String(productsData[i][10]).toLowerCase() === 'true', // [10] Col K
+        packDescAr: String(productsData[i][12] || ''),        // [12] Col M
+        packDescEn: String(productsData[i][13] || ''),        // [13] Col N
+        netCapacity: String(productsData[i][15] || ''),       // [15] Col P
+        isCustom: false
       });
     }
 
-    // 2. Process Manual Products (Column V)
-    // First, ensure the row actually extends to column V to avoid errors
+    // 2. Process Manual Products (Columns V-AK)
     if (productsData[i].length > 21) {
       let manName = String(productsData[i][21] || '');
       if (manName) {
         products.push({
-          index: 'man_' + i, // Unique ID for manual
-          arabicName: manName,      
-          englishName: String(productsData[i][22] || ''),     
-          unit: String(productsData[i][23] || ''),            
-          barcode: String(productsData[i][9] || ''),
-          isPrivateLabel: productsData[i][10] === true || String(productsData[i][10]).toLowerCase() === 'true', // Column K
-          unitCapacity: parseFloat(productsData[i][4]) || 1, 
-          taxRate: parseFloat(productsData[i][28]) || 0,      
-          packDescAr: String(productsData[i][33] || ''),             
-          packDescEn: String(productsData[i][34] || ''),     
-          netCapacity: String(productsData[i][36] || '')     
+          index: 'man_' + i, 
+          arabicName: manName,                                  // [21] Col V
+          englishName: String(productsData[i][22] || ''),       // [22] Col W
+          unit: String(productsData[i][23] || ''),              // [23] Col X
+          unitCapacity: parseFloat(productsData[i][25]) || 1,   // [25] Col Z
+          taxRate: parseFloat(productsData[i][28]) || 0,        // [28] Col AC
+          barcode: String(productsData[i][30] || ''),           // [30] Col AE
+          isPrivateLabel: productsData[i][31] === true || String(productsData[i][31]).toLowerCase() === 'true', // [31] Col AF
+          packDescAr: String(productsData[i][33] || ''),        // [33] Col AH
+          packDescEn: String(productsData[i][34] || ''),        // [34] Col AI
+          netCapacity: String(productsData[i][36] || ''),       // [36] Col AK
+          isCustom: true
         });
       }
     }
@@ -423,6 +424,7 @@ function addNewProduct(product, pin) {
   
   // Map exact data structure starting from Column V through AK
   let rowData = new Array(16).fill("");
+  
   rowData[0] = product.arabicName;        // Col V
   rowData[1] = product.englishName;       // Col W
   rowData[2] = product.unitType;          // Col X
@@ -433,6 +435,7 @@ function addNewProduct(product, pin) {
   rowData[13] = product.pieceCap;         // Col AI
   rowData[15] = product.pieceCap;         // Col AK (Net capacity)
   
+  // Write exactly 16 columns starting at column 22 (V)
   sheet.getRange(nextRow, 22, 1, 16).setValues([rowData]);
   SpreadsheetApp.flush(); // Force immediate database commit
   
@@ -655,9 +658,9 @@ function analyzeContractWithAI(payload) {
   try {
     // 1. YOUR NEW FREE API KEYS (Get these from aistudio.google.com, console.groq.com, openrouter.ai)
     const API_KEYS = {
-      GEMINI: "********",
-      GROQ: "********",
-      OPENROUTER: "*********"
+      GEMINI: "*****",
+      GROQ: "******",
+      OPENROUTER: "*************"
     };
 
     let documentString = "";

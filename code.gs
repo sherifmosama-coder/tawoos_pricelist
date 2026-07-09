@@ -658,9 +658,9 @@ function analyzeContractWithAI(payload) {
   try {
     // 1. YOUR NEW FREE API KEYS (Get these from aistudio.google.com, console.groq.com, openrouter.ai)
     const API_KEYS = {
-      GEMINI: "*****",
-      GROQ: "******",
-      OPENROUTER: "*************"
+      GEMINI: "****",
+      GROQ: "****",
+      OPENROUTER: "*****"
     };
 
     let documentString = "";
@@ -1004,4 +1004,69 @@ function saveDsWorkspace(payload) {
     sheet.appendRow([payload.id, payload.name, JSON.stringify(payload), timestamp]);
   }
   return true;
+}
+
+// ==========================================
+// DEAL VISUALIZER SAVE/LOAD ENGINE
+// ==========================================
+
+function saveDealRecord(payload) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Saved_Deals');
+  
+  // Create the database sheet if it doesn't exist yet
+  if (!sheet) {
+    sheet = ss.insertSheet('Saved_Deals');
+    sheet.appendRow(['Save ID', 'Save Name', 'Client Name', 'JSON Data', 'Timestamp']);
+    sheet.getRange("A1:E1").setFontWeight("bold").setBackground("#d9ead3");
+  }
+  
+  const timestamp = new Date();
+  
+  // Always append as a new row (Never overwrite, acting as "Save As New")
+  sheet.appendRow([
+    payload.id,
+    payload.saveName,
+    payload.client,
+    JSON.stringify(payload.data),
+    timestamp
+  ]);
+  
+  return true;
+}
+
+function getSavedDeals() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Saved_Deals');
+  if (!sheet) return [];
+  
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return []; // Only headers exist
+  
+  let deals = [];
+  // Loop backwards to show the newest saves at the top of the list
+  for (let i = data.length - 1; i >= 1; i--) {
+    
+    // Safely parse the JSON to prevent crashes on corrupted rows
+    let safeData = {};
+    try {
+      safeData = JSON.parse(String(data[i][3]));
+    } catch(e) {
+      safeData = {}; 
+    }
+    
+    // Ensure all data types are safely stringified for google.script.run
+    let safeDate = "";
+    if (data[i][4]) {
+      safeDate = new Date(data[i][4]).toISOString();
+    }
+    
+    deals.push({
+      id: String(data[i][0]),
+      name: String(data[i][1]),
+      client: String(data[i][2]),
+      data: safeData,
+      date: safeDate
+    });
+  }
+  return deals;
 }
